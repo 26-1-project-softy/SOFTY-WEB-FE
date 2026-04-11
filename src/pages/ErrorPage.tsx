@@ -1,0 +1,106 @@
+import styled from '@emotion/styled';
+import { useNavigate } from 'react-router-dom';
+import { IconBadge, type IconComponent } from '@/components/common/IconBadge';
+import { InlineButton } from '@/components/common/InlineButton';
+import { IcError } from '@/icons';
+
+type ErrorPageProps = {
+  title: string;
+  description: string;
+  primaryBtnLabel: string;
+  primaryBtnIcon: IconComponent;
+  primaryTo: string;
+  ghostBtnLabel?: string;
+  ghostBtnIcon?: IconComponent;
+  ghostTo?: string;
+  isGhostGoBack?: boolean;
+};
+
+export const ErrorPage = ({
+  title,
+  description,
+  primaryBtnLabel,
+  primaryBtnIcon,
+  primaryTo,
+  ghostBtnLabel,
+  ghostBtnIcon,
+  ghostTo,
+  isGhostGoBack = false,
+}: ErrorPageProps) => {
+  const navigate = useNavigate();
+
+  const handleClickGhost = () => {
+    if (isGhostGoBack) {
+      navigate(-1);
+      return;
+    }
+
+    if (!ghostTo) {
+      return;
+    }
+
+    navigate(ghostTo, { replace: true });
+  };
+
+  return (
+    <PageContainer>
+      <IconBadge symbol={IcError} size={68} iconSize={34} bgColor="#FCF3F2" color="#FF2C3D" />
+      <ContentContainer>
+        <Title>{title}</Title>
+        <Description>{description}</Description>
+      </ContentContainer>
+      <ButtonsContainer>
+        {ghostBtnLabel && ghostTo && (
+          <InlineButton
+            variant="ghost"
+            size="L"
+            icon={ghostBtnIcon}
+            label={ghostBtnLabel}
+            onClick={handleClickGhost}
+          />
+        )}
+        <InlineButton
+          variant="primary"
+          size="L"
+          icon={primaryBtnIcon}
+          label={primaryBtnLabel}
+          onClick={() => navigate(primaryTo, { replace: true })}
+        />
+      </ButtonsContainer>
+    </PageContainer>
+  );
+};
+
+const PageContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  padding: 16px;
+  gap: 48px;
+`;
+
+const ContentContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+`;
+
+const Title = styled.span`
+  ${({ theme }) => theme.fonts.title1};
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const Description = styled.span`
+  text-align: center;
+  ${({ theme }) => theme.fonts.body1};
+  color: ${({ theme }) => theme.colors.text.text1};
+  white-space: pre-wrap;
+`;
+
+const ButtonsContainer = styled.div`
+  display: flex;
+  gap: 10px;
+`;
