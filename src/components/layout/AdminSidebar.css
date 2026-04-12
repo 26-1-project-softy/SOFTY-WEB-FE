@@ -1,0 +1,132 @@
+.admin-sidebar {
+  width: 250px;
+  height: 100vh;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+/* 로고 영역 */
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1.5rem 2rem 1.5rem;
+  border-bottom: 1px solid #f1f5f9;
+  margin-bottom: 0.5rem;
+}
+
+.logo-icon {
+  background-color: #5ab19e;
+  color: #fff;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logo-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.logo-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #5ab19e;
+  letter-spacing: -0.5px;
+}
+
+/* 메뉴 리스트 */
+.sidebar-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 1rem;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+  background-color: #f8fafc;
+  color: #475569;
+}
+
+.menu-item.active {
+  background-color: #f0fdf9; /* 아주 연한 청록(틸) 색상 */
+  color: #3b917f;
+  font-weight: 600;
+}
+
+.menu-item.active .menu-icon svg {
+  color: #3b917f;
+}
+
+.menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-text {
+  font-size: 0.95rem;
+  letter-spacing: -0.3px;
+}
+
+/* 하단 관리자 및 로그아웃 영역 */
+.sidebar-footer {
+  border-top: 1px solid #f1f5f9;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #475569;
+}
+
+.profile-icon {
+  color: #94a3b8;
+}
+
+.admin-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+}
+
+.logout-btn {
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-btn:hover {
+  color: #ef4444; /* 위험/작업취소 느낌의 빨간색 하이라이트 */
+}

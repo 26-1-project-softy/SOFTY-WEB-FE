@@ -1,0 +1,157 @@
+.teacher-sidebar {
+  width: 250px;
+  height: 100vh;
+  background-color: #ffffff;
+  border-right: 1px solid #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 100;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1.5rem 1.5rem 1.5rem 1.5rem;
+  border-bottom: 1px solid #f8fafc; /* 시안처럼 테두리가 거의 안보이는 수준 */
+  margin-bottom: 1rem;
+}
+
+.sidebar-logo .logo-icon {
+  background-color: #5ab19e;
+  color: #fff;
+  border-radius: 6px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sidebar-logo .logo-text {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #5ab19e;
+  letter-spacing: -0.5px;
+}
+
+.sidebar-menu {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 1rem;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.85rem 1rem;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #64748b;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.menu-item:hover {
+  background-color: #f8fafc;
+  color: #475569;
+}
+
+.menu-item.active {
+  background-color: #f0fdf9;
+  color: #3b917f;
+}
+
+.menu-item.active .menu-icon svg {
+  color: #3b917f;
+}
+
+.menu-left {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.menu-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.menu-text {
+  font-size: 0.95rem;
+  letter-spacing: -0.3px;
+}
+
+.menu-badge {
+  background-color: #5ab19e;
+  color: #fff;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.15rem 0.6rem;
+  border-radius: 12px;
+}
+
+.sidebar-footer {
+  border-top: 1px solid #f1f5f9;
+  padding: 1.25rem 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.teacher-profile {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.profile-icon-wrapper {
+  color: #5ab19e;
+  background-color: #f0fdf9;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.profile-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.teacher-name {
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: #1e293b;
+  letter-spacing: -0.3px;
+}
+
+.teacher-class {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  letter-spacing: -0.2px;
+  margin-top: 0.1rem;
+}
+
+.logout-btn {
+  color: #94a3b8;
+  cursor: pointer;
+  transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logout-btn:hover {
+  color: #ef4444;
+}

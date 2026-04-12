@@ -1,0 +1,77 @@
+.teacher-login-container {
+  min-height: 100vh;
+  display: flex;
+  background-color: #f8fafc;
+  align-items: center;
+  justify-content: center;
+}
+
+.login-wrapper {
+  width: 100%;
+  max-width: 480px;
+  padding: 2rem;
+  position: relative;
+}
+
+.back-button {
+  position: absolute;
+  top: -2.5rem;
+  left: 2rem;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #fff;
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  cursor: pointer;
+  color: #334155;
+  transition: all 0.2s;
+  z-index: 10;
+}
+
+.back-button:hover {
+  background-color: #f1f5f9;
+  transform: translateY(-2px);
+}
+
+.login-card {
+  border-radius: 20px !important;
+  overflow: hidden;
+  margin-top: 2rem;
+}
+
+.login-title {
+  color: #111;
+  font-size: 1.5rem;
+}
+
+.login-subtitle {
+  color: #64748b;
+  font-size: 0.95rem;
+}
+
+.footer-text {
+  color: #94a3b8;
+  font-size: 0.85rem;
+}
+
+.btn-kakao-lg {
+  background-color: #FEE500 !important;
+  color: #000000 !important;
+  border: none !important;
+  font-weight: 700 !important;
+  padding: 1rem 1.5rem !important;
+  font-size: 1.05rem !important;
+  border-radius: 12px !important;
+  display: flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.btn-kakao-lg:hover {
+  background-color: #e5cd00 !important;
+}

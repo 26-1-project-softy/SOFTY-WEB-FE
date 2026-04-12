@@ -1,0 +1,129 @@
+/* 텍스트 드래그 방지, 브라우저 기본 폰트 재정의 (Pretendard 등 권장) */
+.admin-login-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f5f6f8; /* 디자인 사진 배경과 유사한 밝은 회색 */
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+.login-wrapper {
+  width: 100%;
+  max-width: 550px; /* 카드를 넓게 (400px -> 550px) */
+  padding: 1rem;
+}
+
+/* 뒤로가기 버튼 영역 */
+.back-button {
+  margin-bottom: 1.5rem;
+  color: #333;
+  cursor: pointer;
+  display: inline-block;
+  transition: opacity 0.2s;
+}
+
+.back-button:hover {
+  opacity: 0.7;
+}
+
+/* 중앙 하얀색 카드 */
+.login-card {
+  border-radius: 12px !important; /* 모서리 곡선 */
+  background-color: #ffffff;
+}
+
+.login-title {
+  color: #111;
+  font-size: 1.25rem;
+  letter-spacing: -0.5px;
+}
+
+/* 입력 폼 라벨 */
+.login-label {
+  font-size: 0.85rem;
+  color: #333;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.3px;
+}
+
+/* 입력 창 */
+.login-input {
+  border-radius: 8px !important;
+  padding: 0.85rem 1rem !important;
+  font-size: 0.9rem !important;
+  border: 1px solid #e5e7eb !important;
+  color: #333;
+}
+
+.login-input::placeholder {
+  color: #9ca3af;
+  font-size: 0.9rem;
+}
+
+.login-input:focus {
+  border-color: #d1d5db !important;
+  box-shadow: none !important;
+  outline: none !important;
+}
+
+/* 로그인 버튼 */
+.login-btn {
+  background-color: #5ab19e !important;
+  color: #ffffff !important;
+  border: none !important;
+  border-radius: 8px !important;
+  padding: 0.85rem !important;
+  font-size: 0.95rem !important;
+  letter-spacing: -0.3px;
+  transition: all 0.2s;
+}
+
+.login-btn:hover {
+  background-color: #499a88 !important;
+  color: #ffffff !important;
+}
+
+.login-btn:disabled {
+  background-color: #a7d8cd !important;
+  cursor: not-allowed;
+}
+
+/* 하단 카피라이트 텍스트 */
+.footer-text {
+  color: #9ca3af;
+  font-size: 0.75rem;
+  letter-spacing: -0.2px;
+}
+
+/* 에러 메시지 박스 */
+.error-box {
+  background-color: #fff0f0;
+  border: 1px solid #fecaca;
+  border-radius: 8px;
+  padding: 0.8rem 1rem;
+  color: #ef4444;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  margin-bottom: 1.5rem;
+}
+
+.error-icon {
+  margin-top: 0.15rem;
+  flex-shrink: 0;
+  color: #ef4444;
+}
+
+.error-text-main {
+  font-weight: 600;
+  font-size: 0.85rem;
+  margin-bottom: 0.1rem;
+  letter-spacing: -0.3px;
+}
+
+.error-text-sub {
+  font-size: 0.75rem;
+  opacity: 0.75;
+  letter-spacing: -0.3px;
+}

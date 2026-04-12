@@ -1,0 +1,31 @@
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8fafc; /* 사진 배경과 유사한 밝은 회색톤 */
+}
+
+/* 사이드바 너비(250px)만큼 우측 요소를 밀어줌 */
+.admin-main-content {
+  flex: 1;
+  margin-left: 250px;
+  padding: 3rem 4rem;
+}
+
+.dashboard-title {
+  font-size: 1.7rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin-bottom: 2rem;
+  letter-spacing: -0.5px;
+}
+
+/* 차트 대신 렌더링될 임시 안내 박스 */
+.dashboard-content-placeholder {
+  background-color: #ffffff;
+  border-radius: 12px;
+  padding: 4rem;
+  text-align: center;
+  color: #94a3b8;
+  border: 1px dashed #cbd5e1;
+  font-size: 1rem;
+}
