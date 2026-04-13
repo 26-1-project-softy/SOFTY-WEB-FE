@@ -5,15 +5,15 @@ export const ROUTES = {
   teacherSignUp: '/teacher/signup',
 
   teacher: '/teacher',
-  teacherThreadList: '/teacher/threadList',
-  teacherThreadDetail: '/teacher/threadDetail/:threadId',
+  teacherThreadList: '/teacher/thread-list',
+  teacherThreadDetail: '/teacher/thread-detail/:threadId',
   teacherReports: '/teacher/reports',
   teacherSettings: '/teacher/settings',
 
   admin: '/admin',
   adminDashboard: '/admin/dashboard',
-  adminAiModel: '/admin/aiModel',
-  adminErrorReview: '/admin/errorReview',
+  adminAiModel: '/admin/ai-model',
+  adminErrorReview: '/admin/error-review',
 
   forbidden: '/forbidden',
   notFound: '*',
