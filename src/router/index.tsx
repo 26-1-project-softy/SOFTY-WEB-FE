@@ -43,17 +43,17 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="threadList" />,
+            element: <Navigate to="thread-list" />,
           },
           {
-            path: 'threadList',
+            path: 'thread-list',
             element: <TeacherThreadListPage />,
             handle: {
               title: '수신함',
             },
           },
           {
-            path: 'threadDetail/:threadId',
+            path: 'thread-detail/:threadId',
             element: <TeacherThreadDetailPage />,
             handle: null,
           },
@@ -92,14 +92,14 @@ export const router = createBrowserRouter([
             },
           },
           {
-            path: 'errorReview',
+            path: 'error-review',
             element: <AdminErrorReviewPage />,
             handle: {
               title: '오류 검토',
             },
           },
           {
-            path: 'aiModel',
+            path: 'ai-model',
             element: <AdminAiModelPage />,
             handle: {
               title: 'AI 모델 관리',
