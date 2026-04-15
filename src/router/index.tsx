@@ -4,6 +4,7 @@ import { LandingPage } from '@/pages/auth/LandingPage';
 import { ErrorPage } from '@/pages/ErrorPage';
 import { AdminLoginPage } from '@/pages/auth/AdminLoginPage';
 import { TeacherSignUpPage } from '@/pages/auth/TeacherSignUpPage';
+import { TeacherKakaoCallbackPage } from '@/pages/auth/TeacherKakaoCallbackPage';
 import { AdminAiModelPage } from '@/pages/admin/aiModel/AdminAiModelPage';
 import { AdminDashboardPage } from '@/pages/admin/dashboard/AdminDashboardPage';
 import { TeacherReportsPage } from '@/pages/teacher/reports/TeacherReportsPage';
@@ -31,6 +32,18 @@ export const router = createBrowserRouter([
       {
         path: ROUTES.teacherSignUp,
         element: <TeacherSignUpPage />,
+      },
+      {
+        path: ROUTES.teacherKakaoCallback,
+        element: <TeacherKakaoCallbackPage />,
+      },
+      {
+        path: '/auth/kakao/callback',
+        element: <TeacherKakaoCallbackPage />,
+      },
+      {
+        path: '/oauth/kakao/callback',
+        element: <TeacherKakaoCallbackPage />,
       },
     ],
   },
@@ -67,7 +80,9 @@ export const router = createBrowserRouter([
           {
             path: 'settings',
             element: <TeacherSettingsPage />,
-            handle: null,
+            handle: {
+              title: '설정',
+            },
           },
         ],
       },

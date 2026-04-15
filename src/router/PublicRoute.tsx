@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+﻿import { Navigate, Outlet } from 'react-router-dom';
 import { Loader } from '@/components/common/Loader';
 import { useAuth } from '@/hooks/useAuth';
 import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
@@ -11,7 +11,6 @@ export const PublicRoute = () => {
     return <Loader />;
   }
 
-  // TODO: 인증 구현 후 role 복원 시점까지 포함해 리다이렉트 동작 최종 검증
   if (isAuthenticated && role) {
     return <Navigate to={getDefaultRouteByRole(role)} replace />;
   }

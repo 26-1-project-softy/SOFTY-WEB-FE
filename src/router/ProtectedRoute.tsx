@@ -16,7 +16,10 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to={ROUTES.root} replace />;
+    const redirectTo =
+      allowedRoles?.length === 1 && allowedRoles[0] === 'admin' ? ROUTES.adminLogin : ROUTES.root;
+
+    return <Navigate to={redirectTo} replace />;
   }
 
   if (allowedRoles && (!role || !allowedRoles.includes(role))) {

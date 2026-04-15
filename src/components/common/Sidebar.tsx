@@ -1,24 +1,26 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useLogout } from '@/hooks/useLogout';
 import { IconBadge } from '@/components/common/IconBadge';
 import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
 import { NAVIGATION_BY_ROLE } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
 import { useUiStore } from '@/stores/uiStore';
-import { IcBrandLogo, IcDefaultProfile } from '@/icons';
+import { IcBrandLogo, IcDefaultProfile, IcLogout } from '@/icons';
 
 export const Sidebar = () => {
   const navigate = useNavigate();
   const { role, user } = useAuth();
+  const { logout } = useLogout();
   const isSidebarOpen = useUiStore(state => state.isSidebarOpen);
   const toggleSidebar = useUiStore(state => state.toggleSidebar);
   const items = role ? NAVIGATION_BY_ROLE[role] : [];
 
-  const userName = user?.name ?? '사용자';
+  const userName = user?.name ?? 'User';
   const userMeta =
     role === 'teacher' && user?.grade && user?.classNumber
-      ? `${user.grade}학년 ${user.classNumber}반`
+      ? `${user.grade} grade ${user.classNumber} class`
       : '';
 
   const handleClickBrand = () => {
@@ -30,6 +32,10 @@ export const Sidebar = () => {
     navigate(getDefaultRouteByRole(role), { replace: true });
   };
 
+  const handleLogout = () => {
+    logout();
+  };
+
   return (
     <SidebarContainer isOpen={isSidebarOpen}>
       <SidebarHeader>
@@ -37,18 +43,18 @@ export const Sidebar = () => {
           type="button"
           onClick={handleClickBrand}
           isOpen={isSidebarOpen}
-          aria-label="홈으로 이동"
+          aria-label="Go home"
         >
           <IcBrandLogo />
           <BrandLabelSlot isOpen={isSidebarOpen}>
-            <BrandLabel isOpen={isSidebarOpen}>소프티</BrandLabel>
+            <BrandLabel isOpen={isSidebarOpen}>SOFTY</BrandLabel>
           </BrandLabelSlot>
         </SidebarBrandButton>
 
         <SidebarToggleButton
           type="button"
           onClick={toggleSidebar}
-          aria-label={isSidebarOpen ? '메뉴 닫기' : '메뉴 열기'}
+          aria-label={isSidebarOpen ? 'Close menu' : 'Open menu'}
           aria-expanded={isSidebarOpen}
         >
           <SidebarToggleLine isOpen={isSidebarOpen} />
@@ -56,12 +62,13 @@ export const Sidebar = () => {
           <SidebarToggleLine isOpen={isSidebarOpen} />
         </SidebarToggleButton>
       </SidebarHeader>
+
       <SidebarNavigation>
         {items.map(item => {
           const Icon = item.icon;
 
           return (
-            <MenuLInk
+            <MenuLink
               key={item.path}
               to={item.path}
               isOpen={isSidebarOpen}
@@ -72,10 +79,11 @@ export const Sidebar = () => {
               <MenuLabelSlot isOpen={isSidebarOpen}>
                 <MenuLabel isOpen={isSidebarOpen}>{item.label}</MenuLabel>
               </MenuLabelSlot>
-            </MenuLInk>
+            </MenuLink>
           );
         })}
       </SidebarNavigation>
+
       <SidebarProfileSection isOpen={isSidebarOpen}>
         <IconBadge symbol={IcDefaultProfile} bgColor="#F2FDFA" color="#35746E" />
         <ProfileSummarySlot isOpen={isSidebarOpen}>
@@ -84,7 +92,14 @@ export const Sidebar = () => {
             {userMeta && <ProfileMeta>{userMeta}</ProfileMeta>}
           </ProfileSummary>
         </ProfileSummarySlot>
-        {/* TODO: 로그아웃 버튼 */}
+        <LogoutButton
+          type="button"
+          onClick={handleLogout}
+          title={!isSidebarOpen ? 'Logout' : undefined}
+          aria-label="Logout"
+        >
+          <IcLogout />
+        </LogoutButton>
       </SidebarProfileSection>
     </SidebarContainer>
   );
@@ -187,7 +202,7 @@ const SidebarNavigation = styled.nav`
   gap: 8px;
 `;
 
-const MenuLInk = styled(NavLink, {
+const MenuLink = styled(NavLink, {
   shouldForwardProp: prop => prop !== 'isOpen',
 })<{ isOpen: boolean }>`
   display: flex;
@@ -280,4 +295,24 @@ const ProfileMeta = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`;
+
+const LogoutButton = styled.button`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: ${({ theme }) => theme.colors.text.text3};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.bg3};
+    color: ${({ theme }) => theme.colors.text.text1};
+  }
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 `;

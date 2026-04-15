@@ -1,6 +1,13 @@
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { authSession } from '@/services/auth/authSession';
 
 const onRequest = (config: InternalAxiosRequestConfig) => {
+  const accessToken = authSession.getAccessToken();
+
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+
   return config;
 };
 
