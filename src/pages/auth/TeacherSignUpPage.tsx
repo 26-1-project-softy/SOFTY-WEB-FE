@@ -1,7 +1,7 @@
 ﻿import styled from '@emotion/styled';
 import { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { teacherApi } from '@/api/auth/teacherApi';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
@@ -29,6 +29,7 @@ const parseNumberText = (value: string) => Number(value.trim());
 
 export const TeacherSignUpPage = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { setAuth } = useAuth();
 
   const [teacherName, setTeacherName] = useState('');
@@ -39,6 +40,7 @@ export const TeacherSignUpPage = () => {
   const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
   const [globalError, setGlobalError] = useState<GlobalError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const kakaoAccessToken = searchParams.get('kakaoAccessToken') || '';
 
   const validationResult = useMemo(() => {
     const errors: FieldErrors = {};
@@ -67,7 +69,7 @@ export const TeacherSignUpPage = () => {
     };
   }, [teacherName, schoolName, grade, classNumber]);
 
-  const isSignUpEnabled = validationResult.isValid && !isSubmitting;
+  const isSignUpEnabled = validationResult.isValid && !isSubmitting && kakaoAccessToken.length > 0;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -75,6 +77,14 @@ export const TeacherSignUpPage = () => {
     setIsSubmitAttempted(true);
     setFieldErrors(validationResult.errors);
     setGlobalError(null);
+
+    if (!kakaoAccessToken) {
+      setGlobalError({
+        title: '카카오 인증 정보가 만료되었어요',
+        description: '카카오 로그인을 다시 진행해 주세요.',
+      });
+      return;
+    }
 
     if (!validationResult.isValid) {
       return;
@@ -84,6 +94,7 @@ export const TeacherSignUpPage = () => {
       setIsSubmitting(true);
 
       const response = await teacherApi.signUp({
+        kakaoAccessToken,
         teacherName: teacherName.trim(),
         schoolName: schoolName.trim(),
         grade: validationResult.parsedGrade,

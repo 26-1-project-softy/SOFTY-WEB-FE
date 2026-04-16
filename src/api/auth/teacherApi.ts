@@ -1,6 +1,7 @@
 import { apiClient } from '@/services/http/apiClient';
 
 export type TeacherSignUpRequest = {
+  kakaoAccessToken: string;
   teacherName: string;
   schoolName: string;
   grade: number;
@@ -19,7 +20,13 @@ export type TeacherSignUpResponse = {
 
 export const teacherApi = {
   signUp: async (payload: TeacherSignUpRequest) => {
-    const { data } = await apiClient.post<TeacherSignUpResponse>('/auth/teachers/signup', payload);
+    const { kakaoAccessToken, ...body } = payload;
+
+    const { data } = await apiClient.post<TeacherSignUpResponse>('/auth/teachers/signup', body, {
+      headers: {
+        Authorization: `Bearer ${kakaoAccessToken}`,
+      },
+    });
 
     return data;
   },

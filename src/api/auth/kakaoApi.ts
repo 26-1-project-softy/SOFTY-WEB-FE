@@ -1,7 +1,7 @@
 import { apiClient } from '@/services/http/apiClient';
 
 export type KakaoLoginRequest = {
-  code: string;
+  kakaoAccessToken: string;
 };
 
 export type KakaoLoginResponse = {
