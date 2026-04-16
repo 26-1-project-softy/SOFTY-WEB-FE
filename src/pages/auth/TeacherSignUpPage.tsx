@@ -1,15 +1,12 @@
 ﻿import styled from '@emotion/styled';
 import { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { teacherApi } from '@/api/auth/teacherApi';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
-import { useToast } from '@/hooks/useToast';
 import { authApi } from '@/services/auth/auth.api';
-import { IcCheck, IcCopy, IcInfo, IcSparkles } from '@/icons';
-
-type SignUpStep = 'form' | 'signupComplete' | 'classCodeComplete';
+import { IcInfo } from '@/icons';
 
 type FieldErrors = {
   teacherName?: string;
@@ -32,11 +29,8 @@ const parseNumberText = (value: string) => Number(value.trim());
 
 export const TeacherSignUpPage = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { setAuth } = useAuth();
-  const { showToast } = useToast();
 
-  const [step, setStep] = useState<SignUpStep>('form');
   const [teacherName, setTeacherName] = useState('');
   const [schoolName, setSchoolName] = useState('');
   const [grade, setGrade] = useState('');
@@ -45,11 +39,6 @@ export const TeacherSignUpPage = () => {
   const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
   const [globalError, setGlobalError] = useState<GlobalError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isCreatingClassCode, setIsCreatingClassCode] = useState(false);
-  const [isMovingInbox, setIsMovingInbox] = useState(false);
-  const [generatedClassCode, setGeneratedClassCode] = useState('');
-
-  const kakaoAccessToken = searchParams.get('kakaoAccessToken') || '';
 
   const validationResult = useMemo(() => {
     const errors: FieldErrors = {};
@@ -78,7 +67,7 @@ export const TeacherSignUpPage = () => {
     };
   }, [teacherName, schoolName, grade, classNumber]);
 
-  const isSignUpEnabled = validationResult.isValid && !isSubmitting && kakaoAccessToken.length > 0;
+  const isSignUpEnabled = validationResult.isValid && !isSubmitting;
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -86,14 +75,6 @@ export const TeacherSignUpPage = () => {
     setIsSubmitAttempted(true);
     setFieldErrors(validationResult.errors);
     setGlobalError(null);
-
-    if (!kakaoAccessToken) {
-      setGlobalError({
-        title: '카카오 인증 정보가 만료되었어요',
-        description: '카카오 로그인을 다시 진행해 주세요.',
-      });
-      return;
-    }
 
     if (!validationResult.isValid) {
       return;
@@ -103,7 +84,6 @@ export const TeacherSignUpPage = () => {
       setIsSubmitting(true);
 
       const response = await teacherApi.signUp({
-        kakaoAccessToken,
         teacherName: teacherName.trim(),
         schoolName: schoolName.trim(),
         grade: validationResult.parsedGrade,
@@ -118,7 +98,22 @@ export const TeacherSignUpPage = () => {
         return;
       }
 
-      setStep('signupComplete');
+      try {
+        const me = await authApi.getMe();
+        setAuth({ isAuthenticated: true, role: me.role, user: me.user });
+      } catch {
+        setAuth({
+          isAuthenticated: true,
+          role: 'teacher',
+          user: {
+            name: teacherName.trim(),
+            grade: validationResult.parsedGrade,
+            classNumber: validationResult.parsedClassNumber,
+          },
+        });
+      }
+
+      navigate(ROUTES.inbox, { replace: true });
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
       const message = axiosError.response?.data?.message || FORM_ERROR_FALLBACK.title;
@@ -132,245 +127,110 @@ export const TeacherSignUpPage = () => {
     }
   };
 
-  const handleCreateClassCode = async () => {
-    try {
-      setGlobalError(null);
-      setIsCreatingClassCode(true);
-
-      const response = await teacherApi.createClassCode();
-
-      if (!response.success) {
-        setGlobalError({
-          title: response.message || '학급 코드 생성 중 문제가 발생했어요',
-          description: '잠시 후 다시 시도해 주세요.',
-        });
-        return;
-      }
-
-      setGeneratedClassCode(response.data.classCode);
-      setStep('classCodeComplete');
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      const message = axiosError.response?.data?.message || '학급 코드 생성 중 문제가 발생했어요';
-
-      setGlobalError({
-        title: message,
-        description: '잠시 후 다시 시도해 주세요.',
-      });
-    } finally {
-      setIsCreatingClassCode(false);
-    }
-  };
-
-  const handleCopyClassCode = async () => {
-    if (!generatedClassCode) {
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(generatedClassCode);
-      showToast('학급코드를 복사했어요.');
-    } catch {
-      showToast('복사에 실패했어요. 다시 시도해 주세요.', 'error');
-    }
-  };
-
-  const handleMoveInbox = async () => {
-    try {
-      setIsMovingInbox(true);
-      const me = await authApi.getMe();
-      setAuth({ isAuthenticated: true, role: me.role, user: me.user });
-      navigate(me.role === 'teacher' ? ROUTES.teacherThreadList : ROUTES.adminDashboard, {
-        replace: true,
-      });
-    } catch {
-      setAuth({
-        isAuthenticated: true,
-        role: 'teacher',
-        user: {
-          name: teacherName.trim(),
-          grade: validationResult.parsedGrade,
-          classNumber: validationResult.parsedClassNumber,
-        },
-      });
-      navigate(ROUTES.teacherThreadList, { replace: true });
-    } finally {
-      setIsMovingInbox(false);
-    }
-  };
-
   const showFieldErrors = isSubmitAttempted;
 
   return (
     <PageContainer>
       <Card>
-        <ProgressTrack>
-          <ProgressBar progress={step === 'classCodeComplete' ? 100 : 42} />
-        </ProgressTrack>
+        <Title>교사 정보 입력</Title>
+        <Description>가입을 위해 선생님의 정보를 입력해주세요.</Description>
 
-        {step === 'form' ? (
-          <FormSection>
-            <Title>교사 정보 입력</Title>
-            <Description>가입을 위해 선생님의 정보를 입력해주세요.</Description>
-
-            <SignUpForm onSubmit={handleSubmit}>
-              <InputGroup>
-                <Label
-                  htmlFor="teacherName"
-                  hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
-                >
-                  이름 <RequiredMark>*</RequiredMark>
-                </Label>
-                <Input
-                  id="teacherName"
-                  name="teacherName"
-                  value={teacherName}
-                  onChange={event => setTeacherName(event.target.value)}
-                  placeholder="홍길동"
-                  hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
-                />
-                {showFieldErrors && fieldErrors.teacherName ? (
-                  <FieldErrorText>{fieldErrors.teacherName}</FieldErrorText>
-                ) : null}
-              </InputGroup>
-
-              <InputGroup>
-                <Label
-                  htmlFor="schoolName"
-                  hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
-                >
-                  학교명 <RequiredMark>*</RequiredMark>
-                </Label>
-                <Input
-                  id="schoolName"
-                  name="schoolName"
-                  value={schoolName}
-                  onChange={event => setSchoolName(event.target.value)}
-                  placeholder="한국초등학교"
-                  hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
-                />
-                {showFieldErrors && fieldErrors.schoolName ? (
-                  <FieldErrorText>{fieldErrors.schoolName}</FieldErrorText>
-                ) : null}
-              </InputGroup>
-
-              <InlineTwoColumn>
-                <InputGroup>
-                  <Label htmlFor="grade" hasError={Boolean(showFieldErrors && fieldErrors.grade)}>
-                    학년 <RequiredMark>*</RequiredMark>
-                  </Label>
-                  <Input
-                    id="grade"
-                    name="grade"
-                    value={grade}
-                    onChange={event => setGrade(event.target.value)}
-                    placeholder="3"
-                    hasError={Boolean(showFieldErrors && fieldErrors.grade)}
-                  />
-                  {showFieldErrors && fieldErrors.grade ? (
-                    <FieldErrorText>{fieldErrors.grade}</FieldErrorText>
-                  ) : null}
-                </InputGroup>
-
-                <InputGroup>
-                  <Label
-                    htmlFor="classNumber"
-                    hasError={Boolean(showFieldErrors && fieldErrors.classNumber)}
-                  >
-                    반 <RequiredMark>*</RequiredMark>
-                  </Label>
-                  <Input
-                    id="classNumber"
-                    name="classNumber"
-                    value={classNumber}
-                    onChange={event => setClassNumber(event.target.value)}
-                    placeholder="2"
-                    hasError={Boolean(showFieldErrors && fieldErrors.classNumber)}
-                  />
-                  {showFieldErrors && fieldErrors.classNumber ? (
-                    <FieldErrorText>{fieldErrors.classNumber}</FieldErrorText>
-                  ) : null}
-                </InputGroup>
-              </InlineTwoColumn>
-
-              {globalError ? (
-                <ErrorBox role="alert">
-                  <ErrorIcon>
-                    <IcInfo />
-                  </ErrorIcon>
-                  <ErrorTextWrap>
-                    <ErrorTitle>{globalError.title}</ErrorTitle>
-                    <ErrorDescription>{globalError.description}</ErrorDescription>
-                  </ErrorTextWrap>
-                </ErrorBox>
-              ) : null}
-
-              <PrimaryButton type="submit" disabled={!isSignUpEnabled}>
-                {isSubmitting ? '가입 중...' : '가입하기'}
-              </PrimaryButton>
-            </SignUpForm>
-          </FormSection>
-        ) : null}
-
-        {step === 'signupComplete' ? (
-          <ResultSection>
-            <ResultIconWrap>
-              <IcCheck />
-            </ResultIconWrap>
-            <Title>가입 완료</Title>
-            <ResultBodyText>교사 가입이 완료되었어요.</ResultBodyText>
-            <ResultBodyText>
-              이제 학급을 개설하고, 학부모님과 안전한 소통을 시작해보세요.
-            </ResultBodyText>
-
-            {globalError ? (
-              <ErrorBox role="alert">
-                <ErrorIcon>
-                  <IcInfo />
-                </ErrorIcon>
-                <ErrorTextWrap>
-                  <ErrorTitle>{globalError.title}</ErrorTitle>
-                  <ErrorDescription>{globalError.description}</ErrorDescription>
-                </ErrorTextWrap>
-              </ErrorBox>
-            ) : null}
-
-            <PrimaryButton
-              type="button"
-              onClick={handleCreateClassCode}
-              disabled={isCreatingClassCode}
+        <SignUpForm onSubmit={handleSubmit}>
+          <InputGroup>
+            <Label
+              htmlFor="teacherName"
+              hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
             >
-              {isCreatingClassCode ? '생성 중...' : '학급 개설하기'}
-            </PrimaryButton>
-          </ResultSection>
-        ) : null}
+              이름 <RequiredMark>*</RequiredMark>
+            </Label>
+            <Input
+              id="teacherName"
+              name="teacherName"
+              value={teacherName}
+              onChange={event => setTeacherName(event.target.value)}
+              placeholder="홍길동"
+              hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
+            />
+            {showFieldErrors && fieldErrors.teacherName ? (
+              <FieldErrorText>{fieldErrors.teacherName}</FieldErrorText>
+            ) : null}
+          </InputGroup>
 
-        {step === 'classCodeComplete' ? (
-          <ResultSection>
-            <ResultIconWrap>
-              <IcSparkles />
-            </ResultIconWrap>
-            <Title>학급 코드 생성 완료</Title>
-            <ResultBodyText>학급이 개설되었어요.</ResultBodyText>
-            <ResultBodyText>생성된 학급 코드를 학부모님들께 공유해주세요.</ResultBodyText>
+          <InputGroup>
+            <Label
+              htmlFor="schoolName"
+              hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
+            >
+              학교명 <RequiredMark>*</RequiredMark>
+            </Label>
+            <Input
+              id="schoolName"
+              name="schoolName"
+              value={schoolName}
+              onChange={event => setSchoolName(event.target.value)}
+              placeholder="한국초등학교"
+              hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
+            />
+            {showFieldErrors && fieldErrors.schoolName ? (
+              <FieldErrorText>{fieldErrors.schoolName}</FieldErrorText>
+            ) : null}
+          </InputGroup>
 
-            <CodeCard>
-              <CodeClassInfo>
-                {schoolName.trim()} {grade.trim()}학년 {classNumber.trim()}반
-              </CodeClassInfo>
-              <CodeValue>{generatedClassCode}</CodeValue>
-            </CodeCard>
+          <InlineTwoColumn>
+            <InputGroup>
+              <Label htmlFor="grade" hasError={Boolean(showFieldErrors && fieldErrors.grade)}>
+                학년 <RequiredMark>*</RequiredMark>
+              </Label>
+              <Input
+                id="grade"
+                name="grade"
+                value={grade}
+                onChange={event => setGrade(event.target.value)}
+                placeholder="3"
+                hasError={Boolean(showFieldErrors && fieldErrors.grade)}
+              />
+              {showFieldErrors && fieldErrors.grade ? (
+                <FieldErrorText>{fieldErrors.grade}</FieldErrorText>
+              ) : null}
+            </InputGroup>
 
-            <GhostButton type="button" onClick={handleCopyClassCode}>
-              <IcCopy />
-              학급코드 복사하기
-            </GhostButton>
+            <InputGroup>
+              <Label
+                htmlFor="classNumber"
+                hasError={Boolean(showFieldErrors && fieldErrors.classNumber)}
+              >
+                반 <RequiredMark>*</RequiredMark>
+              </Label>
+              <Input
+                id="classNumber"
+                name="classNumber"
+                value={classNumber}
+                onChange={event => setClassNumber(event.target.value)}
+                placeholder="2"
+                hasError={Boolean(showFieldErrors && fieldErrors.classNumber)}
+              />
+              {showFieldErrors && fieldErrors.classNumber ? (
+                <FieldErrorText>{fieldErrors.classNumber}</FieldErrorText>
+              ) : null}
+            </InputGroup>
+          </InlineTwoColumn>
 
-            <PrimaryButton type="button" onClick={handleMoveInbox} disabled={isMovingInbox}>
-              {isMovingInbox ? '이동 중...' : '수신함으로 이동'}
-            </PrimaryButton>
-          </ResultSection>
-        ) : null}
+          {globalError ? (
+            <ErrorBox role="alert">
+              <ErrorIcon>
+                <IcInfo />
+              </ErrorIcon>
+              <ErrorTextWrap>
+                <ErrorTitle>{globalError.title}</ErrorTitle>
+                <ErrorDescription>{globalError.description}</ErrorDescription>
+              </ErrorTextWrap>
+            </ErrorBox>
+          ) : null}
+
+          <PrimaryButton type="submit" disabled={!isSignUpEnabled}>
+            {isSubmitting ? '가입 중...' : '가입하기'}
+          </PrimaryButton>
+        </SignUpForm>
       </Card>
 
       <FooterText>© 2026, 소프티 All rights reserved.</FooterText>
@@ -394,39 +254,12 @@ const Card = styled.section`
   border-radius: 20px;
   background: #f4f4f4;
   box-shadow: 0 12px 22px rgba(0, 0, 0, 0.14);
-  padding: 18px 30px 28px;
+  padding: 28px 30px;
 
   @media (max-width: 640px) {
-    padding: 16px 16px 22px;
+    padding: 20px 16px;
     border-radius: 16px;
   }
-`;
-
-const ProgressTrack = styled.div`
-  height: 3px;
-  width: 100%;
-  border-radius: 999px;
-  background: #c9c9c9;
-  overflow: hidden;
-`;
-
-const ProgressBar = styled.div<{ progress: number }>`
-  height: 100%;
-  width: ${({ progress }) => `${progress}%`};
-  background: ${({ theme }) => theme.colors.brand.primary};
-  transition: width 0.25s ease;
-`;
-
-const FormSection = styled.div`
-  margin-top: 28px;
-`;
-
-const ResultSection = styled.div`
-  margin-top: 28px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
 `;
 
 const Title = styled.h1`
@@ -459,10 +292,6 @@ const InlineTwoColumn = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-
-  @media (max-width: 640px) {
-    grid-template-columns: 1fr 1fr;
-  }
 `;
 
 const Label = styled.label<{ hasError?: boolean }>`
@@ -559,69 +388,6 @@ const PrimaryButton = styled.button`
     color: #7a7a7a;
     cursor: not-allowed;
   }
-`;
-
-const GhostButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
-  margin-top: 14px;
-  width: 100%;
-  border: 1px solid #d4d4d4;
-  border-radius: 12px;
-  padding: 14px;
-  color: ${({ theme }) => theme.colors.text.text1};
-  background: #f4f4f4;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-const ResultIconWrap = styled.span`
-  width: 72px;
-  height: 72px;
-  border-radius: 999px;
-  background: #e7f1ef;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.brand.dark};
-
-  svg {
-    width: 28px;
-    height: 28px;
-  }
-`;
-
-const ResultBodyText = styled.p`
-  ${({ theme }) => theme.fonts.body3};
-  margin: 6px 0 0;
-  color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const CodeCard = styled.div`
-  width: 100%;
-  margin-top: 18px;
-  border-radius: 18px;
-  background: #dfeae8;
-  padding: 16px 14px;
-`;
-
-const CodeClassInfo = styled.p`
-  ${({ theme }) => theme.fonts.body3};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.brand.dark};
-`;
-
-const CodeValue = styled.p`
-  ${({ theme }) => theme.fonts.title1};
-  margin: 8px 0 0;
-  color: ${({ theme }) => theme.colors.text.text1};
 `;
 
 const FooterText = styled.p`

@@ -1,4 +1,6 @@
 ﻿import styled from '@emotion/styled';
+import { useEffect, useState } from 'react';
+import { authApi } from '@/services/auth/auth.api';
 
 type MockThread = {
   id: number;
@@ -53,9 +55,56 @@ const mockThreads: MockThread[] = [
 ];
 
 export const TeacherThreadListPage = () => {
+  const [classInfo, setClassInfo] = useState<{
+    teacherName: string;
+    grade?: number;
+    classNumber?: number;
+  } | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchClassInfo = async () => {
+      try {
+        const me = await authApi.getMe();
+
+        if (!isMounted || me.role !== 'teacher') {
+          return;
+        }
+
+        setClassInfo({
+          teacherName: me.user.name,
+          grade: me.user.grade,
+          classNumber: me.user.classNumber,
+        });
+      } catch {
+        if (isMounted) {
+          setClassInfo(null);
+        }
+      }
+    };
+
+    void fetchClassInfo();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   return (
     <PageContainer>
       <ListPane>
+        {classInfo ? (
+          <ClassInfoCard>
+            <ClassInfoTitle>{classInfo.teacherName} 선생님 학급</ClassInfoTitle>
+            <ClassInfoText>
+              {classInfo.grade && classInfo.classNumber
+                ? `${classInfo.grade}학년 ${classInfo.classNumber}반`
+                : '학급 정보 확인 중'}
+            </ClassInfoText>
+          </ClassInfoCard>
+        ) : null}
+
         {mockThreads.map(thread => (
           <ThreadCard key={thread.id} unread={thread.unread}>
             <CardHeader>
@@ -103,6 +152,25 @@ const ListPane = styled.section`
     border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
     max-height: 55vh;
   }
+`;
+
+const ClassInfoCard = styled.div`
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border-radius: 12px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  padding: 12px;
+`;
+
+const ClassInfoTitle = styled.p`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const ClassInfoText = styled.p`
+  ${({ theme }) => theme.fonts.body3};
+  margin: 6px 0 0;
+  color: ${({ theme }) => theme.colors.text.text3};
 `;
 
 const ThreadCard = styled.button<{ unread: boolean }>`

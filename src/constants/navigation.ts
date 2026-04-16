@@ -1,4 +1,4 @@
-import type { AuthRole } from '@/stores/authStore';
+﻿import type { AuthRole } from '@/stores/authStore';
 import type { IconComponent } from '@/components/common/IconBadge.tsx';
 import { ROUTES } from '@/constants/routes';
 import { IcInbox, IcReport, IcSettings, IcDashboard, IcErrorReview, IcModel } from '@/icons';
@@ -11,7 +11,7 @@ export type NavigationItem = {
 
 export const NAVIGATION_BY_ROLE: Record<Exclude<AuthRole, null>, NavigationItem[]> = {
   teacher: [
-    { label: '수신함', icon: IcInbox, path: ROUTES.teacherThreadList },
+    { label: '수신함', icon: IcInbox, path: ROUTES.inbox },
     { label: '증빙 리포트', icon: IcReport, path: ROUTES.teacherReports },
     { label: '설정', icon: IcSettings, path: ROUTES.teacherSettings },
   ],

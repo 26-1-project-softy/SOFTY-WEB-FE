@@ -5,6 +5,6 @@ export const getDefaultRouteByRole = (role: AuthRole) => {
   if (role === 'admin') {
     return ROUTES.admin;
   } else if (role === 'teacher') {
-    return ROUTES.teacher;
+    return ROUTES.inbox;
   } else return ROUTES.root;
 };

@@ -81,7 +81,7 @@ export const AdminLoginPage = () => {
       const me = await authApi.getMe();
       setAuth({ isAuthenticated: true, role: me.role, user: me.user });
 
-      navigate(me.role === 'admin' ? ROUTES.adminDashboard : ROUTES.teacherThreadList, {
+      navigate(me.role === 'admin' ? ROUTES.adminDashboard : ROUTES.inbox, {
         replace: true,
       });
     } catch (error) {

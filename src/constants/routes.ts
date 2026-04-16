@@ -4,6 +4,7 @@ export const ROUTES = {
   adminLogin: '/admin/login',
   teacherSignUp: '/teacher/signup',
   teacherKakaoCallback: '/auth/teacher/kakao/callback',
+  inbox: '/inbox',
 
   teacher: '/teacher',
   teacherThreadList: '/teacher/thread-list',

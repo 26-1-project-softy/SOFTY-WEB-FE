@@ -1,4 +1,4 @@
-import { createBrowserRouter, Navigate } from 'react-router-dom';
+﻿import { createBrowserRouter, Navigate } from 'react-router-dom';
 import { AppLayout } from '@/layouts/AppLayout';
 import { LandingPage } from '@/pages/auth/LandingPage';
 import { ErrorPage } from '@/pages/ErrorPage';
@@ -51,19 +51,29 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute allowedRoles={['teacher']} />,
     children: [
       {
+        path: ROUTES.inbox,
+        element: <AppLayout />,
+        children: [
+          {
+            index: true,
+            element: <TeacherThreadListPage />,
+            handle: {
+              title: '수신함',
+            },
+          },
+        ],
+      },
+      {
         path: ROUTES.teacher,
         element: <AppLayout />,
         children: [
           {
             index: true,
-            element: <Navigate to="thread-list" />,
+            element: <Navigate to={ROUTES.inbox} replace />,
           },
           {
             path: 'thread-list',
-            element: <TeacherThreadListPage />,
-            handle: {
-              title: '수신함',
-            },
+            element: <Navigate to={ROUTES.inbox} replace />,
           },
           {
             path: 'thread-detail/:threadId',
@@ -129,7 +139,7 @@ export const router = createBrowserRouter([
     element: (
       <ErrorPage
         title="403 Forbidden"
-        description={`권한이 없거나, 사용할 수 없는 페이지예요.\n로그인 정보를 다시 한 번 확인해주세요.`}
+        description={`권한이 없어 접근할 수 없는 페이지예요.\n로그인 정보를 다시 확인해주세요.`}
         primaryBtnLabel="홈으로 이동"
         primaryBtnIcon={IcHome}
         primaryTo={ROUTES.root}
