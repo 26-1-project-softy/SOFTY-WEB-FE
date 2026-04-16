@@ -16,17 +16,19 @@ const getKakaoLoginStartUrl = () => {
     return customAuthUrl;
   }
 
+  const restApiKey =
+    (import.meta.env.VITE_KAKAO_REST_API_KEY as string | undefined) ||
+    (import.meta.env.VITE_KAKAO_JS_KEY as string | undefined);
+  const redirectUri = import.meta.env.VITE_KAKAO_REDIRECT_URI as string | undefined;
+
+  if (restApiKey && redirectUri) {
+    return `https://kauth.kakao.com/oauth/authorize?client_id=${restApiKey}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
+  }
+
   const apiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
 
   if (apiBaseUrl) {
     return `${apiBaseUrl}/oauth2/authorization/kakao`;
-  }
-
-  const jsKey = import.meta.env.VITE_KAKAO_JS_KEY as string | undefined;
-  const redirectUri = import.meta.env.VITE_KAKAO_REDIRECT_URI as string | undefined;
-
-  if (jsKey && redirectUri) {
-    return `https://kauth.kakao.com/oauth/authorize?client_id=${jsKey}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
   }
 
   return '';
