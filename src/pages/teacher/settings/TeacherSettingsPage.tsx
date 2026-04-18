@@ -35,6 +35,29 @@ export const TeacherSettingsPage = () => {
       const response = await userApi.deleteMe();
 
       if (!response.success) {
+        if (response.code === 401) {
+          logout();
+          return;
+        }
+
+        if (response.code === 409) {
+          setPageError({
+            title: response.message || '이미 탈퇴한 계정이에요',
+            description: '로그인 화면으로 이동해 다시 확인해 주세요.',
+          });
+          setIsDeleteModalOpen(false);
+          return;
+        }
+
+        if (response.code === 502) {
+          setPageError({
+            title: response.message || '카카오 연결 해제 실패로 탈퇴가 완료되지 않았습니다.',
+            description: '잠시 후 다시 시도해 주세요.',
+          });
+          setIsDeleteModalOpen(false);
+          return;
+        }
+
         setPageError({
           title: response.message || '사용자 정보를 불러오지 못했어요',
           description: '잠시 후 다시 시도해 주세요.',
@@ -46,6 +69,32 @@ export const TeacherSettingsPage = () => {
       logout();
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
+      const status = axiosError.response?.status;
+
+      if (status === 401) {
+        logout();
+        return;
+      }
+
+      if (status === 409) {
+        setPageError({
+          title: axiosError.response?.data?.message || '이미 탈퇴한 계정이에요',
+          description: '로그인 화면으로 이동해 다시 확인해 주세요.',
+        });
+        setIsDeleteModalOpen(false);
+        return;
+      }
+
+      if (status === 502) {
+        setPageError({
+          title:
+            axiosError.response?.data?.message ||
+            '카카오 연결 해제 실패로 탈퇴가 완료되지 않았습니다.',
+          description: '잠시 후 다시 시도해 주세요.',
+        });
+        setIsDeleteModalOpen(false);
+        return;
+      }
 
       setPageError({
         title: axiosError.response?.data?.message || '사용자 정보를 불러오지 못했어요',
