@@ -10,12 +10,6 @@ import mockups4 from '@/images/mockups4.png';
 import mockups5 from '@/images/mockups5.png';
 
 const getKakaoLoginStartUrl = () => {
-  const customAuthUrl = import.meta.env.VITE_KAKAO_AUTH_URL as string | undefined;
-
-  if (customAuthUrl) {
-    return customAuthUrl;
-  }
-
   const restApiKey =
     (import.meta.env.VITE_KAKAO_REST_API_KEY as string | undefined) ||
     (import.meta.env.VITE_KAKAO_JS_KEY as string | undefined);
