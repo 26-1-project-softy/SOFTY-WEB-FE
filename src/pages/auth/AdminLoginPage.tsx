@@ -1,11 +1,11 @@
-﻿import styled from '@emotion/styled';
+import styled from '@emotion/styled';
 import { useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
 import { useNavigate } from 'react-router-dom';
-import { adminApi } from '@/api/auth/adminApi';
+import { adminApi } from '@/services/auth/adminApi';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
-import { authApi } from '@/services/auth/auth.api';
+import { authApi } from '@/services/auth/authApi';
 import { authSession } from '@/services/auth/authSession';
 import { IcBack, IcInfo } from '@/icons';
 
@@ -15,8 +15,8 @@ type LoginErrorState = {
 } | null;
 
 const DEFAULT_LOGIN_ERROR: LoginErrorState = {
-  title: '아이디 또는 비밀번호가 올바르지 않아요',
-  description: '입력한 정보를 다시 확인해 주세요.',
+  title: '���̵� �Ǵ� ��й�ȣ�� �ùٸ��� �ʾƿ�',
+  description: '�Է��� ������ �ٽ� Ȯ���� �ּ���.',
 };
 
 export const AdminLoginPage = () => {
@@ -101,16 +101,16 @@ export const AdminLoginPage = () => {
   return (
     <AdminLoginPageContainer>
       <ContentArea>
-        <BackButton type="button" onClick={handleGoBack} aria-label="뒤로가기">
+        <BackButton type="button" onClick={handleGoBack} aria-label="�ڷΰ���">
           <IcBack />
         </BackButton>
 
         <LoginCard>
-          <Title>관리자 로그인</Title>
+          <Title>������ �α���</Title>
 
           <LoginForm onSubmit={handleSubmit}>
             <InputGroup>
-              <Label htmlFor="loginId">아이디</Label>
+              <Label htmlFor="loginId">���̵�</Label>
               <Input
                 id="loginId"
                 name="loginId"
@@ -118,12 +118,12 @@ export const AdminLoginPage = () => {
                 autoComplete="username"
                 value={loginId}
                 onChange={event => handleChangeLoginId(event.target.value)}
-                placeholder="아이디를 입력해주세요."
+                placeholder="���̵� �Է����ּ���."
               />
             </InputGroup>
 
             <InputGroup>
-              <Label htmlFor="password">비밀번호</Label>
+              <Label htmlFor="password">��й�ȣ</Label>
               <Input
                 id="password"
                 name="password"
@@ -131,7 +131,7 @@ export const AdminLoginPage = () => {
                 autoComplete="current-password"
                 value={password}
                 onChange={event => handleChangePassword(event.target.value)}
-                placeholder="비밀번호를 입력해주세요."
+                placeholder="��й�ȣ�� �Է����ּ���."
               />
             </InputGroup>
 
@@ -148,13 +148,13 @@ export const AdminLoginPage = () => {
             ) : null}
 
             <LoginButton type="submit" disabled={!isLoginEnabled}>
-              {isSubmitting ? '로그인 중...' : '로그인'}
+              {isSubmitting ? '�α��� ��...' : '�α���'}
             </LoginButton>
           </LoginForm>
         </LoginCard>
       </ContentArea>
 
-      <FooterText>© 2026, 소프티 All rights reserved.</FooterText>
+      <FooterText>�� 2026, ����Ƽ All rights reserved.</FooterText>
     </AdminLoginPageContainer>
   );
 };

@@ -1,7 +1,7 @@
-﻿import { useEffect, type PropsWithChildren } from 'react';
+import { useEffect, type PropsWithChildren } from 'react';
 import { AxiosError } from 'axios';
 import { Loader } from '@/components/common/Loader';
-import { authApi } from '@/services/auth/auth.api';
+import { authApi } from '@/services/auth/authApi';
 import { authSession } from '@/services/auth/authSession';
 import { useAuthStore } from '@/stores/authStore';
 

@@ -1,6 +1,6 @@
-﻿import styled from '@emotion/styled';
+import styled from '@emotion/styled';
 import { useEffect, useState } from 'react';
-import { authApi } from '@/services/auth/auth.api';
+import { authApi } from '@/services/auth/authApi';
 
 type MockThread = {
   id: number;
@@ -14,41 +14,41 @@ type MockThread = {
 const mockThreads: MockThread[] = [
   {
     id: 1,
-    sender: '김민수 보호자',
-    subject: '오늘 결석 사유 전달드립니다',
-    preview: '안녕하세요 선생님, 오늘 아이가 감기 증상이 있어 결석합니다.',
+    sender: '��μ� ��ȣ��',
+    subject: '���� �Ἦ ���� ���޵帳�ϴ�',
+    preview: '�ȳ��ϼ��� ������, ���� ���̰� ���� ������ �־� �Ἦ�մϴ�.',
     time: '09:12',
     unread: true,
   },
   {
     id: 2,
-    sender: '박서준 보호자',
-    subject: '숙제 관련 문의',
-    preview: '국어 숙제 분량을 한 번 더 안내 부탁드립니다.',
-    time: '어제',
+    sender: '�ڼ��� ��ȣ��',
+    subject: '���� ���� ����',
+    preview: '���� ���� �з��� �� �� �� �ȳ� ��Ź�帳�ϴ�.',
+    time: '����',
     unread: true,
   },
   {
     id: 3,
-    sender: '최나은 보호자',
-    subject: '상담 일정 조율 가능할까요?',
-    preview: '가능하신 시간대를 알려주시면 맞춰보겠습니다.',
-    time: '어제',
+    sender: '�ֳ��� ��ȣ��',
+    subject: '��� ���� ���� �����ұ��?',
+    preview: '�����Ͻ� �ð��븦 �˷��ֽø� ���纸�ڽ��ϴ�.',
+    time: '����',
     unread: false,
   },
   {
     id: 4,
-    sender: '이도윤 보호자',
-    subject: '현장체험학습 준비물 확인',
-    preview: '준비물 목록 중 실내화 포함 여부 확인 부탁드립니다.',
+    sender: '�̵��� ��ȣ��',
+    subject: '����ü���н� �غ� Ȯ��',
+    preview: '�غ� ��� �� �ǳ�ȭ ���� ���� Ȯ�� ��Ź�帳�ϴ�.',
     time: '4/15',
     unread: false,
   },
   {
     id: 5,
-    sender: '정유진 보호자',
-    subject: '학급 공지 확인 완료',
-    preview: '공지 내용 확인했고 준비물 챙겨 보내겠습니다.',
+    sender: '������ ��ȣ��',
+    subject: '�б� ���� Ȯ�� �Ϸ�',
+    preview: '���� ���� Ȯ���߰� �غ� ì�� �����ڽ��ϴ�.',
     time: '4/14',
     unread: false,
   },
@@ -96,11 +96,11 @@ export const TeacherThreadListPage = () => {
       <ListPane>
         {classInfo ? (
           <ClassInfoCard>
-            <ClassInfoTitle>{classInfo.teacherName} 선생님 학급</ClassInfoTitle>
+            <ClassInfoTitle>{classInfo.teacherName} ������ �б�</ClassInfoTitle>
             <ClassInfoText>
               {classInfo.grade && classInfo.classNumber
-                ? `${classInfo.grade}학년 ${classInfo.classNumber}반`
-                : '학급 정보 확인 중'}
+                ? `${classInfo.grade}�г� ${classInfo.classNumber}��`
+                : '�б� ���� Ȯ�� ��'}
             </ClassInfoText>
           </ClassInfoCard>
         ) : null}
@@ -111,7 +111,7 @@ export const TeacherThreadListPage = () => {
               <SenderName>{thread.sender}</SenderName>
               <MetaRow>
                 <TimeText>{thread.time}</TimeText>
-                {thread.unread ? <UnreadDot aria-label="안읽음" /> : null}
+                {thread.unread ? <UnreadDot aria-label="������" /> : null}
               </MetaRow>
             </CardHeader>
             <Subject>{thread.subject}</Subject>
@@ -121,8 +121,8 @@ export const TeacherThreadListPage = () => {
       </ListPane>
 
       <EmptyPane>
-        <EmptyTitle>대화를 선택해 주세요</EmptyTitle>
-        <EmptyDescription>좌측 목록에서 대화를 선택하면 상세 내용을 볼 수 있어요.</EmptyDescription>
+        <EmptyTitle>��ȭ�� ������ �ּ���</EmptyTitle>
+        <EmptyDescription>���� ��Ͽ��� ��ȭ�� �����ϸ� �� ������ �� �� �־��.</EmptyDescription>
       </EmptyPane>
     </PageContainer>
   );

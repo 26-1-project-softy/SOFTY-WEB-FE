@@ -1,7 +1,7 @@
-﻿import styled from '@emotion/styled';
+import styled from '@emotion/styled';
 import { useState } from 'react';
 import { AxiosError } from 'axios';
-import { userApi } from '@/api/auth/userApi';
+import { userApi } from '@/services/auth/userApi';
 import { useLogout } from '@/hooks/useLogout';
 import { IcInfo } from '@/icons';
 
@@ -42,8 +42,8 @@ export const TeacherSettingsPage = () => {
 
         if (response.code === 409) {
           setPageError({
-            title: response.message || '이미 탈퇴한 계정이에요',
-            description: '로그인 화면으로 이동해 다시 확인해 주세요.',
+            title: response.message || '�̹� Ż���� �����̿���',
+            description: '�α��� ȭ������ �̵��� �ٽ� Ȯ���� �ּ���.',
           });
           setIsDeleteModalOpen(false);
           return;
@@ -51,16 +51,16 @@ export const TeacherSettingsPage = () => {
 
         if (response.code === 502) {
           setPageError({
-            title: response.message || '카카오 연결 해제 실패로 탈퇴가 완료되지 않았습니다.',
-            description: '잠시 후 다시 시도해 주세요.',
+            title: response.message || 'īī�� ���� ���� ���з� Ż�� �Ϸ���� �ʾҽ��ϴ�.',
+            description: '��� �� �ٽ� �õ��� �ּ���.',
           });
           setIsDeleteModalOpen(false);
           return;
         }
 
         setPageError({
-          title: response.message || '사용자 정보를 불러오지 못했어요',
-          description: '잠시 후 다시 시도해 주세요.',
+          title: response.message || '����� ������ �ҷ����� ���߾��',
+          description: '��� �� �ٽ� �õ��� �ּ���.',
         });
         setIsDeleteModalOpen(false);
         return;
@@ -78,8 +78,8 @@ export const TeacherSettingsPage = () => {
 
       if (status === 409) {
         setPageError({
-          title: axiosError.response?.data?.message || '이미 탈퇴한 계정이에요',
-          description: '로그인 화면으로 이동해 다시 확인해 주세요.',
+          title: axiosError.response?.data?.message || '�̹� Ż���� �����̿���',
+          description: '�α��� ȭ������ �̵��� �ٽ� Ȯ���� �ּ���.',
         });
         setIsDeleteModalOpen(false);
         return;
@@ -87,18 +87,16 @@ export const TeacherSettingsPage = () => {
 
       if (status === 502) {
         setPageError({
-          title:
-            axiosError.response?.data?.message ||
-            '카카오 연결 해제 실패로 탈퇴가 완료되지 않았습니다.',
-          description: '잠시 후 다시 시도해 주세요.',
+          title: axiosError.response?.data?.message || 'īī�� ���� ���� ���з� Ż�� �Ϸ���� �ʾҽ��ϴ�.',
+          description: '��� �� �ٽ� �õ��� �ּ���.',
         });
         setIsDeleteModalOpen(false);
         return;
       }
 
       setPageError({
-        title: axiosError.response?.data?.message || '사용자 정보를 불러오지 못했어요',
-        description: '잠시 후 다시 시도해 주세요.',
+        title: axiosError.response?.data?.message || '����� ������ �ҷ����� ���߾��',
+        description: '��� �� �ٽ� �õ��� �ּ���.',
       });
       setIsDeleteModalOpen(false);
     } finally {
@@ -113,8 +111,8 @@ export const TeacherSettingsPage = () => {
   return (
     <PageContainer>
       <TopActions>
-        <ActionGhostButton type="button">취소</ActionGhostButton>
-        <ActionGhostButton type="button">변경사항 저장</ActionGhostButton>
+        <ActionGhostButton type="button">���</ActionGhostButton>
+        <ActionGhostButton type="button">������� ����</ActionGhostButton>
       </TopActions>
 
       {pageError ? (
@@ -129,19 +127,19 @@ export const TeacherSettingsPage = () => {
             </ErrorTextWrap>
           </ErrorLeft>
           <ErrorRetryButton type="button" onClick={handleRetry}>
-            다시 시도
+            �ٽ� �õ�
           </ErrorRetryButton>
         </ErrorBanner>
       ) : null}
 
       <SectionCard>
-        <SectionTitle>계정 관리</SectionTitle>
+        <SectionTitle>���� ����</SectionTitle>
         <MenuList>
           <MenuItemButton type="button" onClick={() => logout()}>
-            로그아웃
+            �α׾ƿ�
           </MenuItemButton>
           <MenuItemButton type="button" onClick={handleOpenDeleteModal}>
-            회원 탈퇴
+            ȸ�� Ż��
           </MenuItemButton>
         </MenuList>
       </SectionCard>
@@ -152,11 +150,11 @@ export const TeacherSettingsPage = () => {
             <ModalIconWrap>
               <IcInfo />
             </ModalIconWrap>
-            <ModalTitle>정말 탈퇴하시겠어요?</ModalTitle>
+            <ModalTitle>���� Ż���Ͻðھ��?</ModalTitle>
             <ModalDescription>
-              탈퇴하면 학급 정보와 대화 내역이 모두 삭제되고,
+              Ż���ϸ� �б� ������ ��ȭ ������ ��� �����ǰ�,
               <br />
-              다시 복구할 수 없어요.
+              �ٽ� ������ �� �����.
             </ModalDescription>
 
             <ModalButtonRow>
@@ -165,10 +163,10 @@ export const TeacherSettingsPage = () => {
                 onClick={handleCloseDeleteModal}
                 disabled={isDeleting}
               >
-                취소
+                ���
               </ModalCancelButton>
               <ModalDangerButton type="button" onClick={handleDeleteMe} disabled={isDeleting}>
-                {isDeleting ? '탈퇴 중...' : '탈퇴하기'}
+                {isDeleting ? 'Ż�� ��...' : 'Ż���ϱ�'}
               </ModalDangerButton>
             </ModalButtonRow>
           </ModalCard>

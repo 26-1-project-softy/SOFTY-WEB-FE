@@ -1,12 +1,12 @@
-﻿import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import styled from '@emotion/styled';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { Loader } from '@/components/common/Loader';
-import { kakaoApi } from '@/api/auth/kakaoApi';
+import { kakaoApi } from '@/services/auth/kakaoApi';
 import { AxiosError } from 'axios';
-import { authApi } from '@/services/auth/auth.api';
+import { authApi } from '@/services/auth/authApi';
 import { authSession } from '@/services/auth/authSession';
 
 const getKakaoAccessTokenFromQuery = (search: string) => {
@@ -32,7 +32,7 @@ const exchangeKakaoCodeForAccessToken = async (code: string) => {
   const redirectUri = import.meta.env.VITE_KAKAO_REDIRECT_URI as string | undefined;
 
   if (!clientId || !redirectUri) {
-    throw new Error('카카오 로그인 설정을 확인해주세요.');
+    throw new Error('īī�� �α��� ������ Ȯ�����ּ���.');
   }
 
   const body = new URLSearchParams({
@@ -51,12 +51,12 @@ const exchangeKakaoCodeForAccessToken = async (code: string) => {
   });
 
   if (!response.ok) {
-    throw new Error('카카오 인증 코드를 토큰으로 교환하지 못했어요.');
+    throw new Error('īī�� ���� �ڵ带 ��ū���� ��ȯ���� ���߾��.');
   }
 
   const data = (await response.json()) as { access_token?: string };
   if (!data.access_token) {
-    throw new Error('카카오 액세스 토큰이 응답에 없어요.');
+    throw new Error('īī�� �׼��� ��ū�� ���信 �����.');
   }
 
   return data.access_token;
@@ -89,14 +89,14 @@ export const TeacherKakaoCallbackPage = () => {
         }
 
         if (!kakaoAccessToken) {
-          moveToLandingWithError(navigate, '카카오 로그인에 실패했어요.');
+          moveToLandingWithError(navigate, 'īī�� �α��ο� �����߾��.');
           return;
         }
 
         const response = await kakaoApi.login({ kakaoAccessToken });
 
         if (!response.success) {
-          moveToLandingWithError(navigate, response.message || '카카오 로그인에 실패했어요.');
+          moveToLandingWithError(navigate, response.message || 'īī�� �α��ο� �����߾��.');
           return;
         }
 
@@ -124,7 +124,7 @@ export const TeacherKakaoCallbackPage = () => {
         });
       } catch (error) {
         const axiosError = error as AxiosError<{ message?: string }>;
-        const errorMessage = axiosError.response?.data?.message || '카카오 로그인에 실패했어요.';
+        const errorMessage = axiosError.response?.data?.message || 'īī�� �α��ο� �����߾��.';
         authSession.clearTokens();
         moveToLandingWithError(navigate, errorMessage);
       }

@@ -45,3 +45,12 @@ export const authApi = {
     };
   },
 };
+
+export { adminApi } from '@/services/auth/adminApi';
+export type { AdminLoginRequest, AdminLoginResponse } from '@/services/auth/adminApi';
+export { teacherApi } from '@/services/auth/teacherApi';
+export type { TeacherSignUpRequest, TeacherSignUpResponse } from '@/services/auth/teacherApi';
+export { kakaoApi } from '@/services/auth/kakaoApi';
+export type { KakaoLoginRequest, KakaoLoginResponse } from '@/services/auth/kakaoApi';
+export { userApi } from '@/services/auth/userApi';
+export type { DeleteMeResponse } from '@/services/auth/userApi';

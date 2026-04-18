@@ -1,11 +1,11 @@
-﻿import styled from '@emotion/styled';
+import styled from '@emotion/styled';
 import { AxiosError } from 'axios';
 import { useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { teacherApi } from '@/api/auth/teacherApi';
+import { teacherApi } from '@/services/auth/teacherApi';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
-import { authApi } from '@/services/auth/auth.api';
+import { authApi } from '@/services/auth/authApi';
 import { IcInfo } from '@/icons';
 
 type FieldErrors = {
@@ -21,8 +21,8 @@ type GlobalError = {
 } | null;
 
 const FORM_ERROR_FALLBACK: GlobalError = {
-  title: '회원가입 중 문제가 발생했어요',
-  description: '잠시 후 다시 시도해 주세요.',
+  title: 'ȸ������ �� ������ �߻��߾��',
+  description: '��� �� �ٽ� �õ��� �ּ���.',
 };
 
 const parseNumberText = (value: string) => Number(value.trim());
@@ -46,19 +46,19 @@ export const TeacherSignUpPage = () => {
     const errors: FieldErrors = {};
 
     if (teacherName.trim().length < 2) {
-      errors.teacherName = '이름은 2자 이상 입력해주세요.';
+      errors.teacherName = '�̸��� 2�� �̻� �Է����ּ���.';
     }
 
     if (schoolName.trim().length === 0) {
-      errors.schoolName = '학교명을 입력해주세요.';
+      errors.schoolName = '�б����� �Է����ּ���.';
     }
 
     if (!/^\d+$/.test(grade.trim())) {
-      errors.grade = '숫자만 입력해주세요.';
+      errors.grade = '���ڸ� �Է����ּ���.';
     }
 
     if (!/^\d+$/.test(classNumber.trim())) {
-      errors.classNumber = '숫자만 입력해주세요.';
+      errors.classNumber = '���ڸ� �Է����ּ���.';
     }
 
     return {
@@ -80,8 +80,8 @@ export const TeacherSignUpPage = () => {
 
     if (!kakaoAccessToken) {
       setGlobalError({
-        title: '카카오 인증 정보가 만료되었어요',
-        description: '카카오 로그인을 다시 진행해 주세요.',
+        title: 'īī�� ���� ������ ����Ǿ����',
+        description: 'īī�� �α����� �ٽ� ������ �ּ���.',
       });
       return;
     }
@@ -143,8 +143,8 @@ export const TeacherSignUpPage = () => {
   return (
     <PageContainer>
       <Card>
-        <Title>교사 정보 입력</Title>
-        <Description>가입을 위해 선생님의 정보를 입력해주세요.</Description>
+        <Title>���� ���� �Է�</Title>
+        <Description>������ ���� �������� ������ �Է����ּ���.</Description>
 
         <SignUpForm onSubmit={handleSubmit}>
           <InputGroup>
@@ -152,14 +152,14 @@ export const TeacherSignUpPage = () => {
               htmlFor="teacherName"
               hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
             >
-              이름 <RequiredMark>*</RequiredMark>
+              �̸� <RequiredMark>*</RequiredMark>
             </Label>
             <Input
               id="teacherName"
               name="teacherName"
               value={teacherName}
               onChange={event => setTeacherName(event.target.value)}
-              placeholder="홍길동"
+              placeholder="ȫ�浿"
               hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
             />
             {showFieldErrors && fieldErrors.teacherName ? (
@@ -172,14 +172,14 @@ export const TeacherSignUpPage = () => {
               htmlFor="schoolName"
               hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
             >
-              학교명 <RequiredMark>*</RequiredMark>
+              �б��� <RequiredMark>*</RequiredMark>
             </Label>
             <Input
               id="schoolName"
               name="schoolName"
               value={schoolName}
               onChange={event => setSchoolName(event.target.value)}
-              placeholder="한국초등학교"
+              placeholder="�ѱ��ʵ��б�"
               hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
             />
             {showFieldErrors && fieldErrors.schoolName ? (
@@ -190,7 +190,7 @@ export const TeacherSignUpPage = () => {
           <InlineTwoColumn>
             <InputGroup>
               <Label htmlFor="grade" hasError={Boolean(showFieldErrors && fieldErrors.grade)}>
-                학년 <RequiredMark>*</RequiredMark>
+                �г� <RequiredMark>*</RequiredMark>
               </Label>
               <Input
                 id="grade"
@@ -210,7 +210,7 @@ export const TeacherSignUpPage = () => {
                 htmlFor="classNumber"
                 hasError={Boolean(showFieldErrors && fieldErrors.classNumber)}
               >
-                반 <RequiredMark>*</RequiredMark>
+                �� <RequiredMark>*</RequiredMark>
               </Label>
               <Input
                 id="classNumber"
@@ -239,12 +239,12 @@ export const TeacherSignUpPage = () => {
           ) : null}
 
           <PrimaryButton type="submit" disabled={!isSignUpEnabled}>
-            {isSubmitting ? '가입 중...' : '가입하기'}
+            {isSubmitting ? '���� ��...' : '�����ϱ�'}
           </PrimaryButton>
         </SignUpForm>
       </Card>
 
-      <FooterText>© 2026, 소프티 All rights reserved.</FooterText>
+      <FooterText>�� 2026, ����Ƽ All rights reserved.</FooterText>
     </PageContainer>
   );
 };
