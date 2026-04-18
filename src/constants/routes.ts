@@ -1,5 +1,6 @@
 export const ROUTES = {
   root: '/',
+  landing: '/landing',
 
   adminLogin: '/admin/login',
   teacherSignUp: '/teacher/signup',

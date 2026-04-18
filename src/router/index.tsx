@@ -19,6 +19,10 @@ import { IcBack, IcHome } from '@/icons';
 
 export const router = createBrowserRouter([
   {
+    path: ROUTES.landing,
+    element: <LandingPage />,
+  },
+  {
     element: <PublicRoute />,
     children: [
       {
@@ -142,7 +146,7 @@ export const router = createBrowserRouter([
         description={`권한이 없어 접근할 수 없는 페이지예요.\n로그인 정보를 다시 확인해주세요.`}
         primaryBtnLabel="홈으로 이동"
         primaryBtnIcon={IcHome}
-        primaryTo={ROUTES.root}
+        primaryTo={ROUTES.landing}
         ghostBtnLabel="이전으로"
         ghostBtnIcon={IcBack}
         isGhostGoBack
@@ -157,7 +161,7 @@ export const router = createBrowserRouter([
         description={`페이지를 찾을 수 없어요.\n주소가 잘못되었거나, 삭제되었을 수 있어요.`}
         primaryBtnLabel="홈으로 이동"
         primaryBtnIcon={IcHome}
-        primaryTo={ROUTES.root}
+        primaryTo={ROUTES.landing}
       />
     ),
   },
