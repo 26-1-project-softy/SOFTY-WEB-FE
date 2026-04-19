@@ -1,9 +1,13 @@
 ﻿import styled from '@emotion/styled';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
 import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
 import { authApi, type TeacherSetting } from '@/services/auth/authApi';
 import { useToast } from '@/hooks/useToast';
+import {
+  TEACHER_SETTINGS_RESET_EVENT,
+  TEACHER_SETTINGS_SAVE_EVENT,
+} from '@/constants/teacherSettingsEvents';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
@@ -16,6 +20,7 @@ type Workday = {
 };
 
 const EMPTY_TIME = '';
+const TIME_PLACEHOLDER = '00:00';
 
 const DAY_INFO: { key: WorkdayKey; dayOfWeek: number; label: string }[] = [
   { key: 'mon', dayOfWeek: 1, label: '월' },
@@ -26,6 +31,46 @@ const DAY_INFO: { key: WorkdayKey; dayOfWeek: number; label: string }[] = [
   { key: 'sat', dayOfWeek: 6, label: '토' },
   { key: 'sun', dayOfWeek: 7, label: '일' },
 ];
+
+const toDisplayTime = (value: string | null | undefined) => {
+  if (!value) {
+    return EMPTY_TIME;
+  }
+
+  const normalized = value.trim();
+  const match = normalized.match(/^(\d{2}):(\d{2})/);
+
+  if (!match) {
+    return EMPTY_TIME;
+  }
+
+  return `${match[1]}:${match[2]}`;
+};
+
+const sanitizeTimeInput = (value: string) => {
+  const sanitized = value.replace(/[^\d:]/g, '').slice(0, 5);
+
+  if (sanitized.length <= 2) {
+    return sanitized;
+  }
+
+  const withoutColon = sanitized.replace(':', '');
+
+  if (withoutColon.length <= 2) {
+    return withoutColon;
+  }
+
+  return `${withoutColon.slice(0, 2)}:${withoutColon.slice(2, 4)}`;
+};
+
+const isValidTimeFormat = (value: string) => /^([01]\d|2[0-3]):([0-5]\d)$/.test(value);
+
+const toMinutes = (value: string) => {
+  const [hour, minute] = value.split(':').map(Number);
+  return hour * 60 + minute;
+};
+
+const toApiTime = (value: string) => `${value}:00`;
 
 const toWorkdays = (setting: TeacherSetting): Workday[] => {
   return DAY_INFO.map(day => {
@@ -45,8 +90,8 @@ const toWorkdays = (setting: TeacherSetting): Workday[] => {
       key: day.key,
       label: day.label,
       enabled: true,
-      start: schedule.startTime ?? EMPTY_TIME,
-      end: schedule.endTime ?? EMPTY_TIME,
+      start: toDisplayTime(schedule.startTime),
+      end: toDisplayTime(schedule.endTime),
     };
   });
 };
@@ -77,6 +122,9 @@ export const TeacherSettingsPage = () => {
   const [schoolNameInput, setSchoolNameInput] = useState('');
   const [gradeInput, setGradeInput] = useState('');
   const [classInput, setClassInput] = useState('');
+  const [initialWorkdays, setInitialWorkdays] = useState<Workday[]>([]);
+  const [workdays, setWorkdays] = useState<Workday[]>([]);
+  const [isSavingWorkHours, setIsSavingWorkHours] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -113,12 +161,16 @@ export const TeacherSettingsPage = () => {
     };
   }, []);
 
-  const workdays = useMemo(() => {
+  useEffect(() => {
     if (!setting) {
-      return [] as Workday[];
+      setInitialWorkdays([]);
+      setWorkdays([]);
+      return;
     }
 
-    return toWorkdays(setting);
+    const nextWorkdays = toWorkdays(setting);
+    setInitialWorkdays(nextWorkdays);
+    setWorkdays(nextWorkdays);
   }, [setting]);
 
   const profileName = setting?.teacherName?.trim() ? setting.teacherName : '-';
@@ -243,6 +295,153 @@ export const TeacherSettingsPage = () => {
     }
   };
 
+  const handleToggleWorkday = (targetKey: WorkdayKey) => {
+    setWorkdays(prev =>
+      prev.map(day => {
+        if (day.key !== targetKey) {
+          return day;
+        }
+
+        return {
+          ...day,
+          enabled: !day.enabled,
+        };
+      })
+    );
+  };
+
+  const handleChangeWorkdayTime = (
+    targetKey: WorkdayKey,
+    field: 'start' | 'end',
+    value: string
+  ) => {
+    const nextValue = sanitizeTimeInput(value);
+
+    setWorkdays(prev =>
+      prev.map(day => {
+        if (day.key !== targetKey) {
+          return day;
+        }
+
+        return {
+          ...day,
+          [field]: nextValue,
+        };
+      })
+    );
+  };
+
+  const handleResetWorkHours = useCallback(() => {
+    if (isLoading) {
+      return;
+    }
+
+    setWorkdays(initialWorkdays);
+    showToast('근무시간 입력값을 되돌렸어요.', 'success');
+  }, [initialWorkdays, isLoading, showToast]);
+
+  const handleSaveWorkHours = useCallback(async () => {
+    if (isLoading || isSavingWorkHours) {
+      return;
+    }
+
+    const enabledWorkdays = workdays.filter(day => day.enabled);
+    if (enabledWorkdays.length === 0) {
+      showToast('근무 요일을 1개 이상 활성화해주세요.', 'error');
+      return;
+    }
+
+    const invalidWorkday = enabledWorkdays.find(
+      day => !isValidTimeFormat(day.start) || !isValidTimeFormat(day.end)
+    );
+
+    if (invalidWorkday) {
+      showToast(`${invalidWorkday.label}요일 시간을 HH:mm 형식으로 입력해주세요.`, 'error');
+      return;
+    }
+
+    const invalidOrderWorkday = enabledWorkdays.find(
+      day => toMinutes(day.start) >= toMinutes(day.end)
+    );
+    if (invalidOrderWorkday) {
+      showToast(`${invalidOrderWorkday.label}요일 종료 시간은 시작 시간보다 늦어야 해요.`, 'error');
+      return;
+    }
+
+    try {
+      setIsSavingWorkHours(true);
+      const schedules = enabledWorkdays.map(day => {
+        const dayInfo = DAY_INFO.find(info => info.key === day.key);
+
+        return {
+          dayOfWeek: dayInfo?.dayOfWeek ?? 0,
+          startTime: toApiTime(day.start),
+          endTime: toApiTime(day.end),
+        };
+      });
+
+      const response = await authApi.changeTeacherWorkHours({ schedules });
+
+      if (!response.success) {
+        const failMessage = response.message?.trim()
+          ? response.message
+          : response.code
+            ? `근무시간 저장에 실패했어요. (code: ${response.code})`
+            : '근무시간 저장에 실패했어요.';
+        showToast(failMessage, 'error');
+        return;
+      }
+
+      setSetting(prev => {
+        if (!prev) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          schedules: schedules.map(schedule => ({
+            dayOfWeek: schedule.dayOfWeek,
+            startTime: schedule.startTime,
+            endTime: schedule.endTime,
+          })),
+        };
+      });
+
+      setInitialWorkdays(workdays);
+      showToast('근무시간이 저장되었어요.', 'success');
+    } catch (error) {
+      const axiosError = error as AxiosError<{
+        message?: string;
+        error?: { message?: string };
+      }>;
+      const status = axiosError.response?.status;
+      const serverMessage =
+        axiosError.response?.data?.message ??
+        axiosError.response?.data?.error?.message ??
+        axiosError.message;
+      showToast(
+        `${serverMessage || '근무시간 저장에 실패했어요.'}${status ? ` (HTTP ${status})` : ''}`,
+        'error'
+      );
+    } finally {
+      setIsSavingWorkHours(false);
+    }
+  }, [isLoading, isSavingWorkHours, showToast, workdays]);
+
+  useEffect(() => {
+    const handleSaveEvent = () => {
+      void handleSaveWorkHours();
+    };
+
+    window.addEventListener(TEACHER_SETTINGS_SAVE_EVENT, handleSaveEvent);
+    window.addEventListener(TEACHER_SETTINGS_RESET_EVENT, handleResetWorkHours);
+
+    return () => {
+      window.removeEventListener(TEACHER_SETTINGS_SAVE_EVENT, handleSaveEvent);
+      window.removeEventListener(TEACHER_SETTINGS_RESET_EVENT, handleResetWorkHours);
+    };
+  }, [handleResetWorkHours, handleSaveWorkHours]);
+
   return (
     <PageContainer>
       <ContentArea>
@@ -268,16 +467,42 @@ export const TeacherSettingsPage = () => {
             <WorkdayList>
               {workdays.map(day => (
                 <WorkdayRow key={day.key}>
-                  <ToggleButton type="button" isEnabled={day.enabled} aria-pressed={day.enabled}>
+                  <ToggleButton
+                    type="button"
+                    isEnabled={day.enabled}
+                    aria-pressed={day.enabled}
+                    aria-label={`${day.label}요일 근무시간 사용`}
+                    onClick={() => handleToggleWorkday(day.key)}
+                  >
                     <ToggleThumb isEnabled={day.enabled} />
                   </ToggleButton>
 
                   <DayLabel>{day.label}</DayLabel>
 
                   <TimeRange>
-                    <TimeInput type="text" value={day.start} readOnly />
+                    <TimeInput
+                      type="text"
+                      value={day.start}
+                      placeholder={TIME_PLACEHOLDER}
+                      inputMode="numeric"
+                      maxLength={5}
+                      disabled={!day.enabled}
+                      onChange={event =>
+                        handleChangeWorkdayTime(day.key, 'start', event.target.value)
+                      }
+                    />
                     <RangeSeparator>~</RangeSeparator>
-                    <TimeInput type="text" value={day.end} readOnly />
+                    <TimeInput
+                      type="text"
+                      value={day.end}
+                      placeholder={TIME_PLACEHOLDER}
+                      inputMode="numeric"
+                      maxLength={5}
+                      disabled={!day.enabled}
+                      onChange={event =>
+                        handleChangeWorkdayTime(day.key, 'end', event.target.value)
+                      }
+                    />
                   </TimeRange>
                 </WorkdayRow>
               ))}
@@ -601,7 +826,7 @@ const ToggleButton = styled.button<{ isEnabled: boolean }>`
   display: flex;
   align-items: center;
   justify-content: ${({ isEnabled }) => (isEnabled ? 'flex-end' : 'flex-start')};
-  cursor: default;
+  cursor: pointer;
 `;
 
 const ToggleThumb = styled.span<{ isEnabled: boolean }>`
@@ -638,6 +863,16 @@ const TimeInput = styled.input`
   background: ${({ theme }) => theme.colors.background.bg1};
   color: ${({ theme }) => theme.colors.text.text2};
   padding: 10px 12px;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.text.text4};
+  }
+
+  &:disabled {
+    background: #f4f5f6;
+    color: ${({ theme }) => theme.colors.text.text4};
+    cursor: not-allowed;
+  }
 
   @media (max-width: 760px) {
     width: 100%;

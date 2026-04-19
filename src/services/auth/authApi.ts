@@ -60,6 +60,21 @@ export type ChangeTeacherClassResponse = {
   } | null;
 };
 
+export type ChangeTeacherWorkHoursRequest = {
+  schedules: {
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+  }[];
+};
+
+export type ChangeTeacherWorkHoursResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: null;
+};
+
 const normalizeRole = (role: string): 'teacher' | 'admin' => {
   const normalized = role.toLowerCase();
 
@@ -113,6 +128,18 @@ export const authApi = {
       success: data.success,
       message: data.message,
       classCode: data.data?.classCode ?? '',
+    };
+  },
+  changeTeacherWorkHours: async (payload: ChangeTeacherWorkHoursRequest) => {
+    const { data } = await apiClient.patch<ChangeTeacherWorkHoursResponse>(
+      '/teachers/me/work-hours',
+      payload
+    );
+
+    return {
+      success: data.success,
+      code: data.code,
+      message: data.message,
     };
   },
 };
