@@ -1,8 +1,8 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
 import { useEffect, useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
-import { IcCopy } from '@/icons';
-import { authApi, type TeacherSetting } from '@/services/auth/auth.api';
+import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
+import { authApi, type TeacherSetting } from '@/services/auth/authApi';
 import { useToast } from '@/hooks/useToast';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
@@ -51,11 +51,32 @@ const toWorkdays = (setting: TeacherSetting): Workday[] => {
   });
 };
 
+const extractClassNumber = (raw: string) => {
+  const digits = raw.replace(/\D/g, '');
+
+  if (!digits) {
+    return null;
+  }
+
+  return Number(digits);
+};
+
 export const TeacherSettingsPage = () => {
   const { showToast } = useToast();
   const [setting, setSetting] = useState<TeacherSetting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+
+  const [isClassChangeModalOpen, setIsClassChangeModalOpen] = useState(false);
+  const [isClassChangeConfirmModalOpen, setIsClassChangeConfirmModalOpen] = useState(false);
+  const [isClassChangeSuccessModalOpen, setIsClassChangeSuccessModalOpen] = useState(false);
+  const [isClassChangeSubmitting, setIsClassChangeSubmitting] = useState(false);
+  const [classChangeErrorTitle, setClassChangeErrorTitle] = useState('');
+  const [newClassCode, setNewClassCode] = useState('');
+
+  const [schoolNameInput, setSchoolNameInput] = useState('');
+  const [gradeInput, setGradeInput] = useState('');
+  const [classInput, setClassInput] = useState('');
 
   useEffect(() => {
     let isMounted = true;
@@ -102,6 +123,99 @@ export const TeacherSettingsPage = () => {
 
   const profileName = setting?.teacherName?.trim() ? setting.teacherName : '-';
   const profileInitial = profileName !== '-' ? profileName.charAt(0) : '-';
+  const isClassChangeEnabled =
+    schoolNameInput.trim().length > 0 &&
+    gradeInput.trim().length > 0 &&
+    classInput.trim().length > 0;
+
+  const classSummaryText = useMemo(() => {
+    if (!gradeInput.trim() || !classInput.trim()) {
+      return '-';
+    }
+
+    return `${gradeInput}학년 ${classInput}`;
+  }, [classInput, gradeInput]);
+
+  const handleOpenClassChangeModal = () => {
+    setSchoolNameInput(setting?.schoolName ?? '');
+    setGradeInput(setting?.grade != null ? String(setting.grade) : '');
+    setClassInput(setting?.classNumber != null ? `${setting.classNumber}반` : '');
+    setIsClassChangeModalOpen(true);
+  };
+
+  const handleCloseClassChangeModal = () => {
+    setIsClassChangeModalOpen(false);
+  };
+
+  const handleOpenClassChangeConfirmModal = () => {
+    if (!isClassChangeEnabled) {
+      return;
+    }
+
+    setIsClassChangeModalOpen(false);
+    setClassChangeErrorTitle('');
+    setIsClassChangeConfirmModalOpen(true);
+  };
+
+  const handleCloseClassChangeConfirmModal = () => {
+    if (isClassChangeSubmitting) {
+      return;
+    }
+
+    setClassChangeErrorTitle('');
+    setIsClassChangeConfirmModalOpen(false);
+  };
+
+  const handleCloseClassChangeSuccessModal = () => {
+    setIsClassChangeSuccessModalOpen(false);
+  };
+
+  const handleConfirmClassChange = async () => {
+    const classNumber = extractClassNumber(classInput.trim());
+
+    if (!classNumber) {
+      setClassChangeErrorTitle('반 정보를 확인해주세요.');
+      return;
+    }
+
+    try {
+      setIsClassChangeSubmitting(true);
+      setClassChangeErrorTitle('');
+      const response = await authApi.changeTeacherClass({
+        schoolName: schoolNameInput.trim(),
+        grade: Number(gradeInput),
+        class: classNumber,
+      });
+
+      if (!response.success) {
+        setClassChangeErrorTitle(response.message || '학급 변경에 실패했어요.');
+        return;
+      }
+
+      setSetting(prev => {
+        if (!prev) {
+          return prev;
+        }
+
+        return {
+          ...prev,
+          schoolName: schoolNameInput.trim(),
+          grade: Number(gradeInput),
+          classNumber,
+          classCode: response.classCode || prev.classCode,
+        };
+      });
+
+      setNewClassCode(response.classCode || '');
+      setIsClassChangeConfirmModalOpen(false);
+      setIsClassChangeSuccessModalOpen(true);
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      setClassChangeErrorTitle(axiosError.response?.data?.message || '학급 변경에 실패했어요.');
+    } finally {
+      setIsClassChangeSubmitting(false);
+    }
+  };
 
   const handleCopyClassCode = async () => {
     if (!setting?.classCode) {
@@ -110,6 +224,19 @@ export const TeacherSettingsPage = () => {
 
     try {
       await navigator.clipboard.writeText(setting.classCode);
+      showToast('학급코드를 복사했어요.', 'success');
+    } catch {
+      showToast('학급코드 복사에 실패했어요.', 'error');
+    }
+  };
+
+  const handleCopyNewClassCode = async () => {
+    if (!newClassCode) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(newClassCode);
       showToast('학급코드를 복사했어요.', 'success');
     } catch {
       showToast('학급코드 복사에 실패했어요.', 'error');
@@ -161,7 +288,9 @@ export const TeacherSettingsPage = () => {
         <CardSection>
           <ClassHeader>
             <SectionTitle>학급 관리</SectionTitle>
-            <PrimaryActionButton type="button">학급 변경하기</PrimaryActionButton>
+            <PrimaryActionButton type="button" onClick={handleOpenClassChangeModal}>
+              학급 변경하기
+            </PrimaryActionButton>
           </ClassHeader>
 
           <ClassInfoGrid>
@@ -203,6 +332,169 @@ export const TeacherSettingsPage = () => {
           </AccountLinkList>
         </CardSection>
       </ContentArea>
+
+      {isClassChangeModalOpen ? (
+        <ModalOverlay onClick={handleCloseClassChangeModal}>
+          <ModalCard onClick={event => event.stopPropagation()}>
+            <ModalIconWrap>
+              <IcChange />
+            </ModalIconWrap>
+
+            <ModalTitle>학급 변경</ModalTitle>
+            <ModalDescription>
+              새 학급 정보를 입력해주세요. 변경이 완료되면 새로운 학급 코드가 발급돼요.
+            </ModalDescription>
+
+            <ModalForm>
+              <FormGroup>
+                <FormLabel>
+                  학교명 <RequiredAsterisk>*</RequiredAsterisk>
+                </FormLabel>
+                <FormInput
+                  value={schoolNameInput}
+                  onChange={event => setSchoolNameInput(event.target.value)}
+                  placeholder="학교명을 입력해주세요."
+                  autoComplete="off"
+                />
+              </FormGroup>
+
+              <FormRow>
+                <FormGroup>
+                  <FormLabel>
+                    학년 <RequiredAsterisk>*</RequiredAsterisk>
+                  </FormLabel>
+                  <FormSelect
+                    value={gradeInput}
+                    onChange={event => setGradeInput(event.target.value)}
+                  >
+                    <option value="">학년을 선택해주세요.</option>
+                    <option value="1">1학년</option>
+                    <option value="2">2학년</option>
+                    <option value="3">3학년</option>
+                    <option value="4">4학년</option>
+                    <option value="5">5학년</option>
+                    <option value="6">6학년</option>
+                  </FormSelect>
+                </FormGroup>
+
+                <FormGroup>
+                  <FormLabel>
+                    반 <RequiredAsterisk>*</RequiredAsterisk>
+                  </FormLabel>
+                  <FormInput
+                    value={classInput}
+                    onChange={event => setClassInput(event.target.value)}
+                    placeholder="2반"
+                    autoComplete="off"
+                  />
+                </FormGroup>
+              </FormRow>
+            </ModalForm>
+
+            <ModalButtonRow>
+              <ModalGhostButton type="button" onClick={handleCloseClassChangeModal}>
+                취소
+              </ModalGhostButton>
+              <ModalPrimaryButton
+                type="button"
+                disabled={!isClassChangeEnabled}
+                onClick={handleOpenClassChangeConfirmModal}
+              >
+                변경하기
+              </ModalPrimaryButton>
+            </ModalButtonRow>
+          </ModalCard>
+        </ModalOverlay>
+      ) : null}
+
+      {isClassChangeConfirmModalOpen ? (
+        <ModalOverlay onClick={handleCloseClassChangeConfirmModal}>
+          <ModalCard onClick={event => event.stopPropagation()}>
+            <ConfirmIconWrap>
+              <IcInfo />
+            </ConfirmIconWrap>
+
+            <ModalTitle>학급을 변경할까요?</ModalTitle>
+            <ModalDescription>
+              학급을 변경하면 새로운 학급 코드가 발급돼요. 기존 학급 코드는 더 이상 사용할 수
+              없어요.
+            </ModalDescription>
+
+            <ConfirmSummaryBox>
+              <ConfirmSummaryRow>
+                <ConfirmSummaryLabel>학교명</ConfirmSummaryLabel>
+                <ConfirmSummaryValue>{schoolNameInput || '-'}</ConfirmSummaryValue>
+              </ConfirmSummaryRow>
+              <ConfirmSummaryRow>
+                <ConfirmSummaryLabel>학급</ConfirmSummaryLabel>
+                <ConfirmSummaryValue>{classSummaryText}</ConfirmSummaryValue>
+              </ConfirmSummaryRow>
+            </ConfirmSummaryBox>
+
+            {classChangeErrorTitle ? (
+              <ConfirmErrorBox role="alert">
+                <ConfirmErrorIcon>
+                  <IcError />
+                </ConfirmErrorIcon>
+                <ConfirmErrorTextWrap>
+                  <ConfirmErrorTitle>{classChangeErrorTitle}</ConfirmErrorTitle>
+                  <ConfirmErrorDescription>잠시 후 다시 시도해주세요.</ConfirmErrorDescription>
+                </ConfirmErrorTextWrap>
+              </ConfirmErrorBox>
+            ) : null}
+
+            <ModalButtonRow>
+              <ModalGhostButton type="button" onClick={handleCloseClassChangeConfirmModal}>
+                취소
+              </ModalGhostButton>
+              <ModalPrimaryButton
+                type="button"
+                onClick={handleConfirmClassChange}
+                disabled={isClassChangeSubmitting}
+              >
+                {isClassChangeSubmitting ? '변경 중...' : '변경하기'}
+              </ModalPrimaryButton>
+            </ModalButtonRow>
+          </ModalCard>
+        </ModalOverlay>
+      ) : null}
+
+      {isClassChangeSuccessModalOpen ? (
+        <ModalOverlay onClick={handleCloseClassChangeSuccessModal}>
+          <ModalCard onClick={event => event.stopPropagation()}>
+            <SuccessIconWrap>
+              <IcCheck />
+            </SuccessIconWrap>
+
+            <ModalTitle>학급이 변경되었어요</ModalTitle>
+            <ModalDescription>
+              새로운 학급 코드가 발급되었어요.
+              <br />
+              학부모님께 새 코드를 전달해주세요.
+            </ModalDescription>
+
+            <SuccessCodeCard>
+              <SuccessCodeMeta>
+                {schoolNameInput || '-'} {classSummaryText}
+              </SuccessCodeMeta>
+              <SuccessCodeValue>{newClassCode || '-'}</SuccessCodeValue>
+            </SuccessCodeCard>
+
+            <SuccessCopyButton
+              type="button"
+              onClick={handleCopyNewClassCode}
+              disabled={!newClassCode}
+            >
+              <IcCopy />
+              학급코드 복사하기
+            </SuccessCopyButton>
+
+            <SuccessConfirmButton type="button" onClick={handleCloseClassChangeSuccessModal}>
+              확인
+            </SuccessConfirmButton>
+          </ModalCard>
+        </ModalOverlay>
+      ) : null}
     </PageContainer>
   );
 };
@@ -458,4 +750,279 @@ const AccountLinkButton = styled.button`
 const DangerLinkButton = styled.button`
   ${({ theme }) => theme.fonts.body2};
   color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+`;
+
+const ModalCard = styled.section`
+  width: 100%;
+  max-width: 420px;
+  border-radius: 16px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  padding: 28px 28px 24px;
+`;
+
+const ModalIconWrap = styled.div`
+  width: 58px;
+  height: 58px;
+  border-radius: 999px;
+  background: #e7f8f5;
+  color: ${({ theme }) => theme.colors.brand.dark};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto;
+
+  svg {
+    width: 30px;
+    height: 30px;
+  }
+`;
+
+const ConfirmIconWrap = styled(ModalIconWrap)`
+  background: #fdf7e8;
+  color: #e59b2d;
+`;
+
+const SuccessIconWrap = styled(ModalIconWrap)`
+  background: #e7f8f5;
+  color: ${({ theme }) => theme.colors.brand.dark};
+`;
+
+const ModalTitle = styled.h4`
+  ${({ theme }) => theme.fonts.labelM};
+  margin: 16px 0 0;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const ModalDescription = styled.p`
+  ${({ theme }) => theme.fonts.body2};
+  margin: 12px 0 0;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const ModalForm = styled.div`
+  margin-top: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+`;
+
+const FormRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+`;
+
+const FormGroup = styled.label`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const FormLabel = styled.span`
+  ${({ theme }) => theme.fonts.labelXS};
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const RequiredAsterisk = styled.span`
+  color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
+const FormInput = styled.input`
+  ${({ theme }) => theme.fonts.body2};
+  width: 100%;
+  min-width: 0;
+  display: block;
+  border: 1px solid ${({ theme }) => theme.colors.border.border2};
+  border-radius: 10px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  color: ${({ theme }) => theme.colors.text.text1};
+  padding: 10px 12px;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.colors.text.text4};
+  }
+`;
+
+const FormSelect = styled.select`
+  ${({ theme }) => theme.fonts.body2};
+  width: 100%;
+  min-width: 0;
+  display: block;
+  border: 1px solid ${({ theme }) => theme.colors.border.border2};
+  border-radius: 10px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  color: ${({ theme }) => theme.colors.text.text1};
+  padding: 10px 12px;
+`;
+
+const ConfirmSummaryBox = styled.div`
+  margin-top: 18px;
+  border-radius: 12px;
+  border: 1px solid #d2ebe6;
+  background: #eaf6f3;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const ConfirmSummaryRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+`;
+
+const ConfirmSummaryLabel = styled.span`
+  ${({ theme }) => theme.fonts.labelXS};
+  color: ${({ theme }) => theme.colors.brand.dark};
+`;
+
+const ConfirmSummaryValue = styled.span`
+  ${({ theme }) => theme.fonts.labelXS};
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const ConfirmErrorBox = styled.div`
+  margin-top: 14px;
+  border-radius: 12px;
+  border: 1px solid #ff8e96;
+  background: #fff2f3;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ConfirmErrorIcon = styled.span`
+  display: inline-flex;
+  color: ${({ theme }) => theme.colors.semantic.error};
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const ConfirmErrorTextWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+`;
+
+const ConfirmErrorTitle = styled.p`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
+const ConfirmErrorDescription = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
+const SuccessCodeCard = styled.div`
+  margin-top: 16px;
+  border-radius: 14px;
+  border: 1px solid #d2ebe6;
+  background: #eaf6f3;
+  padding: 14px;
+  text-align: center;
+`;
+
+const SuccessCodeMeta = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.brand.dark};
+`;
+
+const SuccessCodeValue = styled.p`
+  ${({ theme }) => theme.fonts.labelL};
+  margin: 8px 0 0;
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const SuccessCopyButton = styled.button`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin-top: 10px;
+  width: 100%;
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border-radius: 10px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  color: ${({ theme }) => theme.colors.text.text1};
+  padding: 11px 12px;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const SuccessConfirmButton = styled.button`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin-top: 14px;
+  width: 100%;
+  border: none;
+  border-radius: 10px;
+  background: ${({ theme }) => theme.colors.brand.primary};
+  color: ${({ theme }) => theme.colors.text.textW};
+  padding: 11px 12px;
+`;
+
+const ModalButtonRow = styled.div`
+  margin-top: 22px;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+`;
+
+const ModalGhostButton = styled.button`
+  ${({ theme }) => theme.fonts.labelXS};
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border-radius: 10px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  color: ${({ theme }) => theme.colors.text.text1};
+  padding: 11px 12px;
+`;
+
+const ModalPrimaryButton = styled.button`
+  ${({ theme }) => theme.fonts.labelXS};
+  border: none;
+  border-radius: 10px;
+  background: ${({ theme }) => theme.colors.brand.primary};
+  color: ${({ theme }) => theme.colors.text.textW};
+  padding: 11px 12px;
+
+  &:disabled {
+    background: #dbdee2;
+    color: #8f949d;
+    cursor: not-allowed;
+  }
 `;
