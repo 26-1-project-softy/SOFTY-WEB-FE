@@ -45,6 +45,21 @@ export type TeacherSetting = {
   schedules: TeacherSettingScheduleResponse[];
 };
 
+export type ChangeTeacherClassRequest = {
+  schoolName: string;
+  grade: number;
+  class: number;
+};
+
+export type ChangeTeacherClassResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: {
+    classCode?: string | null;
+  } | null;
+};
+
 const normalizeRole = (role: string): 'teacher' | 'admin' => {
   const normalized = role.toLowerCase();
 
@@ -87,5 +102,17 @@ export const authApi = {
       teacherName: setting?.teacherName ?? '',
       schedules: setting?.schedules ?? [],
     } satisfies TeacherSetting;
+  },
+  changeTeacherClass: async (payload: ChangeTeacherClassRequest) => {
+    const { data } = await apiClient.patch<ChangeTeacherClassResponse>(
+      '/teachers/me/class',
+      payload
+    );
+
+    return {
+      success: data.success,
+      message: data.message,
+      classCode: data.data?.classCode ?? '',
+    };
   },
 };
