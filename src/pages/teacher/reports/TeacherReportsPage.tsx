@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
 import { useEffect, useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
-import { IcFile } from '@/icons';
+import { IcDownload, IcFile } from '@/icons';
 import { reportsApi, type ReportChatRoomItem } from '@/services/teacher/reportsApi';
 
 export const TeacherReportsPage = () => {
@@ -9,11 +9,20 @@ export const TeacherReportsPage = () => {
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isReportCompleteModalOpen, setIsReportCompleteModalOpen] = useState(false);
 
   const selectedReport = useMemo(
     () => reportItems.find(item => item.chatRoomId === selectedReportId) ?? reportItems[0] ?? null,
-    [selectedReportId]
+    [reportItems, selectedReportId]
   );
+
+  const reportFileName = useMemo(() => {
+    if (!selectedReport?.lastMessageAt) {
+      return '증빙리포트_0000-00-00.pdf';
+    }
+
+    return `증빙리포트_${formatDateOnly(selectedReport.lastMessageAt)}.pdf`;
+  }, [selectedReport]);
 
   useEffect(() => {
     let isMounted = true;
@@ -57,6 +66,18 @@ export const TeacherReportsPage = () => {
     };
   }, []);
 
+  const handleOpenReportCompleteModal = () => {
+    if (!selectedReport) {
+      return;
+    }
+
+    setIsReportCompleteModalOpen(true);
+  };
+
+  const handleCloseReportCompleteModal = () => {
+    setIsReportCompleteModalOpen(false);
+  };
+
   return (
     <ReportsPageContainer>
       <ReportListSection>
@@ -97,7 +118,11 @@ export const TeacherReportsPage = () => {
       <PreviewSection>
         <PreviewHeader>
           <PreviewTitle>미리보기</PreviewTitle>
-          <PdfButton type="button" disabled={!selectedReport}>
+          <PdfButton
+            type="button"
+            disabled={!selectedReport}
+            onClick={handleOpenReportCompleteModal}
+          >
             <IcFile />
             PDF 생성하기
           </PdfButton>
@@ -133,6 +158,34 @@ export const TeacherReportsPage = () => {
           </MessageBlock>
         </PreviewBody>
       </PreviewSection>
+
+      {isReportCompleteModalOpen ? (
+        <ModalOverlay onClick={handleCloseReportCompleteModal}>
+          <ModalCard onClick={event => event.stopPropagation()}>
+            <ModalIconWrap>
+              <IcFile />
+            </ModalIconWrap>
+
+            <ModalTitle>리포트 생성 완료</ModalTitle>
+            <ModalDescription>PDF 파일이 준비되었습니다.</ModalDescription>
+
+            <FileInfoCard>
+              <FileInfoLabel>파일명</FileInfoLabel>
+              <FileInfoValue>{reportFileName}</FileInfoValue>
+            </FileInfoCard>
+
+            <ModalActionRow>
+              <ModalGhostButton type="button" onClick={handleCloseReportCompleteModal}>
+                닫기
+              </ModalGhostButton>
+              <ModalPrimaryButton type="button">
+                <IcDownload />
+                다운로드
+              </ModalPrimaryButton>
+            </ModalActionRow>
+          </ModalCard>
+        </ModalOverlay>
+      ) : null}
     </ReportsPageContainer>
   );
 };
@@ -442,4 +495,99 @@ const ErrorText = styled.p`
   ${({ theme }) => theme.fonts.body2};
   margin: 4px 4px 0;
   color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgba(0, 0, 0, 0.42);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 18px;
+`;
+
+const ModalCard = styled.div`
+  width: 100%;
+  max-width: 520px;
+  border-radius: 16px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.25);
+  padding: 20px;
+`;
+
+const ModalIconWrap = styled.div`
+  width: 56px;
+  height: 56px;
+  margin: 0 auto;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.background.bg3};
+  color: ${({ theme }) => theme.colors.text.text4};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const ModalTitle = styled.h3`
+  ${({ theme }) => theme.fonts.labelM};
+  margin: 14px 0 0;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const ModalDescription = styled.p`
+  ${({ theme }) => theme.fonts.labelS};
+  margin: 10px 0 0;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.text.text2};
+`;
+
+const FileInfoCard = styled.div`
+  margin-top: 20px;
+  border-radius: 12px;
+  background: ${({ theme }) => theme.colors.background.bg3};
+  padding: 14px 16px;
+`;
+
+const FileInfoLabel = styled.p`
+  ${({ theme }) => theme.fonts.body3};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const FileInfoValue = styled.p`
+  ${({ theme }) => theme.fonts.labelS};
+  margin: 8px 0 0;
+  color: ${({ theme }) => theme.colors.text.text2};
+`;
+
+const ModalActionRow = styled.div`
+  margin-top: 18px;
+  display: flex;
+  gap: 10px;
+`;
+
+const ModalGhostButton = styled.button`
+  ${({ theme }) => theme.fonts.labelS};
+  flex: 1;
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border-radius: 12px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  color: ${({ theme }) => theme.colors.text.text1};
+  padding: 12px 14px;
+`;
+
+const ModalPrimaryButton = styled.button`
+  ${({ theme }) => theme.fonts.labelS};
+  flex: 1;
+  border: none;
+  border-radius: 12px;
+  background: ${({ theme }) => theme.colors.brand.primary};
+  color: ${({ theme }) => theme.colors.text.textW};
+  padding: 12px 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
 `;
