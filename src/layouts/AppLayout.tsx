@@ -2,6 +2,10 @@ import styled from '@emotion/styled';
 import { Outlet, useMatches } from 'react-router-dom';
 import { Sidebar } from '@/components/common/Sidebar';
 import { Header } from '@/components/common/Header';
+import {
+  TEACHER_SETTINGS_RESET_EVENT,
+  TEACHER_SETTINGS_SAVE_EVENT,
+} from '@/constants/teacherSettingsEvents';
 import type { AppRouteHandle } from '@/router/types';
 
 type AppRouteMatch = {
@@ -12,11 +16,25 @@ export const AppLayout = () => {
   const matches = useMatches() as AppRouteMatch[];
 
   const currentHeader = [...matches].reverse().find(match => match.handle != null)?.handle;
+  const dispatchTeacherSettingsEvent = (eventName: string) => {
+    window.dispatchEvent(new CustomEvent(eventName));
+  };
+
   const headerActions =
     currentHeader?.actionType === 'teacherSettings' ? (
       <>
-        <GhostButton type="button">취소</GhostButton>
-        <PrimaryButton type="button">변경사항 저장</PrimaryButton>
+        <GhostButton
+          type="button"
+          onClick={() => dispatchTeacherSettingsEvent(TEACHER_SETTINGS_RESET_EVENT)}
+        >
+          취소
+        </GhostButton>
+        <PrimaryButton
+          type="button"
+          onClick={() => dispatchTeacherSettingsEvent(TEACHER_SETTINGS_SAVE_EVENT)}
+        >
+          변경사항 저장
+        </PrimaryButton>
       </>
     ) : undefined;
 
