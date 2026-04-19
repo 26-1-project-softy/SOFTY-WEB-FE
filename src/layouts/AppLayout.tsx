@@ -12,12 +12,19 @@ export const AppLayout = () => {
   const matches = useMatches() as AppRouteMatch[];
 
   const currentHeader = [...matches].reverse().find(match => match.handle != null)?.handle;
+  const headerActions =
+    currentHeader?.actionType === 'teacherSettings' ? (
+      <>
+        <GhostButton type="button">취소</GhostButton>
+        <PrimaryButton type="button">변경사항 저장</PrimaryButton>
+      </>
+    ) : undefined;
 
   return (
     <Shell>
       <Sidebar />
       <Main>
-        {currentHeader && <Header title={currentHeader.title} />}
+        {currentHeader && <Header title={currentHeader.title} actions={headerActions} />}
         <Content>
           <Outlet />
         </Content>
@@ -41,4 +48,22 @@ const Main = styled.div`
 
 const Content = styled.main`
   flex: 1;
+`;
+
+const GhostButton = styled.button`
+  ${({ theme }) => theme.fonts.labelXS};
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border-radius: 10px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  color: ${({ theme }) => theme.colors.text.text1};
+  padding: 10px 18px;
+`;
+
+const PrimaryButton = styled.button`
+  ${({ theme }) => theme.fonts.labelXS};
+  border: none;
+  border-radius: 10px;
+  background: ${({ theme }) => theme.colors.brand.primary};
+  color: ${({ theme }) => theme.colors.text.textW};
+  padding: 10px 18px;
 `;
