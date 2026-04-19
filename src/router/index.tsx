@@ -67,7 +67,10 @@ export const router = createBrowserRouter([
           {
             path: 'settings',
             element: <TeacherSettingsPage />,
-            handle: null,
+            handle: {
+              title: '설정',
+              actionType: 'teacherSettings',
+            },
           },
         ],
       },
