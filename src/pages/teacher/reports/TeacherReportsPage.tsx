@@ -1,7 +1,7 @@
 import styled from '@emotion/styled';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AxiosError } from 'axios';
-import { IcDownload, IcFile } from '@/icons';
+import { IcDownload, IcError, IcFile, IcInbox, IcRefresh } from '@/icons';
 import { reportsApi, type ReportChatRoomItem } from '@/services/teacher/reportsApi';
 
 export const TeacherReportsPage = () => {
@@ -9,108 +9,221 @@ export const TeacherReportsPage = () => {
   const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [isPreviewLoadError, setIsPreviewLoadError] = useState(false);
   const [isReportCompleteModalOpen, setIsReportCompleteModalOpen] = useState(false);
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
+  const [generatedPdfFileName, setGeneratedPdfFileName] = useState('');
+  const [generatedPdfDownloadUrl, setGeneratedPdfDownloadUrl] = useState('');
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
+  const [isPdfDownloadErrorVisible, setIsPdfDownloadErrorVisible] = useState(false);
+  const [isPdfErrorToastVisible, setIsPdfErrorToastVisible] = useState(false);
+  const [pdfErrorToastMessage, setPdfErrorToastMessage] = useState('');
+  const pdfErrorToastTimerRef = useRef<number | null>(null);
 
   const selectedReport = useMemo(
-    () => reportItems.find(item => item.chatRoomId === selectedReportId) ?? reportItems[0] ?? null,
+    () => reportItems.find(item => item.chatRoomId === selectedReportId) ?? null,
     [reportItems, selectedReportId]
   );
+  const hasNoData = !isLoading && !errorMessage && reportItems.length === 0;
+  const hasListError = !isLoading && !!errorMessage;
+  const shouldShowPreviewEmptyState =
+    hasNoData || hasListError || !selectedReport || isPreviewLoadError;
 
-  const reportFileName = useMemo(() => {
+  const defaultReportFileName = useMemo(() => {
     if (!selectedReport?.lastMessageAt) {
       return '증빙리포트_0000-00-00.pdf';
     }
 
     return `증빙리포트_${formatDateOnly(selectedReport.lastMessageAt)}.pdf`;
   }, [selectedReport]);
+  const reportFileName = generatedPdfFileName || defaultReportFileName;
+
+  const fetchReportRooms = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+      const response = await reportsApi.getReportChatRooms({ page: 0, size: 20 });
+
+      setReportItems(response.data);
+      setSelectedReportId(prev => {
+        if (prev && response.data.some(item => item.chatRoomId === prev)) {
+          return prev;
+        }
+
+        return null;
+      });
+      setIsPreviewLoadError(false);
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      setErrorMessage(axiosError.response?.data?.message || '채팅방 목록을 불러오지 못했어요.');
+      setReportItems([]);
+      setSelectedReportId(null);
+      setIsPreviewLoadError(false);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
+  const handleSelectReport = (chatRoomId: number) => {
+    setSelectedReportId(chatRoomId);
+    setIsPreviewLoadError(false);
+    // TODO: 미리보기 API 연동 시 실패하면 setIsPreviewLoadError(true) 처리
+  };
+
+  const openPdfErrorToast = useCallback((message?: string) => {
+    setPdfErrorToastMessage(message || 'PDF 생성에 실패했어요.');
+    setIsPdfErrorToastVisible(true);
+
+    if (pdfErrorToastTimerRef.current) {
+      window.clearTimeout(pdfErrorToastTimerRef.current);
+    }
+
+    pdfErrorToastTimerRef.current = window.setTimeout(() => {
+      setIsPdfErrorToastVisible(false);
+      pdfErrorToastTimerRef.current = null;
+    }, 2800);
+  }, []);
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchReportRooms = async () => {
-      try {
-        setIsLoading(true);
-        setErrorMessage('');
-        const response = await reportsApi.getReportChatRooms({ page: 0, size: 20 });
-
-        if (!isMounted) {
-          return;
-        }
-
-        setReportItems(response.data);
-        setSelectedReportId(prev => {
-          if (prev && response.data.some(item => item.chatRoomId === prev)) {
-            return prev;
-          }
-
-          return response.data[0]?.chatRoomId ?? null;
-        });
-      } catch (error) {
-        if (!isMounted) {
-          return;
-        }
-
-        const axiosError = error as AxiosError<{ message?: string }>;
-        setErrorMessage(axiosError.response?.data?.message || '채팅방 목록을 불러오지 못했어요.');
-      } finally {
-        if (isMounted) {
-          setIsLoading(false);
-        }
-      }
-    };
-
     void fetchReportRooms();
+  }, [fetchReportRooms]);
 
+  useEffect(() => {
     return () => {
-      isMounted = false;
+      if (pdfErrorToastTimerRef.current) {
+        window.clearTimeout(pdfErrorToastTimerRef.current);
+      }
     };
   }, []);
 
-  const handleOpenReportCompleteModal = () => {
-    if (!selectedReport) {
+  const handleOpenReportCompleteModal = async () => {
+    if (!selectedReport || isGeneratingPdf) {
       return;
     }
 
-    setIsReportCompleteModalOpen(true);
+    setIsGeneratingPdf(true);
+
+    try {
+      const response = await reportsApi.createReportPdf(selectedReport.chatRoomId);
+
+      if (!response.success) {
+        openPdfErrorToast('PDF 생성에 실패했어요.');
+        return;
+      }
+
+      setGeneratedPdfFileName(response.fileName || defaultReportFileName);
+      setGeneratedPdfDownloadUrl(response.downloadUrl || '');
+      setIsReportCompleteModalOpen(true);
+    } catch (error) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      openPdfErrorToast(axiosError.response?.data?.message || 'PDF 생성에 실패했어요.');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
   const handleCloseReportCompleteModal = () => {
     setIsReportCompleteModalOpen(false);
+    setIsPdfDownloadErrorVisible(false);
+    setIsDownloadingPdf(false);
+  };
+
+  const handleDownloadGeneratedPdf = async () => {
+    setIsPdfDownloadErrorVisible(false);
+
+    if (!generatedPdfDownloadUrl) {
+      setIsPdfDownloadErrorVisible(true);
+      return;
+    }
+
+    try {
+      setIsDownloadingPdf(true);
+      const response = await fetch(generatedPdfDownloadUrl);
+
+      if (!response.ok) {
+        throw new Error('Failed to download pdf');
+      }
+
+      const blob = await response.blob();
+      const blobUrl = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = reportFileName || '증빙리포트.pdf';
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(blobUrl);
+    } catch {
+      setIsPdfDownloadErrorVisible(true);
+    } finally {
+      setIsDownloadingPdf(false);
+    }
   };
 
   return (
     <ReportsPageContainer>
+      {isPdfErrorToastVisible ? (
+        <TopErrorToast role="alert">
+          <TopErrorIconWrap>
+            <IcError />
+          </TopErrorIconWrap>
+          <TopErrorText>{pdfErrorToastMessage}</TopErrorText>
+        </TopErrorToast>
+      ) : null}
+
       <ReportListSection>
         {isLoading ? <StatusText>목록을 불러오는 중이에요...</StatusText> : null}
-        {!isLoading && errorMessage ? <ErrorText>{errorMessage}</ErrorText> : null}
+        {hasListError ? (
+          <ErrorPane>
+            <ErrorIconWrap>
+              <IcError />
+            </ErrorIconWrap>
+            <ErrorTitle>대화 목록을 불러올 수 없어요</ErrorTitle>
+            <ErrorDescription>잠시 후 다시 시도해주세요.</ErrorDescription>
+            <RetryButton type="button" onClick={() => void fetchReportRooms()}>
+              <IcRefresh />
+              다시 시도
+            </RetryButton>
+          </ErrorPane>
+        ) : null}
 
-        {!isLoading && !errorMessage ? (
+        {hasNoData && !hasListError ? (
+          <EmptyPane>
+            <EmptyIconWrap>
+              <IcInbox />
+            </EmptyIconWrap>
+            <EmptyTitle>아직 대화가 없어요</EmptyTitle>
+            <EmptyDescription>
+              학부모와의 대화가 시작되면 이곳에서 대화를 선택해
+              <br />
+              리포트를 생성할 수 있어요.
+            </EmptyDescription>
+          </EmptyPane>
+        ) : null}
+
+        {!isLoading && !hasListError && !hasNoData ? (
           <ReportList>
-            {reportItems.length === 0 ? (
-              <StatusText>표시할 채팅방이 없어요.</StatusText>
-            ) : (
-              reportItems.map(item => (
-                <ReportListItem
-                  key={item.chatRoomId}
-                  isSelected={item.chatRoomId === selectedReportId}
-                  onClick={() => setSelectedReportId(item.chatRoomId)}
-                >
-                  <ReportItemTopRow>
-                    <ReportTitleWrap>
-                      <ParentName>{item.parentName || '-'}</ParentName>
-                      <StudentName>{item.studentName || '-'}</StudentName>
-                    </ReportTitleWrap>
-                    <LastMessageDate>
-                      마지막 메시지: {formatDateOnly(item.lastMessageAt)}
-                    </LastMessageDate>
-                  </ReportItemTopRow>
+            {reportItems.map(item => (
+              <ReportListItem
+                key={item.chatRoomId}
+                isSelected={item.chatRoomId === selectedReportId}
+                onClick={() => handleSelectReport(item.chatRoomId)}
+              >
+                <ReportItemTopRow>
+                  <ReportTitleWrap>
+                    <ParentName>{item.parentName || '-'}</ParentName>
+                    <StudentName>{item.studentName || '-'}</StudentName>
+                  </ReportTitleWrap>
+                  <LastMessageDate>
+                    마지막 메시지: {formatDateOnly(item.lastMessageAt)}
+                  </LastMessageDate>
+                </ReportItemTopRow>
 
-                  <IntentBadge intent={toIntentType(item.intentLabel)}>
-                    {item.intentLabel || '-'}
-                  </IntentBadge>
-                </ReportListItem>
-              ))
-            )}
+                <IntentBadge intent={toIntentType(item.intentLabel)}>
+                  {item.intentLabel || '-'}
+                </IntentBadge>
+              </ReportListItem>
+            ))}
           </ReportList>
         ) : null}
       </ReportListSection>
@@ -120,42 +233,58 @@ export const TeacherReportsPage = () => {
           <PreviewTitle>미리보기</PreviewTitle>
           <PdfButton
             type="button"
-            disabled={!selectedReport}
+            disabled={
+              !selectedReport || hasNoData || hasListError || isPreviewLoadError || isGeneratingPdf
+            }
             onClick={handleOpenReportCompleteModal}
           >
             <IcFile />
-            PDF 생성하기
+            {isGeneratingPdf ? '생성 중...' : 'PDF 생성하기'}
           </PdfButton>
         </PreviewHeader>
 
         <PreviewBody>
-          <MessageBlock>
-            <SenderMetaRow>
-              <SenderAvatar>
-                {selectedReport?.parentName?.trim() ? selectedReport.parentName.charAt(0) : '-'}
-              </SenderAvatar>
-              <SenderInfo>
-                <SenderName>{formatPreviewName(selectedReport?.parentName)}</SenderName>
-                <SenderTime>{formatDateTime(selectedReport?.lastMessageAt)}</SenderTime>
-              </SenderInfo>
-            </SenderMetaRow>
+          {shouldShowPreviewEmptyState ? (
+            <PreviewEmptyPane>
+              <EmptyIconWrap>
+                <IcFile />
+              </EmptyIconWrap>
+              <EmptyTitle>미리볼 대화를 선택해주세요</EmptyTitle>
+              <EmptyDescription>
+                왼쪽 목록에서 대화를 선택하면 대화 리포트를 확인할 수 있어요.
+              </EmptyDescription>
+            </PreviewEmptyPane>
+          ) : (
+            <>
+              <MessageBlock>
+                <SenderMetaRow>
+                  <SenderAvatar>
+                    {selectedReport?.parentName?.trim() ? selectedReport.parentName.charAt(0) : '-'}
+                  </SenderAvatar>
+                  <SenderInfo>
+                    <SenderName>{formatPreviewName(selectedReport?.parentName)}</SenderName>
+                    <SenderTime>{formatDateTime(selectedReport?.lastMessageAt)}</SenderTime>
+                  </SenderInfo>
+                </SenderMetaRow>
 
-            <IncomingBubble>
-              {selectedReport
-                ? '선택한 채팅방의 대화 미리보기가 여기에 표시돼요.'
-                : '좌측에서 채팅방을 선택하면 미리보기가 표시돼요.'}
-            </IncomingBubble>
-          </MessageBlock>
+                <IncomingBubble>
+                  {selectedReport
+                    ? '선택한 채팅방의 대화 미리보기가 여기에 표시돼요.'
+                    : '좌측에서 채팅방을 선택하면 미리보기가 표시돼요.'}
+                </IncomingBubble>
+              </MessageBlock>
 
-          <MessageBlock align="right">
-            <OutgoingTime>{formatDateTime(selectedReport?.lastMessageAt)}</OutgoingTime>
-            <OutgoingBubble>
-              {selectedReport
-                ? 'PDF 생성 시 선택된 채팅방의 전체 대화 내역을 기준으로 리포트가 생성됩니다.'
-                : '생성할 채팅방을 먼저 선택해주세요.'}
-            </OutgoingBubble>
-            <ReadCount>1</ReadCount>
-          </MessageBlock>
+              <MessageBlock align="right">
+                <OutgoingTime>{formatDateTime(selectedReport?.lastMessageAt)}</OutgoingTime>
+                <OutgoingBubble>
+                  {selectedReport
+                    ? 'PDF 생성 시 선택된 채팅방의 전체 대화 내역을 기준으로 리포트가 생성됩니다.'
+                    : '생성할 채팅방을 먼저 선택해주세요.'}
+                </OutgoingBubble>
+                <ReadCount>1</ReadCount>
+              </MessageBlock>
+            </>
+          )}
         </PreviewBody>
       </PreviewSection>
 
@@ -174,13 +303,25 @@ export const TeacherReportsPage = () => {
               <FileInfoValue>{reportFileName}</FileInfoValue>
             </FileInfoCard>
 
+            {isPdfDownloadErrorVisible ? (
+              <ModalErrorBox role="alert">
+                <ModalErrorIcon>
+                  <IcError />
+                </ModalErrorIcon>
+                <ModalErrorTextWrap>
+                  <ModalErrorTitle>PDF 다운로드에 실패했어요</ModalErrorTitle>
+                  <ModalErrorDescription>잠시 후 다시 시도해 주세요.</ModalErrorDescription>
+                </ModalErrorTextWrap>
+              </ModalErrorBox>
+            ) : null}
+
             <ModalActionRow>
               <ModalGhostButton type="button" onClick={handleCloseReportCompleteModal}>
                 닫기
               </ModalGhostButton>
-              <ModalPrimaryButton type="button">
+              <ModalPrimaryButton type="button" onClick={() => void handleDownloadGeneratedPdf()}>
                 <IcDownload />
-                다운로드
+                {isDownloadingPdf ? '다운로드 중...' : '다운로드'}
               </ModalPrimaryButton>
             </ModalActionRow>
           </ModalCard>
@@ -254,6 +395,7 @@ const formatPreviewName = (name?: string) => {
 };
 
 const ReportsPageContainer = styled.div`
+  position: relative;
   display: flex;
   min-height: calc(100vh - 72px);
   background: ${({ theme }) => theme.colors.background.bg2};
@@ -262,6 +404,38 @@ const ReportsPageContainer = styled.div`
   @media (max-width: 1200px) {
     flex-direction: column;
   }
+`;
+
+const TopErrorToast = styled.div`
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  z-index: 20;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid #ff7f89;
+  border-radius: 12px;
+  background: #fff4f5;
+  padding: 6px 12px;
+`;
+
+const TopErrorIconWrap = styled.span`
+  color: ${({ theme }) => theme.colors.semantic.error};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const TopErrorText = styled.span`
+  ${({ theme }) => theme.fonts.labelXS};
+  color: ${({ theme }) => theme.colors.text.text2};
 `;
 
 const ReportListSection = styled.section`
@@ -491,10 +665,82 @@ const StatusText = styled.p`
   color: ${({ theme }) => theme.colors.text.text3};
 `;
 
-const ErrorText = styled.p`
+const ErrorPane = styled.div`
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+`;
+
+const ErrorIconWrap = styled.div`
+  color: ${({ theme }) => theme.colors.text.text2};
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+`;
+
+const ErrorTitle = styled.h4`
+  ${({ theme }) => theme.fonts.labelS};
+  margin: 12px 0 0;
+  color: ${({ theme }) => theme.colors.text.text2};
+`;
+
+const ErrorDescription = styled.p`
   ${({ theme }) => theme.fonts.body2};
-  margin: 4px 4px 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
+  margin: 8px 0 0;
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const RetryButton = styled.button`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin-top: 16px;
+  border: none;
+  border-radius: 10px;
+  background: ${({ theme }) => theme.colors.brand.primary};
+  color: ${({ theme }) => theme.colors.text.textW};
+  padding: 10px 14px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+`;
+
+const EmptyPane = styled.div`
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.text.text4};
+`;
+
+const PreviewEmptyPane = styled(EmptyPane)`
+  min-height: 560px;
+`;
+
+const EmptyIconWrap = styled.div`
+  color: ${({ theme }) => theme.colors.text.text4};
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+`;
+
+const EmptyTitle = styled.h4`
+  ${({ theme }) => theme.fonts.labelS};
+  margin: 10px 0 0;
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const EmptyDescription = styled.p`
+  ${({ theme }) => theme.fonts.body3};
+  margin: 10px 0 0;
+  color: ${({ theme }) => theme.colors.text.text4};
 `;
 
 const ModalOverlay = styled.div`
@@ -568,6 +814,47 @@ const ModalActionRow = styled.div`
   gap: 10px;
 `;
 
+const ModalErrorBox = styled.div`
+  margin-top: 14px;
+  border: 1px solid #ff6b77;
+  border-radius: 18px;
+  background: #fff5f6;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const ModalErrorIcon = styled.span`
+  color: ${({ theme }) => theme.colors.semantic.error};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const ModalErrorTextWrap = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+`;
+
+const ModalErrorTitle = styled.p`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin: 0;
+  color: #eb4955;
+`;
+
+const ModalErrorDescription = styled.p`
+  ${({ theme }) => theme.fonts.body3};
+  margin: 0;
+  color: #eb4955;
+`;
+
 const ModalGhostButton = styled.button`
   ${({ theme }) => theme.fonts.labelS};
   flex: 1;
@@ -590,4 +877,10 @@ const ModalPrimaryButton = styled.button`
   align-items: center;
   justify-content: center;
   gap: 8px;
+
+  &:disabled {
+    background: ${({ theme }) => theme.colors.background.bg5};
+    color: ${({ theme }) => theme.colors.text.text4};
+    cursor: not-allowed;
+  }
 `;
