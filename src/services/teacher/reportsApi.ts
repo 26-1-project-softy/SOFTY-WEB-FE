@@ -39,6 +39,27 @@ export type ReportChatRoomsResult = {
   hasNext: boolean;
 };
 
+export type CreateReportPdfResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: {
+    pdfId?: number;
+    fileName?: string | null;
+    downloadUrl?: string | null;
+    expiresInSeconds?: number;
+  } | null;
+};
+
+export type CreateReportPdfResult = {
+  success: boolean;
+  message: string;
+  pdfId: number | null;
+  fileName: string;
+  downloadUrl: string;
+  expiresInSeconds: number | null;
+};
+
 export const reportsApi = {
   getReportChatRooms: async (params?: { page?: number; size?: number }) => {
     const { data } = await apiClient.get<ReportChatRoomsResponse>('/reports/chat-rooms', {
@@ -63,5 +84,19 @@ export const reportsApi = {
       totalPages: data.totalPages ?? 0,
       hasNext: data.hasNext ?? false,
     } satisfies ReportChatRoomsResult;
+  },
+  createReportPdf: async (chatRoomId: number) => {
+    const { data } = await apiClient.post<CreateReportPdfResponse>(
+      `/reports/chat-rooms/${chatRoomId}/pdfs`
+    );
+
+    return {
+      success: data.success,
+      message: data.message,
+      pdfId: data.data?.pdfId ?? null,
+      fileName: data.data?.fileName ?? '',
+      downloadUrl: data.data?.downloadUrl ?? '',
+      expiresInSeconds: data.data?.expiresInSeconds ?? null,
+    } satisfies CreateReportPdfResult;
   },
 };
