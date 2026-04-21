@@ -1,6 +1,15 @@
 import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import { ROUTES } from '@/constants/routes';
+import { authSession } from '@/services/auth/authSession';
+import { useAuthStore } from '@/stores/authStore';
 
 const onRequest = (config: InternalAxiosRequestConfig) => {
+  const accessToken = authSession.getAccessToken();
+
+  if (accessToken && !config.headers.Authorization) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+  }
+
   return config;
 };
 
@@ -11,8 +20,15 @@ const onRequestError = (error: AxiosError) => {
 const onResponseError = (error: AxiosError) => {
   const status = error.response?.status;
 
-  if (status === 401) {
-    // TODO: 인증 만료/미인증 처리
+  if (status === 401 && authSession.getAccessToken()) {
+    authSession.clearSession();
+    const { clearAuth, setAuthInitialized } = useAuthStore.getState();
+    clearAuth();
+    setAuthInitialized(true);
+
+    if (window.location.pathname !== ROUTES.root) {
+      window.location.replace(ROUTES.root);
+    }
   }
 
   if (status === 403) {
