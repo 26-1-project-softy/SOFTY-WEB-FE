@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import { IcDownload, IcError, IcFile, IcInbox, IcRefresh } from '@/icons';
 import { reportsApi, type ReportChatRoomItem } from '@/services/teacher/reportsApi';
 
@@ -56,6 +56,11 @@ export const TeacherReportsPage = () => {
       setIsPreviewLoadError(false);
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
+      console.error('[TeacherReportsPage] chat room list fetch failed', {
+        status: axiosError.response?.status,
+        message: axiosError.response?.data?.message ?? axiosError.message,
+        error,
+      });
       const status = axiosError.response?.status;
       const isNetworkError = !axiosError.response;
       const isServerError = typeof status === 'number' && status >= 500;
@@ -125,6 +130,12 @@ export const TeacherReportsPage = () => {
       setIsReportCompleteModalOpen(true);
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
+      console.error('[TeacherReportsPage] pdf create failed', {
+        chatRoomId: selectedReport.chatRoomId,
+        status: axiosError.response?.status,
+        message: axiosError.response?.data?.message ?? axiosError.message,
+        error,
+      });
       openPdfErrorToast(axiosError.response?.data?.message || 'PDF 생성에 실패했어요.');
     } finally {
       setIsGeneratingPdf(false);
@@ -141,19 +152,27 @@ export const TeacherReportsPage = () => {
     setIsPdfDownloadErrorVisible(false);
 
     if (!generatedPdfDownloadUrl) {
+      console.error('[TeacherReportsPage] pdf download failed: empty downloadUrl', {
+        fileName: reportFileName,
+      });
       setIsPdfDownloadErrorVisible(true);
       return;
     }
 
     try {
       setIsDownloadingPdf(true);
-      const response = await fetch(generatedPdfDownloadUrl);
+      const response = await axios.get<Blob>(generatedPdfDownloadUrl, {
+        responseType: 'blob',
+        headers: {
+          Accept: 'application/pdf',
+        },
+      });
+      const blob = response.data;
 
-      if (!response.ok) {
-        throw new Error('Failed to download pdf');
+      if (!(blob instanceof Blob) || blob.size === 0) {
+        throw new Error('Downloaded blob is empty');
       }
 
-      const blob = await response.blob();
       const blobUrl = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = blobUrl;
@@ -162,8 +181,32 @@ export const TeacherReportsPage = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
-    } catch {
-      setIsPdfDownloadErrorVisible(true);
+    } catch (error) {
+      console.error('[TeacherReportsPage] pdf download failed', {
+        downloadUrl: generatedPdfDownloadUrl,
+        fileName: reportFileName,
+        error,
+      });
+
+      // CORS/브라우저 정책으로 blob 다운로드가 막히는 경우를 대비한 fallback
+      // presigned URL은 직접 이동 시 정상 다운로드되는 경우가 많다.
+      try {
+        const fallbackLink = document.createElement('a');
+        fallbackLink.href = generatedPdfDownloadUrl;
+        fallbackLink.download = reportFileName || '증빙리포트.pdf';
+        fallbackLink.target = '_blank';
+        fallbackLink.rel = 'noopener noreferrer';
+        document.body.appendChild(fallbackLink);
+        fallbackLink.click();
+        fallbackLink.remove();
+      } catch (fallbackError) {
+        console.error('[TeacherReportsPage] pdf download fallback failed', {
+          downloadUrl: generatedPdfDownloadUrl,
+          fileName: reportFileName,
+          fallbackError,
+        });
+        setIsPdfDownloadErrorVisible(true);
+      }
     } finally {
       setIsDownloadingPdf(false);
     }
