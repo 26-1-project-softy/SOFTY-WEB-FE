@@ -5,6 +5,7 @@ export type ReportChatRoomItemResponse = {
   parentName?: string | null;
   studentName?: string | null;
   intentLabel?: string | null;
+  status?: string | null;
   lastMessageAt?: string | null;
 };
 
@@ -12,12 +13,14 @@ export type ReportChatRoomsResponse = {
   success: boolean;
   code: number;
   message: string;
-  data?: ReportChatRoomItemResponse[] | null;
-  page?: number;
-  size?: number;
-  totalElements?: number;
-  totalPages?: number;
-  hasNext?: boolean;
+  data?: {
+    items?: ReportChatRoomItemResponse[] | null;
+    page?: number;
+    size?: number;
+    totalElements?: number;
+    totalPages?: number;
+    hasNext?: boolean;
+  } | null;
 };
 
 export type ReportChatRoomItem = {
@@ -25,6 +28,7 @@ export type ReportChatRoomItem = {
   parentName: string;
   studentName: string;
   intentLabel: string;
+  status: string;
   lastMessageAt: string;
 };
 
@@ -65,24 +69,27 @@ export const reportsApi = {
     const { data } = await apiClient.get<ReportChatRoomsResponse>('/reports/chat-rooms', {
       params,
     });
+    const payload = data.data;
+    const items = payload?.items;
 
     return {
       success: data.success,
       message: data.message,
-      data: Array.isArray(data.data)
-        ? data.data.map(item => ({
+      data: Array.isArray(items)
+        ? items.map(item => ({
             chatRoomId: item.chatRoomId ?? 0,
             parentName: item.parentName ?? '',
             studentName: item.studentName ?? '',
             intentLabel: item.intentLabel ?? '',
+            status: item.status ?? '',
             lastMessageAt: item.lastMessageAt ?? '',
           }))
         : [],
-      page: data.page ?? 0,
-      size: data.size ?? 0,
-      totalElements: data.totalElements ?? 0,
-      totalPages: data.totalPages ?? 0,
-      hasNext: data.hasNext ?? false,
+      page: payload?.page ?? 0,
+      size: payload?.size ?? 0,
+      totalElements: payload?.totalElements ?? 0,
+      totalPages: payload?.totalPages ?? 0,
+      hasNext: payload?.hasNext ?? false,
     } satisfies ReportChatRoomsResult;
   },
   createReportPdf: async (chatRoomId: number) => {

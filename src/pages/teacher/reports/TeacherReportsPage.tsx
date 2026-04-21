@@ -26,6 +26,7 @@ export const TeacherReportsPage = () => {
   );
   const hasNoData = !isLoading && !errorMessage && reportItems.length === 0;
   const hasListError = !isLoading && !!errorMessage;
+  const listErrorDisplayMessage = errorMessage || '서비스에 문제가 생겼습니다.';
   const shouldShowPreviewEmptyState =
     hasNoData || hasListError || !selectedReport || isPreviewLoadError;
 
@@ -55,7 +56,15 @@ export const TeacherReportsPage = () => {
       setIsPreviewLoadError(false);
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
-      setErrorMessage(axiosError.response?.data?.message || '채팅방 목록을 불러오지 못했어요.');
+      const status = axiosError.response?.status;
+      const isNetworkError = !axiosError.response;
+      const isServerError = typeof status === 'number' && status >= 500;
+
+      if (isNetworkError || isServerError) {
+        setErrorMessage('서비스에 문제가 생겼습니다. 잠시 후 다시 시도해주세요.');
+      } else {
+        setErrorMessage(axiosError.response?.data?.message || '채팅방 목록을 불러오지 못했어요.');
+      }
       setReportItems([]);
       setSelectedReportId(null);
       setIsPreviewLoadError(false);
@@ -179,7 +188,7 @@ export const TeacherReportsPage = () => {
               <IcError />
             </ErrorIconWrap>
             <ErrorTitle>대화 목록을 불러올 수 없어요</ErrorTitle>
-            <ErrorDescription>잠시 후 다시 시도해주세요.</ErrorDescription>
+            <ErrorDescription>{listErrorDisplayMessage}</ErrorDescription>
             <RetryButton type="button" onClick={() => void fetchReportRooms()}>
               <IcRefresh />
               다시 시도
