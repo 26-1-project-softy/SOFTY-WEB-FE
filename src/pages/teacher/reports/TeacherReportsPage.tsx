@@ -2,7 +2,13 @@ import styled from '@emotion/styled';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import axios, { AxiosError } from 'axios';
 import { IcDownload, IcError, IcFile, IcInbox, IcRefresh } from '@/icons';
-import { reportsApi, type ReportChatRoomItem } from '@/services/teacher/reportsApi';
+import {
+  reportsApi,
+  type ReportChatPreviewMessage,
+  type ReportChatRoomItem,
+} from '@/services/teacher/reportsApi';
+
+const PREVIEW_PAGE_SIZE = 30;
 
 export const TeacherReportsPage = () => {
   const [reportItems, setReportItems] = useState<ReportChatRoomItem[]>([]);
@@ -10,6 +16,11 @@ export const TeacherReportsPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
   const [isPreviewLoadError, setIsPreviewLoadError] = useState(false);
+  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
+  const [isPreviewLoadingMore, setIsPreviewLoadingMore] = useState(false);
+  const [previewMessages, setPreviewMessages] = useState<ReportChatPreviewMessage[]>([]);
+  const [previewNextCursor, setPreviewNextCursor] = useState('');
+  const [previewHasNext, setPreviewHasNext] = useState(false);
   const [isReportCompleteModalOpen, setIsReportCompleteModalOpen] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
   const [generatedPdfFileName, setGeneratedPdfFileName] = useState('');
@@ -19,6 +30,7 @@ export const TeacherReportsPage = () => {
   const [isPdfErrorToastVisible, setIsPdfErrorToastVisible] = useState(false);
   const [pdfErrorToastMessage, setPdfErrorToastMessage] = useState('');
   const pdfErrorToastTimerRef = useRef<number | null>(null);
+  const previewRequestIdRef = useRef(0);
 
   const selectedReport = useMemo(
     () => reportItems.find(item => item.chatRoomId === selectedReportId) ?? null,
@@ -27,8 +39,6 @@ export const TeacherReportsPage = () => {
   const hasNoData = !isLoading && !errorMessage && reportItems.length === 0;
   const hasListError = !isLoading && !!errorMessage;
   const listErrorDisplayMessage = errorMessage || '서비스에 문제가 생겼습니다.';
-  const shouldShowPreviewEmptyState =
-    hasNoData || hasListError || !selectedReport || isPreviewLoadError;
 
   const defaultReportFileName = useMemo(() => {
     if (!selectedReport?.lastMessageAt) {
@@ -56,11 +66,6 @@ export const TeacherReportsPage = () => {
       setIsPreviewLoadError(false);
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
-      console.error('[TeacherReportsPage] chat room list fetch failed', {
-        status: axiosError.response?.status,
-        message: axiosError.response?.data?.message ?? axiosError.message,
-        error,
-      });
       const status = axiosError.response?.status;
       const isNetworkError = !axiosError.response;
       const isServerError = typeof status === 'number' && status >= 500;
@@ -78,10 +83,73 @@ export const TeacherReportsPage = () => {
     }
   }, []);
 
+  const fetchPreviewMessages = useCallback(
+    async ({
+      chatRoomId,
+      cursor = '',
+      append = false,
+    }: {
+      chatRoomId: number;
+      cursor?: string;
+      append?: boolean;
+    }) => {
+      const requestId = ++previewRequestIdRef.current;
+
+      if (append) {
+        setIsPreviewLoadingMore(true);
+      } else {
+        setIsPreviewLoading(true);
+      }
+
+      try {
+        const response = await reportsApi.getReportChatRoomPreview(chatRoomId, {
+          cursor,
+          size: PREVIEW_PAGE_SIZE,
+        });
+
+        if (requestId !== previewRequestIdRef.current) {
+          return;
+        }
+
+        setPreviewMessages(prev => (append ? [...prev, ...response.messages] : response.messages));
+        setPreviewNextCursor(response.nextCursor);
+        setPreviewHasNext(response.hasNext);
+        setIsPreviewLoadError(false);
+      } catch {
+        if (requestId !== previewRequestIdRef.current) {
+          return;
+        }
+
+        if (!append) {
+          setPreviewMessages([]);
+        }
+        setPreviewNextCursor('');
+        setPreviewHasNext(false);
+        setIsPreviewLoadError(true);
+      } finally {
+        if (requestId === previewRequestIdRef.current) {
+          setIsPreviewLoading(false);
+          setIsPreviewLoadingMore(false);
+        }
+      }
+    },
+    []
+  );
+
   const handleSelectReport = (chatRoomId: number) => {
     setSelectedReportId(chatRoomId);
-    setIsPreviewLoadError(false);
-    // TODO: 미리보기 API 연동 시 실패하면 setIsPreviewLoadError(true) 처리
+  };
+
+  const handleLoadMorePreview = () => {
+    if (!selectedReportId || !previewHasNext || !previewNextCursor || isPreviewLoadingMore) {
+      return;
+    }
+
+    void fetchPreviewMessages({
+      chatRoomId: selectedReportId,
+      cursor: previewNextCursor,
+      append: true,
+    });
   };
 
   const openPdfErrorToast = useCallback((message?: string) => {
@@ -101,6 +169,20 @@ export const TeacherReportsPage = () => {
   useEffect(() => {
     void fetchReportRooms();
   }, [fetchReportRooms]);
+
+  useEffect(() => {
+    if (!selectedReportId) {
+      setPreviewMessages([]);
+      setPreviewNextCursor('');
+      setPreviewHasNext(false);
+      setIsPreviewLoadError(false);
+      setIsPreviewLoading(false);
+      setIsPreviewLoadingMore(false);
+      return;
+    }
+
+    void fetchPreviewMessages({ chatRoomId: selectedReportId });
+  }, [fetchPreviewMessages, selectedReportId]);
 
   useEffect(() => {
     return () => {
@@ -130,12 +212,6 @@ export const TeacherReportsPage = () => {
       setIsReportCompleteModalOpen(true);
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
-      console.error('[TeacherReportsPage] pdf create failed', {
-        chatRoomId: selectedReport.chatRoomId,
-        status: axiosError.response?.status,
-        message: axiosError.response?.data?.message ?? axiosError.message,
-        error,
-      });
       openPdfErrorToast(axiosError.response?.data?.message || 'PDF 생성에 실패했어요.');
     } finally {
       setIsGeneratingPdf(false);
@@ -152,9 +228,6 @@ export const TeacherReportsPage = () => {
     setIsPdfDownloadErrorVisible(false);
 
     if (!generatedPdfDownloadUrl) {
-      console.error('[TeacherReportsPage] pdf download failed: empty downloadUrl', {
-        fileName: reportFileName,
-      });
       setIsPdfDownloadErrorVisible(true);
       return;
     }
@@ -181,15 +254,9 @@ export const TeacherReportsPage = () => {
       link.click();
       link.remove();
       window.URL.revokeObjectURL(blobUrl);
-    } catch (error) {
-      console.error('[TeacherReportsPage] pdf download failed', {
-        downloadUrl: generatedPdfDownloadUrl,
-        fileName: reportFileName,
-        error,
-      });
-
-      // CORS/브라우저 정책으로 blob 다운로드가 막히는 경우를 대비한 fallback
-      // presigned URL은 직접 이동 시 정상 다운로드되는 경우가 많다.
+    } catch {
+      // CORS/釉뚮씪?곗? ?뺤콉?쇰줈 blob ?ㅼ슫濡쒕뱶媛 留됲엳??寃쎌슦瑜??鍮꾪븳 fallback
+      // presigned URL? 吏곸젒 ?대룞 ???뺤긽 ?ㅼ슫濡쒕뱶?섎뒗 寃쎌슦媛 留롫떎.
       try {
         const fallbackLink = document.createElement('a');
         fallbackLink.href = generatedPdfDownloadUrl;
@@ -199,12 +266,7 @@ export const TeacherReportsPage = () => {
         document.body.appendChild(fallbackLink);
         fallbackLink.click();
         fallbackLink.remove();
-      } catch (fallbackError) {
-        console.error('[TeacherReportsPage] pdf download fallback failed', {
-          downloadUrl: generatedPdfDownloadUrl,
-          fileName: reportFileName,
-          fallbackError,
-        });
+      } catch {
         setIsPdfDownloadErrorVisible(true);
       }
     } finally {
@@ -296,7 +358,7 @@ export const TeacherReportsPage = () => {
         </PreviewHeader>
 
         <PreviewBody>
-          {shouldShowPreviewEmptyState ? (
+          {!selectedReport || hasNoData || hasListError ? (
             <PreviewEmptyPane>
               <EmptyIconWrap>
                 <IcFile />
@@ -306,35 +368,75 @@ export const TeacherReportsPage = () => {
                 왼쪽 목록에서 대화를 선택하면 대화 리포트를 확인할 수 있어요.
               </EmptyDescription>
             </PreviewEmptyPane>
+          ) : isPreviewLoading ? (
+            <StatusText>미리보기를 불러오는 중이에요...</StatusText>
+          ) : isPreviewLoadError ? (
+            <ErrorPane>
+              <ErrorIconWrap>
+                <IcError />
+              </ErrorIconWrap>
+              <ErrorTitle>미리보기를 불러올 수 없어요</ErrorTitle>
+              <ErrorDescription>잠시 후 다시 시도해 주세요.</ErrorDescription>
+              <RetryButton
+                type="button"
+                onClick={() =>
+                  selectedReport
+                    ? void fetchPreviewMessages({ chatRoomId: selectedReport.chatRoomId })
+                    : undefined
+                }
+              >
+                <IcRefresh />
+                다시 시도
+              </RetryButton>
+            </ErrorPane>
+          ) : previewMessages.length === 0 ? (
+            <PreviewEmptyPane>
+              <EmptyIconWrap>
+                <IcInbox />
+              </EmptyIconWrap>
+              <EmptyTitle>미리보기 대화가 없어요</EmptyTitle>
+              <EmptyDescription>선택한 채팅방에 표시할 메시지가 없어요.</EmptyDescription>
+            </PreviewEmptyPane>
           ) : (
             <>
-              <MessageBlock>
-                <SenderMetaRow>
-                  <SenderAvatar>
-                    {selectedReport?.parentName?.trim() ? selectedReport.parentName.charAt(0) : '-'}
-                  </SenderAvatar>
-                  <SenderInfo>
-                    <SenderName>{formatPreviewName(selectedReport?.parentName)}</SenderName>
-                    <SenderTime>{formatDateTime(selectedReport?.lastMessageAt)}</SenderTime>
-                  </SenderInfo>
-                </SenderMetaRow>
+              {previewMessages.map(message => (
+                <MessageBlock
+                  key={`${message.messageId}-${message.createdAt}`}
+                  align={message.isMine ? 'right' : 'left'}
+                >
+                  {message.isMine ? (
+                    <OutgoingTime>{formatDateTime(message.createdAt)}</OutgoingTime>
+                  ) : (
+                    <SenderMetaRow>
+                      <SenderAvatar>
+                        {selectedReport.parentName?.trim()
+                          ? selectedReport.parentName.charAt(0)
+                          : '-'}
+                      </SenderAvatar>
+                      <SenderInfo>
+                        <SenderName>{formatPreviewName(selectedReport.parentName)}</SenderName>
+                        <SenderTime>{formatDateTime(message.createdAt)}</SenderTime>
+                      </SenderInfo>
+                    </SenderMetaRow>
+                  )}
 
-                <IncomingBubble>
-                  {selectedReport
-                    ? '선택한 채팅방의 대화 미리보기가 여기에 표시돼요.'
-                    : '좌측에서 채팅방을 선택하면 미리보기가 표시돼요.'}
-                </IncomingBubble>
-              </MessageBlock>
+                  {message.isMine ? (
+                    <OutgoingBubble>{message.content || '-'}</OutgoingBubble>
+                  ) : (
+                    <IncomingBubble>{message.content || '-'}</IncomingBubble>
+                  )}
+                </MessageBlock>
+              ))}
 
-              <MessageBlock align="right">
-                <OutgoingTime>{formatDateTime(selectedReport?.lastMessageAt)}</OutgoingTime>
-                <OutgoingBubble>
-                  {selectedReport
-                    ? 'PDF 생성 시 선택된 채팅방의 전체 대화 내역을 기준으로 리포트가 생성됩니다.'
-                    : '생성할 채팅방을 먼저 선택해주세요.'}
-                </OutgoingBubble>
-                <ReadCount>1</ReadCount>
-              </MessageBlock>
+              {previewHasNext ? (
+                <PreviewLoadMoreButton
+                  type="button"
+                  onClick={handleLoadMorePreview}
+                  disabled={isPreviewLoadingMore}
+                >
+                  {isPreviewLoadingMore ? '불러오는 중...' : '더 보기'}
+                </PreviewLoadMoreButton>
+              ) : null}
             </>
           )}
         </PreviewBody>
@@ -386,15 +488,15 @@ export const TeacherReportsPage = () => {
 type IntentType = 'absenceLate' | 'counseling' | 'request' | 'inquiry';
 
 const toIntentType = (label: string): IntentType => {
-  if (label.includes('결석') || label.includes('지각')) {
+  if (/(결석|지각|absence|late)/i.test(label)) {
     return 'absenceLate';
   }
 
-  if (label.includes('상담')) {
+  if (/(상담|counsel)/i.test(label)) {
     return 'counseling';
   }
 
-  if (label.includes('문의')) {
+  if (/(문의|inquiry)/i.test(label)) {
     return 'inquiry';
   }
 
@@ -705,10 +807,20 @@ const OutgoingBubble = styled.div`
   padding: 20px 24px;
 `;
 
-const ReadCount = styled.span`
-  ${({ theme }) => theme.fonts.body2};
-  margin-top: 8px;
-  color: ${({ theme }) => theme.colors.brand.dark};
+const PreviewLoadMoreButton = styled.button`
+  ${({ theme }) => theme.fonts.labelXS};
+  align-self: center;
+  margin-top: 4px;
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  color: ${({ theme }) => theme.colors.text.text2};
+  padding: 8px 14px;
+
+  &:disabled {
+    color: ${({ theme }) => theme.colors.text.text4};
+    cursor: not-allowed;
+  }
 `;
 
 const StatusText = styled.p`
