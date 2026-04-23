@@ -44,7 +44,7 @@ export const ErrorPage = ({
 
   return (
     <PageContainer>
-      <IconBadge symbol={IcError} size={68} iconSize={34} bgColor="#FCF3F2" color="#FF2C3D" />
+      <IconBadge icon={IcError} size={68} iconSize={34} bgColor="#FCF3F2" color="#FF2C3D" />
       <ContentContainer>
         <Title>{title}</Title>
         <Description>{description}</Description>
