@@ -3,8 +3,12 @@ import { ROUTES } from '@/constants/routes';
 
 export const getDefaultRouteByRole = (role: AuthRole) => {
   if (role === 'admin') {
-    return ROUTES.admin;
-  } else if (role === 'teacher') {
-    return ROUTES.teacher;
-  } else return ROUTES.root;
+    return ROUTES.adminDashboard;
+  }
+
+  if (role === 'teacher') {
+    return ROUTES.inbox;
+  }
+
+  return ROUTES.root;
 };

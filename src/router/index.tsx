@@ -4,6 +4,7 @@ import { LandingPage } from '@/pages/auth/LandingPage';
 import { ErrorPage } from '@/pages/ErrorPage';
 import { AdminLoginPage } from '@/pages/auth/AdminLoginPage';
 import { TeacherSignUpPage } from '@/pages/auth/TeacherSignUpPage';
+import { TeacherKakaoCallbackPage } from '@/pages/auth/TeacherKakaoCallbackPage';
 import { AdminAiModelPage } from '@/pages/admin/aiModel/AdminAiModelPage';
 import { AdminDashboardPage } from '@/pages/admin/dashboard/AdminDashboardPage';
 import { TeacherReportsPage } from '@/pages/teacher/reports/TeacherReportsPage';
@@ -32,28 +33,42 @@ export const router = createBrowserRouter([
         path: ROUTES.teacherSignUp,
         element: <TeacherSignUpPage />,
       },
+      {
+        path: ROUTES.teacherKakaoCallback,
+        element: <TeacherKakaoCallbackPage />,
+      },
     ],
   },
   {
     element: <ProtectedRoute allowedRoles={['teacher']} />,
     children: [
       {
-        path: ROUTES.teacher,
+        path: ROUTES.inbox,
         element: <AppLayout />,
         children: [
           {
             index: true,
-            element: <Navigate to="threadList" />,
-          },
-          {
-            path: 'threadList',
             element: <TeacherThreadListPage />,
             handle: {
               title: '수신함',
             },
           },
+        ],
+      },
+      {
+        path: ROUTES.teacher,
+        element: <AppLayout />,
+        children: [
           {
-            path: 'threadDetail/:threadId',
+            index: true,
+            element: <Navigate to={ROUTES.inbox} replace />,
+          },
+          {
+            path: 'thread-list',
+            element: <Navigate to={ROUTES.inbox} replace />,
+          },
+          {
+            path: 'thread-detail/:threadId',
             element: <TeacherThreadDetailPage />,
             handle: null,
           },
@@ -67,7 +82,9 @@ export const router = createBrowserRouter([
           {
             path: 'settings',
             element: <TeacherSettingsPage />,
-            handle: null,
+            handle: {
+              title: '설정',
+            },
           },
         ],
       },
@@ -92,14 +109,14 @@ export const router = createBrowserRouter([
             },
           },
           {
-            path: 'errorReview',
+            path: 'error-review',
             element: <AdminErrorReviewPage />,
             handle: {
               title: '오류 검토',
             },
           },
           {
-            path: 'aiModel',
+            path: 'ai-model',
             element: <AdminAiModelPage />,
             handle: {
               title: 'AI 모델 관리',
@@ -114,7 +131,7 @@ export const router = createBrowserRouter([
     element: (
       <ErrorPage
         title="403 Forbidden"
-        description={`권한이 없거나, 사용할 수 없는 페이지예요.\n로그인 정보를 다시 한 번 확인해주세요.`}
+        description={`권한이 없어 접근할 수 없는 페이지예요.\n로그인 정보를 다시 확인해주세요.`}
         primaryBtnLabel="홈으로 이동"
         primaryBtnIcon={IcHome}
         primaryTo={ROUTES.root}
