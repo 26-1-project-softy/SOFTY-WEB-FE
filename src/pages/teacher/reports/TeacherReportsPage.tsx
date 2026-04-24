@@ -1,278 +1,42 @@
-import styled from '@emotion/styled';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import axios, { AxiosError } from 'axios';
+﻿import styled from '@emotion/styled';
 import { IcDownload, IcError, IcFile, IcInbox, IcRefresh } from '@/icons';
+import { useTeacherReports } from '@/features/teacher/reports/useTeacherReports';
 import {
-  reportsApi,
-  type ReportChatPreviewMessage,
-  type ReportChatRoomItem,
-} from '@/services/teacher/reportsApi';
-
-const PREVIEW_PAGE_SIZE = 30;
-
+  formatDateOnly,
+  formatDateTime,
+  formatPreviewName,
+  toIntentType,
+  type IntentType,
+} from '@/utils/reports/reportFormatters';
 export const TeacherReportsPage = () => {
-  const [reportItems, setReportItems] = useState<ReportChatRoomItem[]>([]);
-  const [selectedReportId, setSelectedReportId] = useState<number | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [errorMessage, setErrorMessage] = useState('');
-  const [isPreviewLoadError, setIsPreviewLoadError] = useState(false);
-  const [isPreviewLoading, setIsPreviewLoading] = useState(false);
-  const [isPreviewLoadingMore, setIsPreviewLoadingMore] = useState(false);
-  const [previewMessages, setPreviewMessages] = useState<ReportChatPreviewMessage[]>([]);
-  const [previewNextCursor, setPreviewNextCursor] = useState('');
-  const [previewHasNext, setPreviewHasNext] = useState(false);
-  const [isReportCompleteModalOpen, setIsReportCompleteModalOpen] = useState(false);
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
-  const [generatedPdfFileName, setGeneratedPdfFileName] = useState('');
-  const [generatedPdfDownloadUrl, setGeneratedPdfDownloadUrl] = useState('');
-  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
-  const [isPdfDownloadErrorVisible, setIsPdfDownloadErrorVisible] = useState(false);
-  const [isPdfErrorToastVisible, setIsPdfErrorToastVisible] = useState(false);
-  const [pdfErrorToastMessage, setPdfErrorToastMessage] = useState('');
-  const pdfErrorToastTimerRef = useRef<number | null>(null);
-  const previewRequestIdRef = useRef(0);
-
-  const selectedReport = useMemo(
-    () => reportItems.find(item => item.chatRoomId === selectedReportId) ?? null,
-    [reportItems, selectedReportId]
-  );
-  const hasNoData = !isLoading && !errorMessage && reportItems.length === 0;
-  const hasListError = !isLoading && !!errorMessage;
-  const listErrorDisplayMessage = errorMessage || '서비스에 문제가 생겼습니다.';
-
-  const defaultReportFileName = useMemo(() => {
-    if (!selectedReport?.lastMessageAt) {
-      return '증빙리포트_0000-00-00.pdf';
-    }
-
-    return `증빙리포트_${formatDateOnly(selectedReport.lastMessageAt)}.pdf`;
-  }, [selectedReport]);
-  const reportFileName = generatedPdfFileName || defaultReportFileName;
-
-  const fetchReportRooms = useCallback(async () => {
-    try {
-      setIsLoading(true);
-      setErrorMessage('');
-      const response = await reportsApi.getReportChatRooms({ page: 0, size: 20 });
-
-      setReportItems(response.data);
-      setSelectedReportId(prev => {
-        if (prev && response.data.some(item => item.chatRoomId === prev)) {
-          return prev;
-        }
-
-        return null;
-      });
-      setIsPreviewLoadError(false);
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      const status = axiosError.response?.status;
-      const isNetworkError = !axiosError.response;
-      const isServerError = typeof status === 'number' && status >= 500;
-
-      if (isNetworkError || isServerError) {
-        setErrorMessage('서비스에 문제가 생겼습니다. 잠시 후 다시 시도해주세요.');
-      } else {
-        setErrorMessage(axiosError.response?.data?.message || '채팅방 목록을 불러오지 못했어요.');
-      }
-      setReportItems([]);
-      setSelectedReportId(null);
-      setIsPreviewLoadError(false);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const fetchPreviewMessages = useCallback(
-    async ({
-      chatRoomId,
-      cursor = '',
-      append = false,
-    }: {
-      chatRoomId: number;
-      cursor?: string;
-      append?: boolean;
-    }) => {
-      const requestId = ++previewRequestIdRef.current;
-
-      if (append) {
-        setIsPreviewLoadingMore(true);
-      } else {
-        setIsPreviewLoading(true);
-      }
-
-      try {
-        const response = await reportsApi.getReportChatRoomPreview(chatRoomId, {
-          cursor,
-          size: PREVIEW_PAGE_SIZE,
-        });
-
-        if (requestId !== previewRequestIdRef.current) {
-          return;
-        }
-
-        setPreviewMessages(prev => (append ? [...prev, ...response.messages] : response.messages));
-        setPreviewNextCursor(response.nextCursor);
-        setPreviewHasNext(response.hasNext);
-        setIsPreviewLoadError(false);
-      } catch {
-        if (requestId !== previewRequestIdRef.current) {
-          return;
-        }
-
-        if (!append) {
-          setPreviewMessages([]);
-        }
-        setPreviewNextCursor('');
-        setPreviewHasNext(false);
-        setIsPreviewLoadError(true);
-      } finally {
-        if (requestId === previewRequestIdRef.current) {
-          setIsPreviewLoading(false);
-          setIsPreviewLoadingMore(false);
-        }
-      }
-    },
-    []
-  );
-
-  const handleSelectReport = (chatRoomId: number) => {
-    setSelectedReportId(chatRoomId);
-  };
-
-  const handleLoadMorePreview = () => {
-    if (!selectedReportId || !previewHasNext || !previewNextCursor || isPreviewLoadingMore) {
-      return;
-    }
-
-    void fetchPreviewMessages({
-      chatRoomId: selectedReportId,
-      cursor: previewNextCursor,
-      append: true,
-    });
-  };
-
-  const openPdfErrorToast = useCallback((message?: string) => {
-    setPdfErrorToastMessage(message || 'PDF 생성에 실패했어요.');
-    setIsPdfErrorToastVisible(true);
-
-    if (pdfErrorToastTimerRef.current) {
-      window.clearTimeout(pdfErrorToastTimerRef.current);
-    }
-
-    pdfErrorToastTimerRef.current = window.setTimeout(() => {
-      setIsPdfErrorToastVisible(false);
-      pdfErrorToastTimerRef.current = null;
-    }, 2800);
-  }, []);
-
-  useEffect(() => {
-    void fetchReportRooms();
-  }, [fetchReportRooms]);
-
-  useEffect(() => {
-    if (!selectedReportId) {
-      setPreviewMessages([]);
-      setPreviewNextCursor('');
-      setPreviewHasNext(false);
-      setIsPreviewLoadError(false);
-      setIsPreviewLoading(false);
-      setIsPreviewLoadingMore(false);
-      return;
-    }
-
-    void fetchPreviewMessages({ chatRoomId: selectedReportId });
-  }, [fetchPreviewMessages, selectedReportId]);
-
-  useEffect(() => {
-    return () => {
-      if (pdfErrorToastTimerRef.current) {
-        window.clearTimeout(pdfErrorToastTimerRef.current);
-      }
-    };
-  }, []);
-
-  const handleOpenReportCompleteModal = async () => {
-    if (!selectedReport || isGeneratingPdf) {
-      return;
-    }
-
-    setIsGeneratingPdf(true);
-
-    try {
-      const response = await reportsApi.createReportPdf(selectedReport.chatRoomId);
-
-      if (!response.success) {
-        openPdfErrorToast('PDF 생성에 실패했어요.');
-        return;
-      }
-
-      setGeneratedPdfFileName(response.fileName || defaultReportFileName);
-      setGeneratedPdfDownloadUrl(response.downloadUrl || '');
-      setIsReportCompleteModalOpen(true);
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      openPdfErrorToast(axiosError.response?.data?.message || 'PDF 생성에 실패했어요.');
-    } finally {
-      setIsGeneratingPdf(false);
-    }
-  };
-
-  const handleCloseReportCompleteModal = () => {
-    setIsReportCompleteModalOpen(false);
-    setIsPdfDownloadErrorVisible(false);
-    setIsDownloadingPdf(false);
-  };
-
-  const handleDownloadGeneratedPdf = async () => {
-    setIsPdfDownloadErrorVisible(false);
-
-    if (!generatedPdfDownloadUrl) {
-      setIsPdfDownloadErrorVisible(true);
-      return;
-    }
-
-    try {
-      setIsDownloadingPdf(true);
-      const response = await axios.get<Blob>(generatedPdfDownloadUrl, {
-        responseType: 'blob',
-        headers: {
-          Accept: 'application/pdf',
-        },
-      });
-      const blob = response.data;
-
-      if (!(blob instanceof Blob) || blob.size === 0) {
-        throw new Error('Downloaded blob is empty');
-      }
-
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = reportFileName || '증빙리포트.pdf';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
-    } catch {
-      // CORS/釉뚮씪?곗? ?뺤콉?쇰줈 blob ?ㅼ슫濡쒕뱶媛 留됲엳??寃쎌슦瑜??鍮꾪븳 fallback
-      // presigned URL? 吏곸젒 ?대룞 ???뺤긽 ?ㅼ슫濡쒕뱶?섎뒗 寃쎌슦媛 留롫떎.
-      try {
-        const fallbackLink = document.createElement('a');
-        fallbackLink.href = generatedPdfDownloadUrl;
-        fallbackLink.download = reportFileName || '증빙리포트.pdf';
-        fallbackLink.target = '_blank';
-        fallbackLink.rel = 'noopener noreferrer';
-        document.body.appendChild(fallbackLink);
-        fallbackLink.click();
-        fallbackLink.remove();
-      } catch {
-        setIsPdfDownloadErrorVisible(true);
-      }
-    } finally {
-      setIsDownloadingPdf(false);
-    }
-  };
+  const {
+    reportItems,
+    selectedReport,
+    selectedReportId,
+    isLoading,
+    hasListError,
+    hasNoData,
+    listErrorDisplayMessage,
+    isPreviewLoadError,
+    isPreviewLoading,
+    isPreviewLoadingMore,
+    previewMessages,
+    previewHasNext,
+    isReportCompleteModalOpen,
+    isGeneratingPdf,
+    reportFileName,
+    isDownloadingPdf,
+    isPdfDownloadErrorVisible,
+    isPdfErrorToastVisible,
+    pdfErrorToastMessage,
+    fetchReportRooms,
+    handleSelectReport,
+    handleLoadMorePreview,
+    retryPreviewMessages,
+    handleOpenReportCompleteModal,
+    handleCloseReportCompleteModal,
+    handleDownloadGeneratedPdf,
+  } = useTeacherReports();
 
   return (
     <ReportsPageContainer>
@@ -286,17 +50,17 @@ export const TeacherReportsPage = () => {
       ) : null}
 
       <ReportListSection>
-        {isLoading ? <StatusText>목록을 불러오는 중이에요...</StatusText> : null}
+        {isLoading ? <StatusText>紐⑸줉??遺덈윭?ㅻ뒗 以묒씠?먯슂...</StatusText> : null}
         {hasListError ? (
           <ErrorPane>
             <ErrorIconWrap>
               <IcError />
             </ErrorIconWrap>
-            <ErrorTitle>대화 목록을 불러올 수 없어요</ErrorTitle>
+            <ErrorTitle>대화 목록을 불러올 수 없어요.</ErrorTitle>
             <ErrorDescription>{listErrorDisplayMessage}</ErrorDescription>
             <RetryButton type="button" onClick={() => void fetchReportRooms()}>
               <IcRefresh />
-              다시 시도
+              ?ㅼ떆 ?쒕룄
             </RetryButton>
           </ErrorPane>
         ) : null}
@@ -306,11 +70,11 @@ export const TeacherReportsPage = () => {
             <EmptyIconWrap>
               <IcInbox />
             </EmptyIconWrap>
-            <EmptyTitle>아직 대화가 없어요</EmptyTitle>
+            <EmptyTitle>아직 데이터가 없어요.</EmptyTitle>
             <EmptyDescription>
-              학부모와의 대화가 시작되면 이곳에서 대화를 선택해
+              ?숇?紐⑥?????붽? ?쒖옉?섎㈃ ?닿납?먯꽌 ??붾? ?좏깮??
               <br />
-              리포트를 생성할 수 있어요.
+              由ы룷?몃? ?앹꽦?????덉뼱??
             </EmptyDescription>
           </EmptyPane>
         ) : null}
@@ -329,7 +93,7 @@ export const TeacherReportsPage = () => {
                     <StudentName>{item.studentName || '-'}</StudentName>
                   </ReportTitleWrap>
                   <LastMessageDate>
-                    마지막 메시지: {formatDateOnly(item.lastMessageAt)}
+                    留덉?留?硫붿떆吏: {formatDateOnly(item.lastMessageAt)}
                   </LastMessageDate>
                 </ReportItemTopRow>
 
@@ -344,7 +108,7 @@ export const TeacherReportsPage = () => {
 
       <PreviewSection>
         <PreviewHeader>
-          <PreviewTitle>미리보기</PreviewTitle>
+          <PreviewTitle>誘몃━蹂닿린</PreviewTitle>
           <PdfButton
             type="button"
             disabled={
@@ -353,7 +117,7 @@ export const TeacherReportsPage = () => {
             onClick={handleOpenReportCompleteModal}
           >
             <IcFile />
-            {isGeneratingPdf ? '생성 중...' : 'PDF 생성하기'}
+            {isGeneratingPdf ? '?앹꽦 以?..' : 'PDF ?앹꽦?섍린'}
           </PdfButton>
         </PreviewHeader>
 
@@ -363,30 +127,23 @@ export const TeacherReportsPage = () => {
               <EmptyIconWrap>
                 <IcFile />
               </EmptyIconWrap>
-              <EmptyTitle>미리볼 대화를 선택해주세요</EmptyTitle>
+              <EmptyTitle>誘몃━蹂???붾? ?좏깮?댁＜?몄슂</EmptyTitle>
               <EmptyDescription>
-                왼쪽 목록에서 대화를 선택하면 대화 리포트를 확인할 수 있어요.
+                ?쇱そ 紐⑸줉?먯꽌 ??붾? ?좏깮?섎㈃ ???由ы룷?몃? ?뺤씤?????덉뼱??
               </EmptyDescription>
             </PreviewEmptyPane>
           ) : isPreviewLoading ? (
-            <StatusText>미리보기를 불러오는 중이에요...</StatusText>
+            <StatusText>誘몃━蹂닿린瑜?遺덈윭?ㅻ뒗 以묒씠?먯슂...</StatusText>
           ) : isPreviewLoadError ? (
             <ErrorPane>
               <ErrorIconWrap>
                 <IcError />
               </ErrorIconWrap>
-              <ErrorTitle>미리보기를 불러올 수 없어요</ErrorTitle>
-              <ErrorDescription>잠시 후 다시 시도해 주세요.</ErrorDescription>
-              <RetryButton
-                type="button"
-                onClick={() =>
-                  selectedReport
-                    ? void fetchPreviewMessages({ chatRoomId: selectedReport.chatRoomId })
-                    : undefined
-                }
-              >
+              <ErrorTitle>미리보기를 불러올 수 없어요.</ErrorTitle>
+              <ErrorDescription>?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??</ErrorDescription>
+              <RetryButton type="button" onClick={retryPreviewMessages}>
                 <IcRefresh />
-                다시 시도
+                ?ㅼ떆 ?쒕룄
               </RetryButton>
             </ErrorPane>
           ) : previewMessages.length === 0 ? (
@@ -394,8 +151,8 @@ export const TeacherReportsPage = () => {
               <EmptyIconWrap>
                 <IcInbox />
               </EmptyIconWrap>
-              <EmptyTitle>미리보기 대화가 없어요</EmptyTitle>
-              <EmptyDescription>선택한 채팅방에 표시할 메시지가 없어요.</EmptyDescription>
+              <EmptyTitle>미리보기 데이터가 없어요.</EmptyTitle>
+              <EmptyDescription>?좏깮??梨꾪똿諛⑹뿉 ?쒖떆??硫붿떆吏媛 ?놁뼱??</EmptyDescription>
             </PreviewEmptyPane>
           ) : (
             <>
@@ -434,7 +191,7 @@ export const TeacherReportsPage = () => {
                   onClick={handleLoadMorePreview}
                   disabled={isPreviewLoadingMore}
                 >
-                  {isPreviewLoadingMore ? '불러오는 중...' : '더 보기'}
+                  {isPreviewLoadingMore ? '遺덈윭?ㅻ뒗 以?..' : '??蹂닿린'}
                 </PreviewLoadMoreButton>
               ) : null}
             </>
@@ -449,8 +206,8 @@ export const TeacherReportsPage = () => {
               <IcFile />
             </ModalIconWrap>
 
-            <ModalTitle>리포트 생성 완료</ModalTitle>
-            <ModalDescription>PDF 파일이 준비되었습니다.</ModalDescription>
+            <ModalTitle>由ы룷???앹꽦 ?꾨즺</ModalTitle>
+            <ModalDescription>PDF ?뚯씪??以鍮꾨릺?덉뒿?덈떎.</ModalDescription>
 
             <FileInfoCard>
               <FileInfoLabel>파일명</FileInfoLabel>
@@ -463,19 +220,19 @@ export const TeacherReportsPage = () => {
                   <IcError />
                 </ModalErrorIcon>
                 <ModalErrorTextWrap>
-                  <ModalErrorTitle>PDF 다운로드에 실패했어요</ModalErrorTitle>
-                  <ModalErrorDescription>잠시 후 다시 시도해 주세요.</ModalErrorDescription>
+                  <ModalErrorTitle>PDF 다운로드에 실패했어요.</ModalErrorTitle>
+                  <ModalErrorDescription>?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??</ModalErrorDescription>
                 </ModalErrorTextWrap>
               </ModalErrorBox>
             ) : null}
 
             <ModalActionRow>
               <ModalGhostButton type="button" onClick={handleCloseReportCompleteModal}>
-                닫기
+                ?リ린
               </ModalGhostButton>
               <ModalPrimaryButton type="button" onClick={() => void handleDownloadGeneratedPdf()}>
                 <IcDownload />
-                {isDownloadingPdf ? '다운로드 중...' : '다운로드'}
+                {isDownloadingPdf ? '?ㅼ슫濡쒕뱶 以?..' : '?ㅼ슫濡쒕뱶'}
               </ModalPrimaryButton>
             </ModalActionRow>
           </ModalCard>
@@ -483,69 +240,6 @@ export const TeacherReportsPage = () => {
       ) : null}
     </ReportsPageContainer>
   );
-};
-
-type IntentType = 'absenceLate' | 'counseling' | 'request' | 'inquiry';
-
-const toIntentType = (label: string): IntentType => {
-  if (/(결석|지각|absence|late)/i.test(label)) {
-    return 'absenceLate';
-  }
-
-  if (/(상담|counsel)/i.test(label)) {
-    return 'counseling';
-  }
-
-  if (/(문의|inquiry)/i.test(label)) {
-    return 'inquiry';
-  }
-
-  return 'request';
-};
-
-const formatDateOnly = (value: string) => {
-  if (!value) {
-    return '-';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value.slice(0, 10) || '-';
-  }
-
-  const year = parsed.getFullYear();
-  const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
-  const day = `${parsed.getDate()}`.padStart(2, '0');
-  return `${year}-${month}-${day}`;
-};
-
-const formatDateTime = (value?: string) => {
-  if (!value) {
-    return '-';
-  }
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) {
-    return value;
-  }
-
-  const year = parsed.getFullYear();
-  const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
-  const day = `${parsed.getDate()}`.padStart(2, '0');
-  const hour24 = parsed.getHours();
-  const minute = `${parsed.getMinutes()}`.padStart(2, '0');
-  const period = hour24 >= 12 ? '오후' : '오전';
-  const hour12 = hour24 % 12 || 12;
-
-  return `${year}-${month}-${day} ${period} ${hour12}:${minute}`;
-};
-
-const formatPreviewName = (name?: string) => {
-  if (!name || !name.trim()) {
-    return '-';
-  }
-
-  return name.replace(' 학부모님', '');
 };
 
 const ReportsPageContainer = styled.div`
