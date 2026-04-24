@@ -40,6 +40,21 @@ export const colors = {
     error: '#FF2C3D',
     errorSoft: '#FAE3E2',
   },
+  overlay: {
+    dim1: 'rgba(0, 0, 0, 0.42)',
+  },
+  shadow: {
+    modal: '0 12px 22px rgba(0, 0, 0, 0.25)',
+  },
+  reports: {
+    toastErrorBorder: '#FF7F89',
+    toastErrorBackground: '#FFF4F5',
+    previewBackground: '#DBE7E3',
+    senderAvatarBackground: '#B8EADD',
+    modalErrorBorder: '#FF6B77',
+    modalErrorBackground: '#FFF5F6',
+    modalErrorText: '#EB4955',
+  },
   intent: {
     absenceLate: {
       text: '#BA420D',

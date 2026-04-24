@@ -5,6 +5,7 @@ import {
   type ReportChatPreviewMessage,
   type ReportChatRoomItem,
 } from '@/services/teacher/reportsApi';
+import { useToast } from '@/hooks/useToast';
 import { formatDateOnly } from '@/utils/reports/reportFormatters';
 
 const PREVIEW_PAGE_SIZE = 30;
@@ -26,10 +27,8 @@ export const useTeacherReports = () => {
   const [generatedPdfDownloadUrl, setGeneratedPdfDownloadUrl] = useState('');
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isPdfDownloadErrorVisible, setIsPdfDownloadErrorVisible] = useState(false);
-  const [isPdfErrorToastVisible, setIsPdfErrorToastVisible] = useState(false);
-  const [pdfErrorToastMessage, setPdfErrorToastMessage] = useState('');
-  const pdfErrorToastTimerRef = useRef<number | null>(null);
   const previewRequestIdRef = useRef(0);
+  const { showToast } = useToast();
 
   const selectedReport = useMemo(
     () => reportItems.find(item => item.chatRoomId === selectedReportId) ?? null,
@@ -159,20 +158,6 @@ export const useTeacherReports = () => {
     void fetchPreviewMessages({ chatRoomId: selectedReportId });
   };
 
-  const openPdfErrorToast = useCallback((message?: string) => {
-    setPdfErrorToastMessage(message || 'PDF 생성에 실패했어요.');
-    setIsPdfErrorToastVisible(true);
-
-    if (pdfErrorToastTimerRef.current) {
-      window.clearTimeout(pdfErrorToastTimerRef.current);
-    }
-
-    pdfErrorToastTimerRef.current = window.setTimeout(() => {
-      setIsPdfErrorToastVisible(false);
-      pdfErrorToastTimerRef.current = null;
-    }, 2800);
-  }, []);
-
   useEffect(() => {
     void fetchReportRooms();
   }, [fetchReportRooms]);
@@ -191,14 +176,6 @@ export const useTeacherReports = () => {
     void fetchPreviewMessages({ chatRoomId: selectedReportId });
   }, [fetchPreviewMessages, selectedReportId]);
 
-  useEffect(() => {
-    return () => {
-      if (pdfErrorToastTimerRef.current) {
-        window.clearTimeout(pdfErrorToastTimerRef.current);
-      }
-    };
-  }, []);
-
   const handleOpenReportCompleteModal = async () => {
     if (!selectedReport || isGeneratingPdf) {
       return;
@@ -210,7 +187,7 @@ export const useTeacherReports = () => {
       const response = await reportsApi.createReportPdf(selectedReport.chatRoomId);
 
       if (!response.success) {
-        openPdfErrorToast('PDF 생성에 실패했어요.');
+        showToast('PDF 생성에 실패했어요.', 'error');
         return;
       }
 
@@ -219,7 +196,7 @@ export const useTeacherReports = () => {
       setIsReportCompleteModalOpen(true);
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
-      openPdfErrorToast(axiosError.response?.data?.message || 'PDF 생성에 실패했어요.');
+      showToast(axiosError.response?.data?.message || 'PDF 생성에 실패했어요.', 'error');
     } finally {
       setIsGeneratingPdf(false);
     }
@@ -297,8 +274,6 @@ export const useTeacherReports = () => {
     reportFileName,
     isDownloadingPdf,
     isPdfDownloadErrorVisible,
-    isPdfErrorToastVisible,
-    pdfErrorToastMessage,
     fetchReportRooms,
     handleSelectReport,
     handleLoadMorePreview,
