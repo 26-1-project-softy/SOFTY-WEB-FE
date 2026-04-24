@@ -29,8 +29,6 @@ export const TeacherReportsPage = () => {
     reportFileName,
     isDownloadingPdf,
     isPdfDownloadErrorVisible,
-    isPdfErrorToastVisible,
-    pdfErrorToastMessage,
     fetchReportRooms,
     handleSelectReport,
     handleLoadMorePreview,
@@ -42,15 +40,6 @@ export const TeacherReportsPage = () => {
 
   return (
     <ReportsPageContainer>
-      {isPdfErrorToastVisible ? (
-        <TopErrorToast role="alert">
-          <TopErrorIconWrap>
-            <IcError />
-          </TopErrorIconWrap>
-          <TopErrorText>{pdfErrorToastMessage}</TopErrorText>
-        </TopErrorToast>
-      ) : null}
-
       <ReportListSection>
         {isLoading ? <StatusText>목록을 불러오는 중이에요...</StatusText> : null}
         {hasListError ? (
@@ -273,38 +262,6 @@ const ReportsPageContainer = styled.div`
   }
 `;
 
-const TopErrorToast = styled.div`
-  position: absolute;
-  top: 12px;
-  left: 50%;
-  z-index: 20;
-  transform: translateX(-50%);
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 1px solid #ff7f89;
-  border-radius: 12px;
-  background: #fff4f5;
-  padding: 6px 12px;
-`;
-
-const TopErrorIconWrap = styled.span`
-  color: ${({ theme }) => theme.colors.semantic.error};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-`;
-
-const TopErrorText = styled.span`
-  ${({ theme }) => theme.fonts.labelXS};
-  color: ${({ theme }) => theme.colors.text.text2};
-`;
-
 const ReportListSection = styled.section`
   width: 52%;
   min-width: 0;
@@ -430,7 +387,7 @@ const PreviewTitle = styled.h3`
 const PreviewBody = styled.div`
   min-height: 620px;
   border-radius: 0 0 24px 24px;
-  background: #dbe7e3;
+  background: ${({ theme }) => theme.colors.reports.previewBackground};
   padding: 22px;
   display: flex;
   flex-direction: column;
@@ -454,7 +411,7 @@ const SenderAvatar = styled.div`
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: #b8eadd;
+  background: ${({ theme }) => theme.colors.reports.senderAvatarBackground};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: inline-flex;
   align-items: center;
@@ -582,7 +539,7 @@ const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: rgba(0, 0, 0, 0.42);
+  background: ${({ theme }) => theme.colors.overlay.dim1};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -594,7 +551,7 @@ const ModalCard = styled.div`
   max-width: 520px;
   border-radius: 16px;
   background: ${({ theme }) => theme.colors.background.bg1};
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.25);
+  box-shadow: ${({ theme }) => theme.colors.shadow.modal};
   padding: 20px;
 `;
 
@@ -651,9 +608,9 @@ const ModalActionRow = styled.div`
 
 const ModalErrorBox = styled.div`
   margin-top: 14px;
-  border: 1px solid #ff6b77;
+  border: 1px solid ${({ theme }) => theme.colors.reports.modalErrorBorder};
   border-radius: 18px;
-  background: #fff5f6;
+  background: ${({ theme }) => theme.colors.reports.modalErrorBackground};
   padding: 14px 16px;
   display: flex;
   align-items: center;
@@ -681,11 +638,11 @@ const ModalErrorTextWrap = styled.div`
 const ModalErrorTitle = styled.p`
   ${({ theme }) => theme.fonts.labelXS};
   margin: 0;
-  color: #eb4955;
+  color: ${({ theme }) => theme.colors.reports.modalErrorText};
 `;
 
 const ModalErrorDescription = styled.p`
   ${({ theme }) => theme.fonts.body3};
   margin: 0;
-  color: #eb4955;
+  color: ${({ theme }) => theme.colors.reports.modalErrorText};
 `;
