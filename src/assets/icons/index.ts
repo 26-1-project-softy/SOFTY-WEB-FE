@@ -1,6 +1,7 @@
 export { default as IcBack } from './ic-back.svg?react';
 export { default as IcBrandLogo } from './ic-brand-logo.svg?react';
 export { default as IcChange } from './ic-change.svg?react';
+export { default as IcChat } from './ic-chat.svg?react';
 export { default as IcCheck } from './ic-check.svg?react';
 export { default as IcCopy } from './ic-copy.svg?react';
 export { default as IcDashboard } from './ic-dashboard.svg?react';
