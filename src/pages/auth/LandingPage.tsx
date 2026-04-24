@@ -1,8 +1,14 @@
-﻿import styled from '@emotion/styled';
-import { useEffect, useMemo } from 'react';
+import styled from '@emotion/styled';
+import { useEffect, useMemo, useState } from 'react';
+import { AxiosError } from 'axios';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { IcKakao } from '@/icons';
+import { useAuth } from '@/hooks/useAuth';
+import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
+import { authApi } from '@/services/auth/authApi';
+import { authSession } from '@/services/auth/authSession';
+import { kakaoApi } from '@/services/auth/kakaoApi';
 import { useToastStore } from '@/stores/toastStore';
 import mockups1 from '@/images/mockups1.png';
 import mockups2 from '@/images/mockups2.png';
@@ -11,6 +17,19 @@ import mockups4 from '@/images/mockups4.png';
 import mockups5 from '@/images/mockups5.png';
 
 const KAKAO_LOGIN_START_ERROR_MESSAGE = '카카오 로그인에 실패했어요.';
+const DEV_LOGIN_ERROR_MESSAGE = '개발용 로그인에 실패했어요.';
+const DEV_LOGIN_PROFILE_FETCH_ERROR_MESSAGE =
+  '개발용 로그인은 성공했지만 사용자 정보 조회에 실패했어요.';
+const DEV_LOGIN_SOCIAL_ID_MISSING_MESSAGE =
+  '개발용 로그인 ID가 설정되지 않았어요. .env의 VITE_DEV_LOGIN_SOCIAL_ID를 확인해주세요.';
+
+const getErrorMessageWithStatus = (error: unknown, fallbackMessage: string) => {
+  const axiosError = error as AxiosError<{ message?: string }>;
+  const message = axiosError.response?.data?.message || axiosError.message || fallbackMessage;
+  const status = axiosError.response?.status;
+
+  return status ? `${message} (HTTP ${status})` : message;
+};
 
 const getKakaoLoginStartUrl = () => {
   const restApiKey =
@@ -35,7 +54,11 @@ export const LandingPage = () => {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const showToast = useToastStore(state => state.showToast);
+  const { setAuth } = useAuth();
+  const [isDevLoggingIn, setIsDevLoggingIn] = useState(false);
   const isDev = import.meta.env.DEV;
+  const isDevAuthBypassEnabled = isDev && import.meta.env.VITE_ENABLE_DEV_AUTH_BYPASS === 'true';
+  const devLoginSocialId = (import.meta.env.VITE_DEV_LOGIN_SOCIAL_ID as string | undefined)?.trim();
 
   const kakaoLoginError = searchParams.get('kakaoLoginError');
   const kakaoLoginUrl = useMemo(() => getKakaoLoginStartUrl(), []);
@@ -62,6 +85,67 @@ export const LandingPage = () => {
     window.location.href = kakaoLoginUrl;
   };
 
+  const handleDevBypassLogin = async (role: 'teacher' | 'admin') => {
+    if (isDevLoggingIn) {
+      return;
+    }
+
+    if (!devLoginSocialId) {
+      showToast(DEV_LOGIN_SOCIAL_ID_MISSING_MESSAGE, 'error');
+      return;
+    }
+
+    try {
+      setIsDevLoggingIn(true);
+      let response;
+
+      try {
+        response = await kakaoApi.devLogin({
+          socialId: devLoginSocialId,
+          role,
+          nickname: role === 'teacher' ? '개발용 교사' : '개발용 관리자',
+        });
+      } catch (error) {
+        showToast(getErrorMessageWithStatus(error, DEV_LOGIN_ERROR_MESSAGE), 'error');
+        return;
+      }
+
+      if (!response.success) {
+        showToast(response.message || DEV_LOGIN_ERROR_MESSAGE, 'error');
+        return;
+      }
+
+      authSession.setTokens({
+        accessToken: response.data.accessToken,
+        refreshToken: response.data.refreshToken,
+      });
+
+      if (response.data.registrationRequired) {
+        navigate(ROUTES.teacherSignUp, { replace: true });
+        return;
+      }
+
+      let me;
+
+      try {
+        me = await authApi.getMe(response.data.accessToken);
+      } catch (error) {
+        showToast(getErrorMessageWithStatus(error, DEV_LOGIN_PROFILE_FETCH_ERROR_MESSAGE), 'error');
+        return;
+      }
+
+      setAuth({
+        isAuthenticated: true,
+        role: me.role,
+        user: me.user,
+      });
+
+      navigate(getDefaultRouteByRole(me.role), { replace: true });
+    } finally {
+      setIsDevLoggingIn(false);
+    }
+  };
+
   const handleScrollToFeature = () => {
     const target = document.getElementById('landing-feature-section');
 
@@ -78,6 +162,24 @@ export const LandingPage = () => {
       <Header>
         <Logo>소프티</Logo>
         <HeaderActions>
+          {isDevAuthBypassEnabled ? (
+            <DevQuickLoginWrap>
+              <DevQuickLoginButton
+                type="button"
+                onClick={() => handleDevBypassLogin('teacher')}
+                disabled={isDevLoggingIn}
+              >
+                {isDevLoggingIn ? '로그인 중...' : '교사 빠른 로그인'}
+              </DevQuickLoginButton>
+              <DevQuickLoginButton
+                type="button"
+                onClick={() => handleDevBypassLogin('admin')}
+                disabled={isDevLoggingIn}
+              >
+                {isDevLoggingIn ? '로그인 중...' : '관리자 빠른 로그인'}
+              </DevQuickLoginButton>
+            </DevQuickLoginWrap>
+          ) : null}
           <GhostButton type="button" onClick={handleGoAdminLogin}>
             관리자 로그인
           </GhostButton>
@@ -259,6 +361,20 @@ const HeaderActions = styled.div`
   display: flex;
   gap: 10px;
   align-items: center;
+`;
+
+const DevQuickLoginWrap = styled.div`
+  display: flex;
+  gap: 6px;
+`;
+
+const DevQuickLoginButton = styled.button`
+  ${({ theme }) => theme.fonts.caption};
+  border: 1px dashed #85aca7;
+  border-radius: 10px;
+  background: #e9f6f4;
+  color: #2f625b;
+  padding: 9px 10px;
 `;
 
 const GhostButton = styled.button`

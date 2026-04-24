@@ -1,13 +1,13 @@
 import { apiClient } from '@/services/http/apiClient';
 
 export type ReportChatRoomItemResponse = {
-  chatRoomId?: number;
-  parentName?: string | null;
-  studentName?: string | null;
-  intentType?: string | null;
-  intentLabel?: string | null;
-  status?: string | null;
-  lastMessageAt?: string | null;
+  chatRoomId: number;
+  parentName: string;
+  studentName: string;
+  intentType: string;
+  intentLabel: string;
+  status: string;
+  lastMessageAt: string;
 };
 
 export type ReportChatRoomsResponse = {
@@ -15,12 +15,12 @@ export type ReportChatRoomsResponse = {
   code: number;
   message: string;
   data?: {
-    items?: ReportChatRoomItemResponse[] | null;
-    page?: number;
-    size?: number;
-    totalElements?: number;
-    totalPages?: number;
-    hasNext?: boolean;
+    items: ReportChatRoomItemResponse[];
+    page: number;
+    size: number;
+    totalElements: number;
+    totalPages: number;
+    hasNext: boolean;
   } | null;
 };
 
@@ -50,27 +50,32 @@ export type CreateReportPdfResponse = {
   code: number;
   message: string;
   data?: {
-    pdfId?: number;
-    fileName?: string | null;
-    downloadUrl?: string | null;
-    expiresInSeconds?: number;
+    pdfId: number;
+    fileName: string;
+    downloadUrl: string;
+    expiresInSeconds: number;
   } | null;
 };
 
-export type CreateReportPdfResult = {
-  success: boolean;
-  message: string;
-  pdfId: number | null;
-  fileName: string;
-  downloadUrl: string;
-  expiresInSeconds: number | null;
-};
+export type CreateReportPdfResult =
+  | {
+      success: true;
+      message: string;
+      pdfId: number;
+      fileName: string;
+      downloadUrl: string;
+      expiresInSeconds: number;
+    }
+  | {
+      success: false;
+      message: string;
+    };
 
 export type ReportChatPreviewMessageResponse = {
-  messageId?: number;
-  isMine?: boolean;
-  content?: string | null;
-  createdAt?: string | null;
+  messageId: number;
+  isMine: boolean;
+  content: string;
+  createdAt: string;
 };
 
 export type ReportChatPreviewResponse = {
@@ -78,10 +83,10 @@ export type ReportChatPreviewResponse = {
   code: number;
   message: string;
   data?: {
-    chatRoomId?: number;
-    messages?: ReportChatPreviewMessageResponse[] | null;
-    nextCursor?: string | number | null;
-    hasNext?: boolean;
+    chatRoomId: number;
+    messages: ReportChatPreviewMessageResponse[];
+    nextCursor: number | null;
+    hasNext: boolean;
   } | null;
 };
 
@@ -95,10 +100,18 @@ export type ReportChatPreviewMessage = {
 export type ReportChatPreviewResult = {
   success: boolean;
   message: string;
-  chatRoomId: number | null;
+  chatRoomId: number;
   messages: ReportChatPreviewMessage[];
-  nextCursor: string;
+  nextCursor: number | null;
   hasNext: boolean;
+};
+
+const ensureResponseData = <T>(payload: T | null | undefined, context: string): T => {
+  if (!payload) {
+    throw new Error(`${context}: data is missing`);
+  }
+
+  return payload;
 };
 
 export const reportsApi = {
@@ -106,28 +119,17 @@ export const reportsApi = {
     const { data } = await apiClient.get<ReportChatRoomsResponse>('/reports/chat-rooms', {
       params,
     });
-    const payload = data.data;
-    const items = payload?.items;
+    const payload = ensureResponseData(data.data, 'Report chat rooms response');
 
     return {
       success: data.success,
       message: data.message,
-      data: Array.isArray(items)
-        ? items.map(item => ({
-            chatRoomId: item.chatRoomId ?? 0,
-            parentName: item.parentName ?? '',
-            studentName: item.studentName ?? '',
-            intentType: item.intentType ?? '',
-            intentLabel: item.intentLabel ?? '',
-            status: item.status ?? '',
-            lastMessageAt: item.lastMessageAt ?? '',
-          }))
-        : [],
-      page: payload?.page ?? 0,
-      size: payload?.size ?? 0,
-      totalElements: payload?.totalElements ?? 0,
-      totalPages: payload?.totalPages ?? 0,
-      hasNext: payload?.hasNext ?? false,
+      data: payload.items,
+      page: payload.page,
+      size: payload.size,
+      totalElements: payload.totalElements,
+      totalPages: payload.totalPages,
+      hasNext: payload.hasNext,
     } satisfies ReportChatRoomsResult;
   },
   createReportPdf: async (chatRoomId: number) => {
@@ -135,48 +137,54 @@ export const reportsApi = {
       `/reports/chat-rooms/${chatRoomId}/pdfs`
     );
 
+    if (!data.success) {
+      return {
+        success: false,
+        message: data.message,
+      } satisfies CreateReportPdfResult;
+    }
+
+    const payload = ensureResponseData(data.data, 'Create report PDF response');
+
     return {
-      success: data.success,
+      success: true,
       message: data.message,
-      pdfId: data.data?.pdfId ?? null,
-      fileName: data.data?.fileName ?? '',
-      downloadUrl: data.data?.downloadUrl ?? '',
-      expiresInSeconds: data.data?.expiresInSeconds ?? null,
+      pdfId: payload.pdfId,
+      fileName: payload.fileName,
+      downloadUrl: payload.downloadUrl,
+      expiresInSeconds: payload.expiresInSeconds,
     } satisfies CreateReportPdfResult;
   },
   getReportChatRoomPreview: async (
     chatRoomId: number,
     params?: {
-      cursor?: string;
+      cursor?: number;
       size?: number;
     }
   ) => {
+    const requestParams: { size: number; cursor?: number } = {
+      size: params?.size ?? 30,
+    };
+
+    if (params?.cursor != null) {
+      requestParams.cursor = params.cursor;
+    }
+
     const { data } = await apiClient.get<ReportChatPreviewResponse>(
       `/reports/chat-rooms/${chatRoomId}/preview`,
       {
-        params: {
-          cursor: params?.cursor ?? '',
-          size: params?.size ?? 30,
-        },
+        params: requestParams,
       }
     );
-    const payload = data.data;
-    const messages = payload?.messages;
+    const payload = ensureResponseData(data.data, 'Report chat preview response');
 
     return {
       success: data.success,
       message: data.message,
-      chatRoomId: payload?.chatRoomId ?? null,
-      messages: Array.isArray(messages)
-        ? messages.map(message => ({
-            messageId: message.messageId ?? 0,
-            isMine: message.isMine ?? false,
-            content: message.content ?? '',
-            createdAt: message.createdAt ?? '',
-          }))
-        : [],
-      nextCursor: payload?.nextCursor == null ? '' : String(payload.nextCursor),
-      hasNext: payload?.hasNext ?? false,
+      chatRoomId: payload.chatRoomId,
+      messages: payload.messages,
+      nextCursor: payload.nextCursor,
+      hasNext: payload.hasNext,
     } satisfies ReportChatPreviewResult;
   },
 };

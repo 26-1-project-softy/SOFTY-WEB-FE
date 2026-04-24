@@ -107,16 +107,22 @@ export const TeacherReportsPage = () => {
       <PreviewSection>
         <PreviewHeader>
           <PreviewTitle>미리보기</PreviewTitle>
-          <InlineButton
-            variant="primary"
-            size="L"
-            icon={IcFile}
-            label={isGeneratingPdf ? '생성 중...' : 'PDF 생성하기'}
-            disabled={
-              !selectedReport || hasNoData || hasListError || isPreviewLoadError || isGeneratingPdf
-            }
-            onClick={() => void handleOpenReportCompleteModal()}
-          />
+          <PreviewHeaderAction>
+            <InlineButton
+              variant="primary"
+              size="L"
+              icon={IcFile}
+              label={isGeneratingPdf ? '생성 중...' : 'PDF 생성하기'}
+              disabled={
+                !selectedReport ||
+                hasNoData ||
+                hasListError ||
+                isPreviewLoadError ||
+                isGeneratingPdf
+              }
+              onClick={() => void handleOpenReportCompleteModal()}
+            />
+          </PreviewHeaderAction>
         </PreviewHeader>
 
         <PreviewBody>
@@ -380,6 +386,14 @@ const PreviewHeader = styled.div`
   padding: 12px 20px;
   border-radius: 20px 20px 0 0;
   background: ${({ theme }) => theme.colors.background.bg1};
+`;
+
+const PreviewHeaderAction = styled.div`
+  flex-shrink: 0;
+
+  button {
+    margin: 0;
+  }
 `;
 
 const PreviewTitle = styled.h3`
