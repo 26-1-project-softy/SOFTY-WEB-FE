@@ -48,6 +48,10 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
+            element: <Navigate to="thread-list" replace />,
+          },
+          {
+            path: 'thread-list',
             element: <TeacherThreadListPage />,
             handle: {
               title: '수신함',
@@ -99,7 +103,7 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="dashboard" />,
+            element: <Navigate to="dashboard" replace />,
           },
           {
             path: 'dashboard',
