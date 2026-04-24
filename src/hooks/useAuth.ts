@@ -1,21 +1,24 @@
 import { useAuthStore } from '@/stores/authStore';
 
 export const useAuth = () => {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
+  const authStatus = useAuthStore(state => state.authStatus);
   const role = useAuthStore(state => state.role);
   const user = useAuthStore(state => state.user);
   const isAuthInitialized = useAuthStore(state => state.isAuthInitialized);
-  const setAuth = useAuthStore(state => state.setAuth);
+  const setSignedOut = useAuthStore(state => state.setSignedOut);
+  const setSignupRequired = useAuthStore(state => state.setSignupRequired);
+  const setSignedIn = useAuthStore(state => state.setSignedIn);
   const setAuthInitialized = useAuthStore(state => state.setAuthInitialized);
-  const clearAuth = useAuthStore(state => state.clearAuth);
 
   return {
-    isAuthenticated,
+    authStatus,
     role,
     user,
     isAuthInitialized,
-    setAuth,
+    setSignedOut,
+    setSignupRequired,
+    setSignedIn,
     setAuthInitialized,
-    clearAuth,
+    isAuthenticated: authStatus !== 'SIGNED_OUT',
   };
 };

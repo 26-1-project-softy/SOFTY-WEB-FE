@@ -1,67 +1,129 @@
 import styled from '@emotion/styled';
-import type { AuthRole } from '@/stores/authStore';
+import { useTheme } from '@emotion/react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/hooks/useAuth';
-import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
+import { Header } from '@/components/common/Header';
+import { InlineButton } from '@/components/common/InlineButton';
+import {
+  KakaoLoginButton,
+  LandingHeroSection,
+  LandingSignupSection,
+  LandingAiAnalysisSection,
+  LandingReportSection,
+  LandingCtaSection,
+  ParentAppInstallDialog,
+} from '@/components/auth/landing';
+import { EXTERNAL_LINKS, landingContent } from '@/constants/landing';
+import { ROUTES } from '@/constants/routes';
 
-// 테스트용 role 타입
-type MockLoginRole = Exclude<AuthRole, null>;
+const LANDING_FEATURE_SECTION_ID = 'landing-feature-section';
 
 export const LandingPage = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
-  const { setAuth } = useAuth();
+  const [isParentAppInstallDialogOpen, setIsParentAppInstallDialogOpen] = useState(false);
 
-  const handleMockLogin = (role: MockLoginRole) => {
-    // TODO: 실제 로그인 구현 시 제거하고 API 연동 로직으로 교체
-    // 인증 API 연동 전 라우트 가드, 레이아웃, Sidebar 표시를 확인하기 위한 개발용 mock 로그인
-    setAuth({
-      isAuthenticated: true,
-      role,
-      user:
-        role === 'teacher'
-          ? {
-              name: '홍길동',
-              grade: 3,
-              classNumber: 2,
-            }
-          : {
-              name: '관리자',
-            },
+  const handleGoAdminLogin = () => {
+    navigate(ROUTES.adminLogin);
+  };
+
+  const handleScrollToFeature = () => {
+    const target = document.getElementById(LANDING_FEATURE_SECTION_ID);
+
+    if (!target) {
+      return;
+    }
+
+    target.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
     });
+  };
 
-    navigate(getDefaultRouteByRole(role), { replace: true });
+  const handleOpenParentAppInstallDialog = () => {
+    setIsParentAppInstallDialogOpen(true);
+  };
+
+  const handleCloseParentAppInstallDialog = () => {
+    setIsParentAppInstallDialogOpen(false);
+  };
+
+  const handleOpenDistributionPage = () => {
+    const openedWindow = window.open(
+      EXTERNAL_LINKS.parentAppDistribution,
+      '_blank',
+      'noopener,noreferrer'
+    );
+
+    if (!openedWindow) {
+      window.location.href = EXTERNAL_LINKS.parentAppDistribution;
+    }
   };
 
   return (
-    <LandingPageContainer title="랜딩 페이지">
-      <Actions>
-        <ActionButton type="button" onClick={() => handleMockLogin('teacher')}>
-          교사 로그인
-        </ActionButton>
-        <ActionButton type="button" onClick={() => handleMockLogin('admin')}>
-          관리자 로그인
-        </ActionButton>
-      </Actions>
+    <LandingPageContainer>
+      <Header
+        title="SOFTY"
+        hasLogo
+        titleColor={theme.colors.brand.primary}
+        actions={
+          <HeaderActionContainer>
+            <InlineButton
+              variant="ghost"
+              size="L"
+              label="관리자 로그인"
+              onClick={handleGoAdminLogin}
+            />
+            <KakaoLoginButton />
+          </HeaderActionContainer>
+        }
+      />
+
+      <LandingHeroSection
+        content={landingContent.hero}
+        onOpenParentAppInstallDialog={handleOpenParentAppInstallDialog}
+        onScrollToFeature={handleScrollToFeature}
+      />
+
+      <LandingSignupSection id={LANDING_FEATURE_SECTION_ID} content={landingContent.signup} />
+
+      <LandingAiAnalysisSection content={landingContent.aiAnalysis} />
+
+      <LandingReportSection content={landingContent.report} />
+
+      <LandingCtaSection
+        content={landingContent.cta}
+        onOpenParentAppInstallDialog={handleOpenParentAppInstallDialog}
+        onScrollToFeature={handleScrollToFeature}
+      />
+
+      <Footer>© 2026, 소프티 All rights reserved.</Footer>
+
+      <ParentAppInstallDialog
+        isOpen={isParentAppInstallDialogOpen}
+        onClose={handleCloseParentAppInstallDialog}
+        onOpenDistributionPage={handleOpenDistributionPage}
+      />
     </LandingPageContainer>
   );
 };
 
 const LandingPageContainer = styled.div`
-  display: flex;
-  flex-direction: column;
-  padding: 24px;
-`;
-
-const Actions = styled.div`
-  display: flex;
-  gap: 12px;
-  margin-top: 16px;
-`;
-
-const ActionButton = styled.button`
-  padding: 10px 14px;
-  border: 1px solid #d1d5db;
-  border-radius: 10px;
+  min-height: 100vh;
   background: ${({ theme }) => theme.colors.background.bg1};
-  cursor: pointer;
+`;
+
+const HeaderActionContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+`;
+
+const Footer = styled.footer`
+  padding: 16px;
+  text-align: center;
+  border-top: 1px solid ${({ theme }) => theme.colors.border.border1};
+  ${({ theme }) => theme.fonts.caption};
+  color: ${({ theme }) => theme.colors.text.text4};
 `;
