@@ -29,7 +29,7 @@ export const ParentAppInstallDialog = ({
   };
 
   return (
-    <Dialog isOpen={isOpen} onClose={onClose} maxWidth={720}>
+    <Dialog isOpen={isOpen} onClose={onClose}>
       <DialogHeader
         icon={IcDownload}
         title="학부모 앱 설치"
