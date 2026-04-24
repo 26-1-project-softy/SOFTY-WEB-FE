@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
-import type { IconComponent } from '@/components/common/IconBadge';
 import { useTheme } from '@emotion/react';
+import type { IconComponent } from '@/types/icon';
 
 type ButtonSize = 'M' | 'L';
 type ButtonVariants = 'primary' | 'ghost' | 'text';
