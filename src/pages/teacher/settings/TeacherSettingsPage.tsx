@@ -1,13 +1,12 @@
-﻿import styled from '@emotion/styled';
+import styled from '@emotion/styled';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
+import { useOutletContext } from 'react-router-dom';
+import { InlineButton } from '@/components/common/InlineButton';
 import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
-import { authApi, type TeacherSetting } from '@/services/auth/authApi';
+import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
+import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
 import { useToast } from '@/hooks/useToast';
-import {
-  TEACHER_SETTINGS_RESET_EVENT,
-  TEACHER_SETTINGS_SAVE_EVENT,
-} from '@/constants/teacherSettingsEvents';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
@@ -108,6 +107,7 @@ const extractClassNumber = (raw: string) => {
 
 export const TeacherSettingsPage = () => {
   const { showToast } = useToast();
+  const { setHeaderActions } = useOutletContext<AppLayoutOutletContext>();
   const [setting, setSetting] = useState<TeacherSetting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -133,7 +133,7 @@ export const TeacherSettingsPage = () => {
       try {
         setIsLoading(true);
         setErrorMessage('');
-        const response = await authApi.getTeacherSetting();
+        const response = await teacherApi.getTeacherSetting();
 
         if (!isMounted) {
           return;
@@ -233,7 +233,7 @@ export const TeacherSettingsPage = () => {
     try {
       setIsClassChangeSubmitting(true);
       setClassChangeErrorTitle('');
-      const response = await authApi.changeTeacherClass({
+      const response = await teacherApi.changeTeacherClass({
         schoolName: schoolNameInput.trim(),
         grade: Number(gradeInput),
         class: classNumber,
@@ -380,7 +380,7 @@ export const TeacherSettingsPage = () => {
         };
       });
 
-      const response = await authApi.changeTeacherWorkHours({ schedules });
+      const response = await teacherApi.changeTeacherWorkHours({ schedules });
 
       if (!response.success) {
         const failMessage = response.message?.trim()
@@ -428,19 +428,37 @@ export const TeacherSettingsPage = () => {
     }
   }, [isLoading, isSavingWorkHours, showToast, workdays]);
 
-  useEffect(() => {
-    const handleSaveEvent = () => {
-      void handleSaveWorkHours();
-    };
+  const headerActions = useMemo(
+    () => (
+      <>
+        <InlineButton
+          variant="ghost"
+          size="L"
+          label="취소"
+          disabled={isLoading || isSavingWorkHours}
+          onClick={handleResetWorkHours}
+        />
+        <InlineButton
+          variant="primary"
+          size="L"
+          label={isSavingWorkHours ? '저장 중...' : '변경사항 저장'}
+          disabled={isLoading || isSavingWorkHours}
+          onClick={() => {
+            void handleSaveWorkHours();
+          }}
+        />
+      </>
+    ),
+    [handleResetWorkHours, handleSaveWorkHours, isLoading, isSavingWorkHours]
+  );
 
-    window.addEventListener(TEACHER_SETTINGS_SAVE_EVENT, handleSaveEvent);
-    window.addEventListener(TEACHER_SETTINGS_RESET_EVENT, handleResetWorkHours);
+  useEffect(() => {
+    setHeaderActions(headerActions);
 
     return () => {
-      window.removeEventListener(TEACHER_SETTINGS_SAVE_EVENT, handleSaveEvent);
-      window.removeEventListener(TEACHER_SETTINGS_RESET_EVENT, handleResetWorkHours);
+      setHeaderActions(undefined);
     };
-  }, [handleResetWorkHours, handleSaveWorkHours]);
+  }, [headerActions, setHeaderActions]);
 
   return (
     <PageContainer>

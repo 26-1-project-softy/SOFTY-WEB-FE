@@ -1,42 +1,32 @@
 import styled from '@emotion/styled';
-import { Outlet, useMatches } from 'react-router-dom';
-import { Sidebar } from '@/components/common/Sidebar';
+import { type ReactNode, useState } from 'react';
+import { Outlet, useLocation, useMatches } from 'react-router-dom';
 import { Header } from '@/components/common/Header';
-import {
-  TEACHER_SETTINGS_RESET_EVENT,
-  TEACHER_SETTINGS_SAVE_EVENT,
-} from '@/constants/teacherSettingsEvents';
+import { Sidebar } from '@/components/common/Sidebar';
 import type { AppRouteHandle } from '@/router/types';
 
 type AppRouteMatch = {
   handle?: AppRouteHandle;
 };
 
+export type AppLayoutOutletContext = {
+  setHeaderActions: (actions?: ReactNode) => void;
+};
+
 export const AppLayout = () => {
   const matches = useMatches() as AppRouteMatch[];
+  const { pathname } = useLocation();
+  const [headerActionState, setHeaderActionState] = useState<{
+    pathname: string;
+    actions?: ReactNode;
+  }>({ pathname });
 
   const currentHeader = [...matches].reverse().find(match => match.handle != null)?.handle;
-  const dispatchTeacherSettingsEvent = (eventName: string) => {
-    window.dispatchEvent(new CustomEvent(eventName));
-  };
-
   const headerActions =
-    currentHeader?.actionType === 'teacherSettings' ? (
-      <>
-        <GhostButton
-          type="button"
-          onClick={() => dispatchTeacherSettingsEvent(TEACHER_SETTINGS_RESET_EVENT)}
-        >
-          취소
-        </GhostButton>
-        <PrimaryButton
-          type="button"
-          onClick={() => dispatchTeacherSettingsEvent(TEACHER_SETTINGS_SAVE_EVENT)}
-        >
-          변경사항 저장
-        </PrimaryButton>
-      </>
-    ) : undefined;
+    headerActionState.pathname === pathname ? headerActionState.actions : undefined;
+  const setHeaderActions = (actions?: ReactNode) => {
+    setHeaderActionState({ pathname, actions });
+  };
 
   return (
     <Shell>
@@ -44,7 +34,7 @@ export const AppLayout = () => {
       <Main>
         {currentHeader && <Header title={currentHeader.title} actions={headerActions} />}
         <Content>
-          <Outlet />
+          <Outlet context={{ setHeaderActions }} />
         </Content>
       </Main>
     </Shell>
@@ -66,22 +56,4 @@ const Main = styled.div`
 
 const Content = styled.main`
   flex: 1;
-`;
-
-const GhostButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  padding: 10px 18px;
-`;
-
-const PrimaryButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: none;
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.brand.primary};
-  color: ${({ theme }) => theme.colors.text.textW};
-  padding: 10px 18px;
 `;
