@@ -5,7 +5,7 @@ import { IcKakao } from '@/icons';
 
 export const KakaoLoginButton = () => {
   const theme = useTheme();
-  const { isKakaoLoginLoading, handleKakaoLogin } = useTeacherKakaoLogin();
+  const { isKakaoLoginPending, handleKakaoLogin } = useTeacherKakaoLogin();
 
   return (
     <InlineButton
@@ -17,7 +17,7 @@ export const KakaoLoginButton = () => {
       activeBgColor={theme.colors.kakao.active}
       color={theme.colors.text.text1}
       onClick={handleKakaoLogin}
-      disabled={isKakaoLoginLoading}
+      disabled={isKakaoLoginPending}
     />
   );
 };
