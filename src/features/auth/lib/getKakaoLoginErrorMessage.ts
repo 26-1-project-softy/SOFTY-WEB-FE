@@ -1,12 +1,19 @@
 import { AxiosError } from 'axios';
-import { getAuthErrorMessage } from '@/features/auth/lib/getAuthErrorMessage';
+import {
+  getAuthErrorMessage,
+  type AuthErrorMessage,
+} from '@/features/auth/lib/getAuthErrorMessage';
 
-const KAKAO_LOGIN_ERROR_MESSAGE = '카카오 로그인에 실패했어요. 잠시 후 다시 시도해 주세요.';
+const KAKAO_LOGIN_ERROR_MESSAGE: AuthErrorMessage = {
+  title: '카카오 로그인에 실패했어요',
+  description: '잠시 후 다시 시도해 주세요.',
+};
 
-export const getKakaoLoginErrorMessage = (error: unknown): string | null => {
+export const getKakaoLoginErrorMessage = (error: unknown): AuthErrorMessage | null => {
   if (error instanceof AxiosError) {
-    const message = getAuthErrorMessage(error, '');
-    const normalizedMessage = message.toLowerCase();
+    const responseMessage = error.response?.data?.message;
+    const errorMessage = error.message.trim();
+    const normalizedMessage = `${responseMessage ?? ''} ${errorMessage}`.toLowerCase();
 
     if (
       normalizedMessage.includes('cancel') ||
@@ -16,15 +23,9 @@ export const getKakaoLoginErrorMessage = (error: unknown): string | null => {
       return null;
     }
 
-    if (normalizedMessage.includes('network')) {
-      return '네트워크 연결을 확인한 뒤 다시 시도해 주세요.';
-    }
+    const authErrorMessage = getAuthErrorMessage(error, KAKAO_LOGIN_ERROR_MESSAGE);
 
-    if (message) {
-      return message;
-    }
-
-    return KAKAO_LOGIN_ERROR_MESSAGE;
+    return authErrorMessage;
   }
 
   if (error instanceof Error) {
@@ -40,11 +41,17 @@ export const getKakaoLoginErrorMessage = (error: unknown): string | null => {
     }
 
     if (normalizedMessage.includes('network')) {
-      return '네트워크 연결을 확인한 뒤 다시 시도해 주세요.';
+      return {
+        title: '서버에 연결할 수 없어요',
+        description: '네트워크 연결을 확인한 뒤 다시 시도해 주세요.',
+      };
     }
 
     if (message) {
-      return message;
+      return {
+        title: message,
+        description: KAKAO_LOGIN_ERROR_MESSAGE.description,
+      };
     }
 
     return KAKAO_LOGIN_ERROR_MESSAGE;

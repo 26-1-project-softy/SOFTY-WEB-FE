@@ -1,7 +1,11 @@
+import { AxiosError } from 'axios';
 import { useMemo, useState, type ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { getAuthErrorMessage } from '@/features/auth/lib/getAuthErrorMessage';
+import {
+  getAuthErrorMessage,
+  type AuthErrorMessage,
+} from '@/features/auth/lib/getAuthErrorMessage';
 import { authApi, authSession, teacherAuthApi } from '@/services/auth';
 import { ROUTES } from '@/constants/routes';
 
@@ -12,12 +16,9 @@ type FieldErrors = {
   classNumber?: string;
 };
 
-type GlobalError = {
-  title: string;
-  description: string;
-} | null;
+type GlobalError = AuthErrorMessage | null;
 
-const FORM_ERROR_FALLBACK: GlobalError = {
+const FORM_ERROR_FALLBACK: AuthErrorMessage = {
   title: '회원가입 중 문제가 발생했어요',
   description: '잠시 후 다시 시도해 주세요.',
 };
@@ -116,22 +117,20 @@ export const useTeacherSignUpForm = () => {
 
       navigate(ROUTES.teacherThreadList, { replace: true });
     } catch (error) {
-      const message = getAuthErrorMessage(error, FORM_ERROR_FALLBACK.title);
+      if (error instanceof AxiosError) {
+        const status = error.response?.status;
 
-      if (
-        message === '인증 정보가 유효하지 않아요. 다시 시도해 주세요.' ||
-        message === '접근 권한이 없어요.'
-      ) {
-        authSession.clearSession();
-        setSignedOut();
-        navigate(ROUTES.root, { replace: true });
-        return;
+        if (status === 401 || status === 403) {
+          authSession.clearSession();
+          setSignedOut();
+          navigate(ROUTES.root, { replace: true });
+          return;
+        }
       }
 
-      setGlobalError({
-        title: message,
-        description: FORM_ERROR_FALLBACK.description,
-      });
+      const nextErrorState = getAuthErrorMessage(error, FORM_ERROR_FALLBACK);
+
+      setGlobalError(nextErrorState);
     } finally {
       setIsSubmitting(false);
     }

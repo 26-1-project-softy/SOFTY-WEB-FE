@@ -17,10 +17,10 @@ export const useTeacherKakaoLogin = () => {
     }
 
     if (!kakaoLoginUrl) {
-      const toastMessage = getKakaoLoginErrorMessage(new Error(KAKAO_LOGIN_ERROR_MESSAGE));
+      const toastError = getKakaoLoginErrorMessage(new Error(KAKAO_LOGIN_ERROR_MESSAGE));
 
-      if (toastMessage) {
-        showToast(toastMessage, 'error');
+      if (toastError) {
+        showToast(toastError.title, 'error');
       }
 
       if (import.meta.env.DEV) {

@@ -46,12 +46,12 @@ export const useTeacherKakaoCallback = () => {
         const kakaoErrorDescription = getKakaoErrorDescriptionFromQuery(location.search);
 
         if (kakaoError) {
-          const toastMessage = getKakaoLoginErrorMessage(
+          const toastError = getKakaoLoginErrorMessage(
             new Error(kakaoErrorDescription || kakaoError)
           );
 
-          if (toastMessage) {
-            showToast(toastMessage, 'error');
+          if (toastError) {
+            showToast(toastError.title, 'error');
           }
 
           navigate(ROUTES.root, { replace: true });
@@ -62,10 +62,10 @@ export const useTeacherKakaoCallback = () => {
         const redirectUri = import.meta.env.VITE_KAKAO_REDIRECT_URI as string | undefined;
 
         if (!code || !redirectUri) {
-          const toastMessage = getKakaoLoginErrorMessage(new Error(KAKAO_LOGIN_ERROR_MESSAGE));
+          const toastError = getKakaoLoginErrorMessage(new Error(KAKAO_LOGIN_ERROR_MESSAGE));
 
-          if (toastMessage) {
-            showToast(toastMessage, 'error');
+          if (toastError) {
+            showToast(toastError.title, 'error');
           }
 
           navigate(ROUTES.root, { replace: true });
@@ -78,12 +78,12 @@ export const useTeacherKakaoCallback = () => {
         });
 
         if (!response.success || !response.data?.accessToken || !response.data?.refreshToken) {
-          const toastMessage = getKakaoLoginErrorMessage(
+          const toastError = getKakaoLoginErrorMessage(
             new Error(response.message || KAKAO_LOGIN_ERROR_MESSAGE)
           );
 
-          if (toastMessage) {
-            showToast(toastMessage, 'error');
+          if (toastError) {
+            showToast(toastError.title, 'error');
           }
 
           authSession.clearSession();
@@ -117,10 +117,10 @@ export const useTeacherKakaoCallback = () => {
         authSession.clearSession();
         setSignedOut();
 
-        const toastMessage = getKakaoLoginErrorMessage(error);
+        const toastError = getKakaoLoginErrorMessage(error);
 
-        if (toastMessage) {
-          showToast(toastMessage, 'error');
+        if (toastError) {
+          showToast(toastError.title, 'error');
         }
 
         if (import.meta.env.DEV) {

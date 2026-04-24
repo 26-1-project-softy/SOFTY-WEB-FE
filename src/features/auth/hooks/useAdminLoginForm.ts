@@ -1,17 +1,18 @@
+import { AxiosError } from 'axios';
 import { useMemo, useState, type ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { getAuthErrorMessage } from '@/features/auth/lib/getAuthErrorMessage';
+import {
+  getAuthErrorMessage,
+  type AuthErrorMessage,
+} from '@/features/auth/lib/getAuthErrorMessage';
 import { adminAuthApi, authApi, authSession } from '@/services/auth';
 import { useToastStore } from '@/stores/toastStore';
 import { ROUTES } from '@/constants/routes';
 
-type LoginErrorState = {
-  title: string;
-  description: string;
-} | null;
+type LoginErrorState = AuthErrorMessage | null;
 
-const DEFAULT_LOGIN_ERROR: LoginErrorState = {
+const DEFAULT_LOGIN_ERROR: AuthErrorMessage = {
   title: '아이디 또는 비밀번호가 올바르지 않아요',
   description: '입력한 정보를 다시 확인해 주세요.',
 };
@@ -68,13 +69,13 @@ export const useAdminLoginForm = () => {
         authSession.clearSession();
         setSignedOut();
 
-        const message = response.message || DEFAULT_LOGIN_ERROR.title;
-
-        setLoginError({
-          title: message,
+        const nextErrorState: AuthErrorMessage = {
+          title: response.message || DEFAULT_LOGIN_ERROR.title,
           description: DEFAULT_LOGIN_ERROR.description,
-        });
-        showToast(message, 'error');
+        };
+
+        setLoginError(nextErrorState);
+        showToast(nextErrorState.title, 'error');
         return;
       }
 
@@ -89,13 +90,13 @@ export const useAdminLoginForm = () => {
         authSession.clearSession();
         setSignedOut();
 
-        const message = '관리자 계정만 로그인할 수 있어요.';
+        const nextErrorState: AuthErrorMessage = {
+          title: '관리자 계정만 로그인할 수 있어요',
+          description: '교사 계정은 카카오 로그인을 이용해 주세요.',
+        };
 
-        setLoginError({
-          title: message,
-          description: DEFAULT_LOGIN_ERROR.description,
-        });
-        showToast(message, 'error');
+        setLoginError(nextErrorState);
+        showToast(nextErrorState.title, 'error');
         return;
       }
 
@@ -107,16 +108,16 @@ export const useAdminLoginForm = () => {
 
       navigate(ROUTES.adminDashboard, { replace: true });
     } catch (error) {
-      const message = getAuthErrorMessage(error, DEFAULT_LOGIN_ERROR.title);
-
       authSession.clearSession();
       setSignedOut();
 
-      setLoginError({
-        title: message,
-        description: DEFAULT_LOGIN_ERROR.description,
-      });
-      showToast(message, 'error');
+      const isUnauthorized = error instanceof AxiosError && error.response?.status === 401;
+
+      const nextErrorState = isUnauthorized
+        ? DEFAULT_LOGIN_ERROR
+        : getAuthErrorMessage(error, DEFAULT_LOGIN_ERROR);
+
+      setLoginError(nextErrorState);
     } finally {
       setIsSubmitting(false);
     }
