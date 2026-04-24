@@ -112,7 +112,7 @@ export const useTeacherKakaoCallback = () => {
           user: me.user,
         });
 
-        navigate(ROUTES.inbox, { replace: true });
+        navigate(ROUTES.teacherThreadList, { replace: true });
       } catch (error) {
         authSession.clearSession();
         setSignedOut();

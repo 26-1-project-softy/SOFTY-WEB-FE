@@ -7,7 +7,7 @@ export const getDefaultRouteByRole = (role: AuthRole) => {
   }
 
   if (role === 'teacher') {
-    return ROUTES.inbox;
+    return ROUTES.teacherThreadList;
   }
 
   return ROUTES.root;

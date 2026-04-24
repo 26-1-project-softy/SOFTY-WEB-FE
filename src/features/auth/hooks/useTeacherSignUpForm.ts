@@ -114,7 +114,7 @@ export const useTeacherSignUpForm = () => {
         user: me.user,
       });
 
-      navigate(ROUTES.inbox, { replace: true });
+      navigate(ROUTES.teacherThreadList, { replace: true });
     } catch (error) {
       const message = getAuthErrorMessage(error, FORM_ERROR_FALLBACK.title);
 
