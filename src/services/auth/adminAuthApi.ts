@@ -17,7 +17,7 @@ export type AdminLoginResponse = {
 
 export const adminAuthApi = {
   login: async (payload: AdminLoginRequest) => {
-    const { data } = await apiClient.post<AdminLoginResponse>('/admin/auth/login', payload);
+    const { data } = await apiClient.post<AdminLoginResponse>('/auth/admin/login', payload);
 
     return data;
   },
