@@ -1,19 +1,30 @@
 import { apiClient } from '@/services/http/apiClient';
+import type { AuthRole } from '@/stores/authStore';
+
+type BackendRole = 'TEACHER' | 'ADMIN';
 
 export type MeResponse = {
   success: boolean;
   code: number;
   message: string;
   data?: {
-    role: 'teacher' | 'admin';
+    role: BackendRole;
     name: string;
     grade: number | null;
     class: number | null;
   };
-  role?: 'teacher' | 'admin';
+  role?: BackendRole;
   name?: string;
   grade?: number | null;
   class?: number | null;
+};
+
+const normalizeRole = (role: BackendRole): Exclude<AuthRole, null> => {
+  if (role === 'TEACHER') {
+    return 'teacher';
+  }
+
+  return 'admin';
 };
 
 export const authApi = {
@@ -25,12 +36,8 @@ export const authApi = {
       throw new Error('유효하지 않은 사용자 정보 응답입니다.');
     }
 
-    if (profile.role !== 'teacher' && profile.role !== 'admin') {
-      throw new Error('유효하지 않은 사용자 역할입니다.');
-    }
-
     return {
-      role: profile.role,
+      role: normalizeRole(profile.role),
       user: {
         name: profile.name,
         grade: profile.grade ?? undefined,
