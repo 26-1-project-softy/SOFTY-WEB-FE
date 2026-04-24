@@ -1,21 +1,3 @@
-﻿export type IntentType = 'absenceLate' | 'counseling' | 'request' | 'inquiry';
-
-export const toIntentType = (label: string): IntentType => {
-  if (/(결석|지각|absence|late)/i.test(label)) {
-    return 'absenceLate';
-  }
-
-  if (/(상담|counsel)/i.test(label)) {
-    return 'counseling';
-  }
-
-  if (/(문의|inquiry)/i.test(label)) {
-    return 'inquiry';
-  }
-
-  return 'request';
-};
-
 export const formatDateOnly = (value: string) => {
   if (!value) {
     return '-';
