@@ -43,7 +43,7 @@ export const router = createBrowserRouter([
     element: <ProtectedRoute allowedRoles={['teacher']} />,
     children: [
       {
-        path: ROUTES.inbox,
+        path: ROUTES.teacherThreadList,
         element: <AppLayout />,
         children: [
           {
@@ -61,11 +61,11 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to={ROUTES.inbox} replace />,
+            element: <Navigate to={ROUTES.teacherThreadList} replace />,
           },
           {
             path: 'thread-list',
-            element: <Navigate to={ROUTES.inbox} replace />,
+            element: <Navigate to={ROUTES.teacherThreadList} replace />,
           },
           {
             path: 'thread-detail/:threadId',
