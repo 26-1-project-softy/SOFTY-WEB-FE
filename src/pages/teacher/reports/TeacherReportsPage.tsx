@@ -1,5 +1,6 @@
 ﻿import styled from '@emotion/styled';
-import { IcDownload, IcError, IcFile, IcInbox, IcRefresh } from '@/icons';
+import { InlineButton } from '@/components/common/InlineButton';
+import { IcChat, IcDownload, IcError, IcFile, IcRefresh } from '@/icons';
 import { useTeacherReports } from '@/features/teacher/reports/useTeacherReports';
 import {
   formatDateOnly,
@@ -8,6 +9,7 @@ import {
   toIntentType,
   type IntentType,
 } from '@/utils/reports/reportFormatters';
+
 export const TeacherReportsPage = () => {
   const {
     reportItems,
@@ -50,7 +52,7 @@ export const TeacherReportsPage = () => {
       ) : null}
 
       <ReportListSection>
-        {isLoading ? <StatusText>紐⑸줉??遺덈윭?ㅻ뒗 以묒씠?먯슂...</StatusText> : null}
+        {isLoading ? <StatusText>목록을 불러오는 중이에요...</StatusText> : null}
         {hasListError ? (
           <ErrorPane>
             <ErrorIconWrap>
@@ -58,23 +60,26 @@ export const TeacherReportsPage = () => {
             </ErrorIconWrap>
             <ErrorTitle>대화 목록을 불러올 수 없어요.</ErrorTitle>
             <ErrorDescription>{listErrorDisplayMessage}</ErrorDescription>
-            <RetryButton type="button" onClick={() => void fetchReportRooms()}>
-              <IcRefresh />
-              ?ㅼ떆 ?쒕룄
-            </RetryButton>
+            <InlineButton
+              variant="primary"
+              size="L"
+              icon={IcRefresh}
+              label="다시 시도"
+              onClick={() => void fetchReportRooms()}
+            />
           </ErrorPane>
         ) : null}
 
         {hasNoData && !hasListError ? (
           <EmptyPane>
             <EmptyIconWrap>
-              <IcInbox />
+              <IcChat />
             </EmptyIconWrap>
             <EmptyTitle>아직 데이터가 없어요.</EmptyTitle>
             <EmptyDescription>
-              ?숇?紐⑥?????붽? ?쒖옉?섎㈃ ?닿납?먯꽌 ??붾? ?좏깮??
+              학부모와의 대화가 시작되면 이곳에서 대화를 선택해
               <br />
-              由ы룷?몃? ?앹꽦?????덉뼱??
+              리포트를 생성할 수 있어요.
             </EmptyDescription>
           </EmptyPane>
         ) : null}
@@ -93,7 +98,7 @@ export const TeacherReportsPage = () => {
                     <StudentName>{item.studentName || '-'}</StudentName>
                   </ReportTitleWrap>
                   <LastMessageDate>
-                    留덉?留?硫붿떆吏: {formatDateOnly(item.lastMessageAt)}
+                    마지막 메시지: {formatDateOnly(item.lastMessageAt)}
                   </LastMessageDate>
                 </ReportItemTopRow>
 
@@ -108,17 +113,17 @@ export const TeacherReportsPage = () => {
 
       <PreviewSection>
         <PreviewHeader>
-          <PreviewTitle>誘몃━蹂닿린</PreviewTitle>
-          <PdfButton
-            type="button"
+          <PreviewTitle>미리보기</PreviewTitle>
+          <InlineButton
+            variant="primary"
+            size="L"
+            icon={IcFile}
+            label={isGeneratingPdf ? '생성 중...' : 'PDF 생성하기'}
             disabled={
               !selectedReport || hasNoData || hasListError || isPreviewLoadError || isGeneratingPdf
             }
-            onClick={handleOpenReportCompleteModal}
-          >
-            <IcFile />
-            {isGeneratingPdf ? '?앹꽦 以?..' : 'PDF ?앹꽦?섍린'}
-          </PdfButton>
+            onClick={() => void handleOpenReportCompleteModal()}
+          />
         </PreviewHeader>
 
         <PreviewBody>
@@ -127,32 +132,35 @@ export const TeacherReportsPage = () => {
               <EmptyIconWrap>
                 <IcFile />
               </EmptyIconWrap>
-              <EmptyTitle>誘몃━蹂???붾? ?좏깮?댁＜?몄슂</EmptyTitle>
+              <EmptyTitle>미리볼 대화를 선택해주세요</EmptyTitle>
               <EmptyDescription>
-                ?쇱そ 紐⑸줉?먯꽌 ??붾? ?좏깮?섎㈃ ???由ы룷?몃? ?뺤씤?????덉뼱??
+                왼쪽 목록에서 대화를 선택하면 대화 리포트를 확인할 수 있어요.
               </EmptyDescription>
             </PreviewEmptyPane>
           ) : isPreviewLoading ? (
-            <StatusText>誘몃━蹂닿린瑜?遺덈윭?ㅻ뒗 以묒씠?먯슂...</StatusText>
+            <StatusText>미리보기를 불러오는 중이에요...</StatusText>
           ) : isPreviewLoadError ? (
             <ErrorPane>
               <ErrorIconWrap>
                 <IcError />
               </ErrorIconWrap>
               <ErrorTitle>미리보기를 불러올 수 없어요.</ErrorTitle>
-              <ErrorDescription>?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??</ErrorDescription>
-              <RetryButton type="button" onClick={retryPreviewMessages}>
-                <IcRefresh />
-                ?ㅼ떆 ?쒕룄
-              </RetryButton>
+              <ErrorDescription>잠시 후 다시 시도해 주세요.</ErrorDescription>
+              <InlineButton
+                variant="primary"
+                size="L"
+                icon={IcRefresh}
+                label="다시 시도"
+                onClick={retryPreviewMessages}
+              />
             </ErrorPane>
           ) : previewMessages.length === 0 ? (
             <PreviewEmptyPane>
               <EmptyIconWrap>
-                <IcInbox />
+                <IcFile />
               </EmptyIconWrap>
               <EmptyTitle>미리보기 데이터가 없어요.</EmptyTitle>
-              <EmptyDescription>?좏깮??梨꾪똿諛⑹뿉 ?쒖떆??硫붿떆吏媛 ?놁뼱??</EmptyDescription>
+              <EmptyDescription>선택한 채팅방에 표시할 메시지가 없어요.</EmptyDescription>
             </PreviewEmptyPane>
           ) : (
             <>
@@ -186,13 +194,15 @@ export const TeacherReportsPage = () => {
               ))}
 
               {previewHasNext ? (
-                <PreviewLoadMoreButton
-                  type="button"
-                  onClick={handleLoadMorePreview}
-                  disabled={isPreviewLoadingMore}
-                >
-                  {isPreviewLoadingMore ? '遺덈윭?ㅻ뒗 以?..' : '??蹂닿린'}
-                </PreviewLoadMoreButton>
+                <PreviewLoadMoreButtonWrap>
+                  <InlineButton
+                    variant="ghost"
+                    size="M"
+                    label={isPreviewLoadingMore ? '불러오는 중...' : '더 보기'}
+                    disabled={isPreviewLoadingMore}
+                    onClick={handleLoadMorePreview}
+                  />
+                </PreviewLoadMoreButtonWrap>
               ) : null}
             </>
           )}
@@ -206,8 +216,8 @@ export const TeacherReportsPage = () => {
               <IcFile />
             </ModalIconWrap>
 
-            <ModalTitle>由ы룷???앹꽦 ?꾨즺</ModalTitle>
-            <ModalDescription>PDF ?뚯씪??以鍮꾨릺?덉뒿?덈떎.</ModalDescription>
+            <ModalTitle>리포트 생성 완료</ModalTitle>
+            <ModalDescription>PDF 파일이 준비되었습니다.</ModalDescription>
 
             <FileInfoCard>
               <FileInfoLabel>파일명</FileInfoLabel>
@@ -221,19 +231,28 @@ export const TeacherReportsPage = () => {
                 </ModalErrorIcon>
                 <ModalErrorTextWrap>
                   <ModalErrorTitle>PDF 다운로드에 실패했어요.</ModalErrorTitle>
-                  <ModalErrorDescription>?좎떆 ???ㅼ떆 ?쒕룄??二쇱꽭??</ModalErrorDescription>
+                  <ModalErrorDescription>잠시 후 다시 시도해 주세요.</ModalErrorDescription>
                 </ModalErrorTextWrap>
               </ModalErrorBox>
             ) : null}
 
             <ModalActionRow>
-              <ModalGhostButton type="button" onClick={handleCloseReportCompleteModal}>
-                ?リ린
-              </ModalGhostButton>
-              <ModalPrimaryButton type="button" onClick={() => void handleDownloadGeneratedPdf()}>
-                <IcDownload />
-                {isDownloadingPdf ? '?ㅼ슫濡쒕뱶 以?..' : '?ㅼ슫濡쒕뱶'}
-              </ModalPrimaryButton>
+              <InlineButton
+                variant="ghost"
+                size="L"
+                label="닫기"
+                width="100%"
+                onClick={handleCloseReportCompleteModal}
+              />
+              <InlineButton
+                variant="primary"
+                size="L"
+                icon={IcDownload}
+                label={isDownloadingPdf ? '다운로드 중...' : '다운로드'}
+                width="100%"
+                disabled={isDownloadingPdf}
+                onClick={() => void handleDownloadGeneratedPdf()}
+              />
             </ModalActionRow>
           </ModalCard>
         </ModalOverlay>
@@ -408,24 +427,6 @@ const PreviewTitle = styled.h3`
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
-const PdfButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  border: none;
-  border-radius: 14px;
-  background: ${({ theme }) => theme.colors.brand.primary};
-  color: ${({ theme }) => theme.colors.text.textW};
-  padding: 12px 16px;
-
-  &:disabled {
-    background: ${({ theme }) => theme.colors.background.bg5};
-    color: ${({ theme }) => theme.colors.text.text4};
-    cursor: not-allowed;
-  }
-`;
-
 const PreviewBody = styled.div`
   min-height: 620px;
   border-radius: 0 0 24px 24px;
@@ -501,20 +502,9 @@ const OutgoingBubble = styled.div`
   padding: 20px 24px;
 `;
 
-const PreviewLoadMoreButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
+const PreviewLoadMoreButtonWrap = styled.div`
   align-self: center;
   margin-top: 4px;
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text2};
-  padding: 8px 14px;
-
-  &:disabled {
-    color: ${({ theme }) => theme.colors.text.text4};
-    cursor: not-allowed;
-  }
 `;
 
 const StatusText = styled.p`
@@ -551,19 +541,6 @@ const ErrorDescription = styled.p`
   ${({ theme }) => theme.fonts.body2};
   margin: 8px 0 0;
   color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const RetryButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  margin-top: 16px;
-  border: none;
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.brand.primary};
-  color: ${({ theme }) => theme.colors.text.textW};
-  padding: 10px 14px;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 `;
 
 const EmptyPane = styled.div`
@@ -711,34 +688,4 @@ const ModalErrorDescription = styled.p`
   ${({ theme }) => theme.fonts.body3};
   margin: 0;
   color: #eb4955;
-`;
-
-const ModalGhostButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
-  flex: 1;
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 12px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  padding: 12px 14px;
-`;
-
-const ModalPrimaryButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
-  flex: 1;
-  border: none;
-  border-radius: 12px;
-  background: ${({ theme }) => theme.colors.brand.primary};
-  color: ${({ theme }) => theme.colors.text.textW};
-  padding: 12px 14px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-
-  &:disabled {
-    background: ${({ theme }) => theme.colors.background.bg5};
-    color: ${({ theme }) => theme.colors.text.text4};
-    cursor: not-allowed;
-  }
 `;
