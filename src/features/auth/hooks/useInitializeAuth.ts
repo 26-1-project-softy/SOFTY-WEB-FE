@@ -1,20 +1,61 @@
 import { AxiosError } from 'axios';
 import { useEffect } from 'react';
+import { InvalidAuthenticatedUserResponseError } from '@/services/auth/authApi';
 import { authApi, authSession } from '@/services/auth';
 import { useAuthStore } from '@/stores/authStore';
 
-const shouldClearSession = (error: unknown) => {
-  if (error instanceof AxiosError) {
-    const status = error.response?.status;
+const RETRYABLE_STATUS_CODES = [500, 502, 503, 504] as const;
+const AUTH_INITIALIZATION_RETRY_DELAYS = [300, 700, 1200] as const;
 
-    return status === 401;
+const delay = (ms: number) =>
+  new Promise<void>(resolve => {
+    window.setTimeout(resolve, ms);
+  });
+
+const isUnauthorizedError = (error: unknown) => {
+  return error instanceof AxiosError && error.response?.status === 401;
+};
+
+const isRetryableError = (error: unknown) => {
+  if (!(error instanceof AxiosError)) {
+    return false;
   }
 
-  if (error instanceof Error) {
-    return error.message === '유효하지 않은 사용자 정보 응답입니다.';
+  if (!error.response) {
+    return true;
   }
 
-  return false;
+  const status = error.response.status;
+
+  return RETRYABLE_STATUS_CODES.includes(status as (typeof RETRYABLE_STATUS_CODES)[number]);
+};
+
+const isInvalidAuthenticatedUserResponseError = (error: unknown) => {
+  return error instanceof InvalidAuthenticatedUserResponseError;
+};
+
+const getMeWithRetry = async () => {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt <= AUTH_INITIALIZATION_RETRY_DELAYS.length; attempt += 1) {
+    try {
+      return await authApi.getMe();
+    } catch (error) {
+      lastError = error;
+
+      if (!isRetryableError(error)) {
+        throw error;
+      }
+
+      if (attempt === AUTH_INITIALIZATION_RETRY_DELAYS.length) {
+        break;
+      }
+
+      await delay(AUTH_INITIALIZATION_RETRY_DELAYS[attempt]);
+    }
+  }
+
+  throw lastError;
 };
 
 export const useInitializeAuth = () => {
@@ -49,7 +90,7 @@ export const useInitializeAuth = () => {
       }
 
       try {
-        const me = await authApi.getMe();
+        const me = await getMeWithRetry();
 
         if (!isMounted) {
           return;
@@ -61,12 +102,15 @@ export const useInitializeAuth = () => {
           user: me.user,
         });
       } catch (error) {
-        if (shouldClearSession(error)) {
-          authSession.clearSession();
-        }
+        const shouldInvalidateSession =
+          isUnauthorizedError(error) || isInvalidAuthenticatedUserResponseError(error);
 
-        if (isMounted) {
-          setSignedOut();
+        if (shouldInvalidateSession || isRetryableError(error)) {
+          authSession.clearSession();
+
+          if (isMounted) {
+            setSignedOut();
+          }
         }
 
         if (import.meta.env.DEV) {
