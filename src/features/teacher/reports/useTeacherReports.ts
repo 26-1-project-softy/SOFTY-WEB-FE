@@ -1,11 +1,12 @@
-﻿import axios, { AxiosError } from 'axios';
+import { AxiosError } from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useToast } from '@/hooks/useToast';
+import { reportDownloadService } from '@/services/teacher/reportDownloadService';
 import {
   reportsApi,
   type ReportChatPreviewMessage,
   type ReportChatRoomItem,
 } from '@/services/teacher/reportsApi';
-import { useToast } from '@/hooks/useToast';
 import { formatDateOnly } from '@/utils/reports/reportFormatters';
 
 const PREVIEW_PAGE_SIZE = 30;
@@ -218,39 +219,12 @@ export const useTeacherReports = () => {
 
     try {
       setIsDownloadingPdf(true);
-      const response = await axios.get<Blob>(generatedPdfDownloadUrl, {
-        responseType: 'blob',
-        headers: {
-          Accept: 'application/pdf',
-        },
-      });
-      const blob = response.data;
-
-      if (!(blob instanceof Blob) || blob.size === 0) {
-        throw new Error('Downloaded blob is empty');
-      }
-
-      const blobUrl = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = blobUrl;
-      link.download = reportFileName || '증빙리포트.pdf';
-      document.body.appendChild(link);
-      link.click();
-      link.remove();
-      window.URL.revokeObjectURL(blobUrl);
+      await reportDownloadService.downloadPdfFromPresignedUrl(
+        generatedPdfDownloadUrl,
+        reportFileName || '증빙리포트.pdf'
+      );
     } catch {
-      try {
-        const fallbackLink = document.createElement('a');
-        fallbackLink.href = generatedPdfDownloadUrl;
-        fallbackLink.download = reportFileName || '증빙리포트.pdf';
-        fallbackLink.target = '_blank';
-        fallbackLink.rel = 'noopener noreferrer';
-        document.body.appendChild(fallbackLink);
-        fallbackLink.click();
-        fallbackLink.remove();
-      } catch {
-        setIsPdfDownloadErrorVisible(true);
-      }
+      setIsPdfDownloadErrorVisible(true);
     } finally {
       setIsDownloadingPdf(false);
     }
