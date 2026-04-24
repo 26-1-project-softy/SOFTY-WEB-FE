@@ -1,5 +1,4 @@
 import { Navigate, Outlet } from 'react-router-dom';
-import { Loader } from '@/components/common/Loader';
 import { useAuth } from '@/hooks/useAuth';
 import type { AuthRole } from '@/stores/authStore';
 import { ROUTES } from '@/constants/routes';
@@ -9,11 +8,7 @@ type ProtectedRouteProps = {
 };
 
 export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
-  const { authStatus, isAuthInitialized, role } = useAuth();
-
-  if (!isAuthInitialized) {
-    return <Loader />;
-  }
+  const { authStatus, role } = useAuth();
 
   if (authStatus === 'SIGNED_OUT') {
     const redirectTo =
