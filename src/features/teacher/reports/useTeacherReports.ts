@@ -20,7 +20,7 @@ export const useTeacherReports = () => {
   const [isPreviewLoading, setIsPreviewLoading] = useState(false);
   const [isPreviewLoadingMore, setIsPreviewLoadingMore] = useState(false);
   const [previewMessages, setPreviewMessages] = useState<ReportChatPreviewMessage[]>([]);
-  const [previewNextCursor, setPreviewNextCursor] = useState('');
+  const [previewNextCursor, setPreviewNextCursor] = useState<number | null>(null);
   const [previewHasNext, setPreviewHasNext] = useState(false);
   const [isReportCompleteModalOpen, setIsReportCompleteModalOpen] = useState(false);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -85,11 +85,11 @@ export const useTeacherReports = () => {
   const fetchPreviewMessages = useCallback(
     async ({
       chatRoomId,
-      cursor = '',
+      cursor,
       append = false,
     }: {
       chatRoomId: number;
-      cursor?: string;
+      cursor?: number;
       append?: boolean;
     }) => {
       const requestId = ++previewRequestIdRef.current;
@@ -122,7 +122,7 @@ export const useTeacherReports = () => {
         if (!append) {
           setPreviewMessages([]);
         }
-        setPreviewNextCursor('');
+        setPreviewNextCursor(null);
         setPreviewHasNext(false);
         setIsPreviewLoadError(true);
       } finally {
@@ -140,7 +140,7 @@ export const useTeacherReports = () => {
   };
 
   const handleLoadMorePreview = () => {
-    if (!selectedReportId || !previewHasNext || !previewNextCursor || isPreviewLoadingMore) {
+    if (!selectedReportId || !previewHasNext || previewNextCursor == null || isPreviewLoadingMore) {
       return;
     }
 
@@ -166,7 +166,7 @@ export const useTeacherReports = () => {
   useEffect(() => {
     if (!selectedReportId) {
       setPreviewMessages([]);
-      setPreviewNextCursor('');
+      setPreviewNextCursor(null);
       setPreviewHasNext(false);
       setIsPreviewLoadError(false);
       setIsPreviewLoading(false);
@@ -192,8 +192,8 @@ export const useTeacherReports = () => {
         return;
       }
 
-      setGeneratedPdfFileName(response.fileName || defaultReportFileName);
-      setGeneratedPdfDownloadUrl(response.downloadUrl || '');
+      setGeneratedPdfFileName(response.fileName);
+      setGeneratedPdfDownloadUrl(response.downloadUrl);
       setIsReportCompleteModalOpen(true);
     } catch (error) {
       const axiosError = error as AxiosError<{ message?: string }>;
