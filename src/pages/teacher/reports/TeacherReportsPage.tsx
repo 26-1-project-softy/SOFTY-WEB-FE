@@ -2,12 +2,11 @@
 import { InlineButton } from '@/components/common/InlineButton';
 import { IcChat, IcDownload, IcError, IcFile, IcRefresh } from '@/icons';
 import { useTeacherReports } from '@/features/teacher/reports/useTeacherReports';
+import { resolveIntentType, type IntentType } from '@/utils/reports/intentMapper';
 import {
   formatDateOnly,
   formatDateTime,
   formatPreviewName,
-  toIntentType,
-  type IntentType,
 } from '@/utils/reports/reportFormatters';
 
 export const TeacherReportsPage = () => {
@@ -91,7 +90,12 @@ export const TeacherReportsPage = () => {
                   </LastMessageDate>
                 </ReportItemTopRow>
 
-                <IntentBadge intent={toIntentType(item.intentLabel)}>
+                <IntentBadge
+                  intent={resolveIntentType({
+                    intentType: item.intentType,
+                    intentLabel: item.intentLabel,
+                  })}
+                >
                   {item.intentLabel || '-'}
                 </IntentBadge>
               </ReportListItem>

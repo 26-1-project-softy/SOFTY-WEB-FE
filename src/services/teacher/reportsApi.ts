@@ -4,6 +4,7 @@ export type ReportChatRoomItemResponse = {
   chatRoomId?: number;
   parentName?: string | null;
   studentName?: string | null;
+  intentType?: string | null;
   intentLabel?: string | null;
   status?: string | null;
   lastMessageAt?: string | null;
@@ -27,6 +28,7 @@ export type ReportChatRoomItem = {
   chatRoomId: number;
   parentName: string;
   studentName: string;
+  intentType: string;
   intentLabel: string;
   status: string;
   lastMessageAt: string;
@@ -115,6 +117,7 @@ export const reportsApi = {
             chatRoomId: item.chatRoomId ?? 0,
             parentName: item.parentName ?? '',
             studentName: item.studentName ?? '',
+            intentType: item.intentType ?? '',
             intentLabel: item.intentLabel ?? '',
             status: item.status ?? '',
             lastMessageAt: item.lastMessageAt ?? '',
