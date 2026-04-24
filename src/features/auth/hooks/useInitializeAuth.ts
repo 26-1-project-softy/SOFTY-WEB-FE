@@ -7,14 +7,11 @@ const shouldClearSession = (error: unknown) => {
   if (error instanceof AxiosError) {
     const status = error.response?.status;
 
-    return status === 401 || status === 403;
+    return status === 401;
   }
 
   if (error instanceof Error) {
-    return (
-      error.message === '유효하지 않은 사용자 정보 응답입니다.' ||
-      error.message === '유효하지 않은 사용자 역할입니다.'
-    );
+    return error.message === '유효하지 않은 사용자 정보 응답입니다.';
   }
 
   return false;
