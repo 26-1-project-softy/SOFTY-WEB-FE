@@ -11,7 +11,7 @@ export const TeacherSignUpPage = () => {
     fieldErrors,
     globalError,
     isSubmitting,
-    isSubmitAttempted,
+    isCreatingClassCode,
     isSignUpEnabled,
     step,
     generatedClassCode,
@@ -24,8 +24,6 @@ export const TeacherSignUpPage = () => {
     handleCopyClassCode,
     handleGoToInbox,
   } = useTeacherSignUpForm();
-
-  const showFieldErrors = isSubmitAttempted;
   const progressRatio = step === 'CLASS_CODE_READY' ? 1 : step === 'SIGN_UP_SUCCESS' ? 0.66 : 0.33;
 
   return (
@@ -46,8 +44,12 @@ export const TeacherSignUpPage = () => {
               <br />
               이제 학급을 개설하고, 학부모님과 안전한 소통을 시작해보세요.
             </SuccessDescription>
-            <PrimaryButton type="button" onClick={handleOpenClassCodeModal}>
-              학급 개설하기
+            <PrimaryButton
+              type="button"
+              onClick={handleOpenClassCodeModal}
+              disabled={isCreatingClassCode}
+            >
+              {isCreatingClassCode ? '학급 코드 생성 중...' : '학급 개설하기'}
             </PrimaryButton>
           </SuccessSection>
         ) : null}
@@ -89,10 +91,7 @@ export const TeacherSignUpPage = () => {
 
             <SignUpForm onSubmit={handleSubmit}>
               <InputGroup>
-                <Label
-                  htmlFor="teacherName"
-                  hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
-                >
+                <Label htmlFor="teacherName" hasError={Boolean(fieldErrors.teacherName)}>
                   이름 <RequiredMark>*</RequiredMark>
                 </Label>
                 <Input
@@ -101,18 +100,15 @@ export const TeacherSignUpPage = () => {
                   value={teacherName}
                   onChange={event => setTeacherName(event.target.value)}
                   placeholder="홍길동"
-                  hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
+                  hasError={Boolean(fieldErrors.teacherName)}
                 />
-                {showFieldErrors && fieldErrors.teacherName ? (
+                {fieldErrors.teacherName ? (
                   <FieldErrorText>{fieldErrors.teacherName}</FieldErrorText>
                 ) : null}
               </InputGroup>
 
               <InputGroup>
-                <Label
-                  htmlFor="schoolName"
-                  hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
-                >
+                <Label htmlFor="schoolName" hasError={Boolean(fieldErrors.schoolName)}>
                   학교명 <RequiredMark>*</RequiredMark>
                 </Label>
                 <Input
@@ -121,16 +117,16 @@ export const TeacherSignUpPage = () => {
                   value={schoolName}
                   onChange={event => setSchoolName(event.target.value)}
                   placeholder="한국초등학교"
-                  hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
+                  hasError={Boolean(fieldErrors.schoolName)}
                 />
-                {showFieldErrors && fieldErrors.schoolName ? (
+                {fieldErrors.schoolName ? (
                   <FieldErrorText>{fieldErrors.schoolName}</FieldErrorText>
                 ) : null}
               </InputGroup>
 
               <InlineTwoColumn>
                 <InputGroup>
-                  <Label htmlFor="grade" hasError={Boolean(showFieldErrors && fieldErrors.grade)}>
+                  <Label htmlFor="grade" hasError={Boolean(fieldErrors.grade)}>
                     학년 <RequiredMark>*</RequiredMark>
                   </Label>
                   <Input
@@ -139,18 +135,13 @@ export const TeacherSignUpPage = () => {
                     value={grade}
                     onChange={event => setGrade(event.target.value)}
                     placeholder="3"
-                    hasError={Boolean(showFieldErrors && fieldErrors.grade)}
+                    hasError={Boolean(fieldErrors.grade)}
                   />
-                  {showFieldErrors && fieldErrors.grade ? (
-                    <FieldErrorText>{fieldErrors.grade}</FieldErrorText>
-                  ) : null}
+                  {fieldErrors.grade ? <FieldErrorText>{fieldErrors.grade}</FieldErrorText> : null}
                 </InputGroup>
 
                 <InputGroup>
-                  <Label
-                    htmlFor="classNumber"
-                    hasError={Boolean(showFieldErrors && fieldErrors.classNumber)}
-                  >
+                  <Label htmlFor="classNumber" hasError={Boolean(fieldErrors.classNumber)}>
                     반 <RequiredMark>*</RequiredMark>
                   </Label>
                   <Input
@@ -159,9 +150,9 @@ export const TeacherSignUpPage = () => {
                     value={classNumber}
                     onChange={event => setClassNumber(event.target.value)}
                     placeholder="2"
-                    hasError={Boolean(showFieldErrors && fieldErrors.classNumber)}
+                    hasError={Boolean(fieldErrors.classNumber)}
                   />
-                  {showFieldErrors && fieldErrors.classNumber ? (
+                  {fieldErrors.classNumber ? (
                     <FieldErrorText>{fieldErrors.classNumber}</FieldErrorText>
                   ) : null}
                 </InputGroup>

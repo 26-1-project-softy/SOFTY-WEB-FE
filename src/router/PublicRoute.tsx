@@ -21,6 +21,10 @@ export const PublicRoute = () => {
   }
 
   if (authStatus === 'SIGNED_IN' && role) {
+    if (location.pathname === ROUTES.teacherSignUp) {
+      return <Outlet />;
+    }
+
     return <Navigate to={getDefaultRouteByRole(role)} replace />;
   }
 
