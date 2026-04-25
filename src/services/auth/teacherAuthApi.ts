@@ -21,6 +21,7 @@ export type TeacherSignUpRequest = {
   schoolName: string;
   grade: number;
   classNumber: number;
+  kakaoAccessToken?: string;
 };
 
 export type TeacherSignUpResponse = {
@@ -44,7 +45,14 @@ export const teacherAuthApi = {
   },
 
   signUp: async (payload: TeacherSignUpRequest) => {
-    const { data } = await apiClient.post<TeacherSignUpResponse>('/auth/teachers/signup', payload);
+    const { kakaoAccessToken, ...requestBody } = payload;
+    const headers = kakaoAccessToken ? { Authorization: `Bearer ${kakaoAccessToken}` } : undefined;
+
+    const { data } = await apiClient.post<TeacherSignUpResponse>(
+      '/auth/teachers/signup',
+      requestBody,
+      { headers }
+    );
 
     return data;
   },
