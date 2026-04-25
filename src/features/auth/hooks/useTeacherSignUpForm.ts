@@ -73,6 +73,16 @@ export const useTeacherSignUpForm = () => {
   });
 
   useEffect(() => {
+    if (authStatus !== 'ONBOARDING_REQUIRED' || step !== 'FORM') {
+      return;
+    }
+
+    // When onboarding is already required, skip the sign-up form and continue flow.
+    setGlobalError(null);
+    setStep('SIGN_UP_SUCCESS');
+  }, [authStatus, step]);
+
+  useEffect(() => {
     if (step === 'FORM') {
       return;
     }

@@ -32,5 +32,9 @@ export const PublicRoute = () => {
     return <Navigate to={getDefaultRouteByRole(role)} replace />;
   }
 
+  if (location.pathname === ROUTES.teacherSignUp) {
+    return <Navigate to={ROUTES.root} replace />;
+  }
+
   return <Outlet />;
 };
