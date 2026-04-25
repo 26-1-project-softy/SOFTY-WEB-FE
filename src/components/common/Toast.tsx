@@ -63,7 +63,7 @@ const ToastCard = styled.button<{ toastType: ToastItem['type'] }>`
       toastType === 'success' ? theme.colors.semantic.success : theme.colors.semantic.error};
   background: ${({ toastType, theme }) =>
     toastType === 'success' ? theme.colors.semantic.successSoft : theme.colors.semantic.errorSoft};
-  padding: 8px 12px 8px 8px;
+  padding: 8px;
   gap: 8px;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
   pointer-events: auto;

@@ -1,474 +1,129 @@
-﻿import styled from '@emotion/styled';
-import { useEffect, useMemo } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import styled from '@emotion/styled';
+import { useTheme } from '@emotion/react';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Header } from '@/components/common/Header';
+import { InlineButton } from '@/components/common/InlineButton';
+import {
+  KakaoLoginButton,
+  LandingHeroSection,
+  LandingSignupSection,
+  LandingAiAnalysisSection,
+  LandingReportSection,
+  LandingCtaSection,
+  ParentAppInstallDialog,
+} from '@/components/auth/landing';
+import { EXTERNAL_LINKS, landingContent } from '@/constants/landing';
 import { ROUTES } from '@/constants/routes';
-import { IcKakao } from '@/icons';
-import { useToastStore } from '@/stores/toastStore';
-import mockups1 from '@/images/mockups1.png';
-import mockups2 from '@/images/mockups2.png';
-import mockups3 from '@/images/mockups3.png';
-import mockups4 from '@/images/mockups4.png';
-import mockups5 from '@/images/mockups5.png';
+import { FooterCopyright } from '@/components/common/FooterCopyright';
 
-const KAKAO_LOGIN_START_ERROR_MESSAGE = '카카오 로그인에 실패했어요.';
-
-const getKakaoLoginStartUrl = () => {
-  const restApiKey =
-    (import.meta.env.VITE_KAKAO_REST_API_KEY as string | undefined) ||
-    (import.meta.env.VITE_KAKAO_JS_KEY as string | undefined);
-  const redirectUri = import.meta.env.VITE_KAKAO_REDIRECT_URI as string | undefined;
-
-  if (restApiKey && redirectUri) {
-    return `https://kauth.kakao.com/oauth/authorize?client_id=${restApiKey}&redirect_uri=${encodeURIComponent(redirectUri)}&response_type=code`;
-  }
-
-  const apiBaseUrl = import.meta.env.VITE_API_BASE_URL as string | undefined;
-
-  if (apiBaseUrl) {
-    return `${apiBaseUrl}/oauth2/authorization/kakao`;
-  }
-
-  return '';
-};
+const LANDING_FEATURE_SECTION_ID = 'landing-feature-section';
 
 export const LandingPage = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const showToast = useToastStore(state => state.showToast);
-  const isDev = import.meta.env.DEV;
-
-  const kakaoLoginError = searchParams.get('kakaoLoginError');
-  const kakaoLoginUrl = useMemo(() => getKakaoLoginStartUrl(), []);
-
-  useEffect(() => {
-    if (!kakaoLoginError) {
-      return;
-    }
-
-    showToast(kakaoLoginError, 'error');
-    navigate(ROUTES.root, { replace: true });
-  }, [kakaoLoginError, navigate, showToast]);
+  const [isParentAppInstallDialogOpen, setIsParentAppInstallDialogOpen] = useState(false);
 
   const handleGoAdminLogin = () => {
     navigate(ROUTES.adminLogin);
   };
 
-  const handleKakaoLogin = () => {
-    if (!kakaoLoginUrl) {
-      showToast(KAKAO_LOGIN_START_ERROR_MESSAGE, 'error');
-      return;
-    }
-
-    window.location.href = kakaoLoginUrl;
-  };
-
   const handleScrollToFeature = () => {
-    const target = document.getElementById('landing-feature-section');
+    const target = document.getElementById(LANDING_FEATURE_SECTION_ID);
 
     if (!target) {
       return;
     }
 
-    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.scrollIntoView({
+      behavior: 'smooth',
+      block: 'start',
+    });
+  };
+
+  const handleOpenParentAppInstallDialog = () => {
+    setIsParentAppInstallDialogOpen(true);
+  };
+
+  const handleCloseParentAppInstallDialog = () => {
+    setIsParentAppInstallDialogOpen(false);
+  };
+
+  const handleOpenDistributionPage = () => {
+    const openedWindow = window.open(
+      EXTERNAL_LINKS.parentAppDistribution,
+      '_blank',
+      'noopener,noreferrer'
+    );
+
+    if (!openedWindow) {
+      window.location.href = EXTERNAL_LINKS.parentAppDistribution;
+    }
   };
 
   return (
-    <Page>
-      {isDev ? <DevMarker>LANDING_V2</DevMarker> : null}
-      <Header>
-        <Logo>소프티</Logo>
-        <HeaderActions>
-          <GhostButton type="button" onClick={handleGoAdminLogin}>
-            관리자 로그인
-          </GhostButton>
-          <KakaoButton type="button" onClick={handleKakaoLogin}>
-            <IcKakao />
-            카카오로 로그인
-          </KakaoButton>
-        </HeaderActions>
-      </Header>
+    <LandingPageContainer>
+      <Header
+        title="SOFTY"
+        hasLogo
+        titleColor={theme.colors.brand.primary}
+        actions={
+          <HeaderActionContainer>
+            <InlineButton
+              variant="ghost"
+              size="L"
+              label="관리자 로그인"
+              onClick={handleGoAdminLogin}
+            />
+            <KakaoLoginButton />
+          </HeaderActionContainer>
+        }
+      />
 
-      <HeroSection>
-        <SectionInner>
-          <HeroText>
-            <HeroTitle>
-              선생님과 학부모를 잇는
-              <br />더 안전한 학급 소통 공간, <Highlight>소프티</Highlight>
-            </HeroTitle>
-            <HeroDescription>
-              학부모와 비동기로 소통하고,
-              <br />
-              AI로 분쟁 위험을 점검하고,
-              <br />
-              대화 내역은 PDF로 저장해보세요.
-              <br />
-              소프티와 함께라면 안심하고 소통할 수 있어요.
-            </HeroDescription>
-            <HeroActions>
-              <KakaoButton type="button" onClick={handleKakaoLogin}>
-                <IcKakao />
-                카카오로 로그인
-              </KakaoButton>
-              <GhostButton type="button" onClick={handleScrollToFeature}>
-                서비스 둘러보기
-              </GhostButton>
-            </HeroActions>
-          </HeroText>
+      <LandingHeroSection
+        content={landingContent.hero}
+        onOpenParentAppInstallDialog={handleOpenParentAppInstallDialog}
+        onScrollToFeature={handleScrollToFeature}
+      />
 
-          <HeroMockStage>
-            <HeroImage src={mockups1} alt="메인 소개 목업" />
-          </HeroMockStage>
-        </SectionInner>
-      </HeroSection>
+      <LandingSignupSection id={LANDING_FEATURE_SECTION_ID} content={landingContent.signup} />
 
-      <FeatureSection id="landing-feature-section">
-        <SectionInner twoColumn>
-          <TextBlock>
-            <SectionLabel>가입</SectionLabel>
-            <SectionTitle>
-              학급 생성부터 참여까지
-              <br />
-              간편하게
-            </SectionTitle>
-            <SectionDescription>
-              교사는 학급을 개설하고,
-              <br />
-              학부모는 학급 코드를 입력해
-              <br />
-              간단한 절차로 소통을 시작할 수 있어요.
-            </SectionDescription>
-          </TextBlock>
+      <LandingAiAnalysisSection content={landingContent.aiAnalysis} />
 
-          <JoinMockStage>
-            <JoinCardMock src={mockups2} alt="학급 코드 생성 목업" />
-            <PhoneMock src={mockups3} alt="학급 참여 모바일 목업" />
-          </JoinMockStage>
-        </SectionInner>
-      </FeatureSection>
+      <LandingReportSection content={landingContent.report} />
 
-      <FeatureSection>
-        <SectionInner twoColumn>
-          <TextBlock>
-            <SectionLabel>수신함·채팅방</SectionLabel>
-            <SectionTitle>
-              문의 의도 파악은 빠르게,
-              <br />
-              답장은 더 신중하게
-            </SectionTitle>
-            <SectionDescription>
-              AI가 문의 의도 태그를 먼저 제안하고,
-              <br />
-              교사가 AI 검토를 받은 뒤 메시지를 전송해요.
-            </SectionDescription>
-          </TextBlock>
+      <LandingCtaSection
+        content={landingContent.cta}
+        onOpenParentAppInstallDialog={handleOpenParentAppInstallDialog}
+        onScrollToFeature={handleScrollToFeature}
+      />
 
-          <InboxMockStage>
-            <InboxMockImage src={mockups5} alt="수신함 및 AI 분석 목업" />
-          </InboxMockStage>
-        </SectionInner>
-      </FeatureSection>
+      <LandingFooter>
+        <FooterCopyright />
+      </LandingFooter>
 
-      <FeatureSection>
-        <SectionInner twoColumn>
-          <TextBlock>
-            <SectionLabel>증빙 리포트</SectionLabel>
-            <SectionTitle>
-              대화 내역,
-              <br />
-              간편하게 내려받을 수 있도록
-            </SectionTitle>
-            <SectionDescription>
-              원하는 대화를 선택하고
-              <br />
-              미리보기로 확인한 뒤 PDF로 저장할 수 있어요.
-            </SectionDescription>
-          </TextBlock>
-
-          <ReportMockStage>
-            <ReportMockImage src={mockups4} alt="증빙 리포트 목업" />
-          </ReportMockStage>
-        </SectionInner>
-      </FeatureSection>
-
-      <CtaSection>
-        <CtaTitle>
-          학급 소통을 더 간편하고 안전하게
-          <br />
-          소프티에서 시작해보세요
-        </CtaTitle>
-        <CtaDescription>
-          선생님과 학부모를 잇는 학급 소통,
-          <br />
-          이제 더 명확하고 편안하게 관리해보세요.
-        </CtaDescription>
-        <KakaoButton type="button" onClick={handleKakaoLogin}>
-          <IcKakao />
-          카카오로 로그인
-        </KakaoButton>
-      </CtaSection>
-
-      <Footer>© 2026, 소프티 All rights reserved.</Footer>
-    </Page>
+      <ParentAppInstallDialog
+        isOpen={isParentAppInstallDialogOpen}
+        onClose={handleCloseParentAppInstallDialog}
+        onOpenDistributionPage={handleOpenDistributionPage}
+      />
+    </LandingPageContainer>
   );
 };
 
-const Page = styled.div`
+const LandingPageContainer = styled.div`
   min-height: 100vh;
-  background: #f4f5f6;
+  background: ${({ theme }) => theme.colors.background.bg1};
 `;
 
-const DevMarker = styled.div`
-  position: fixed;
-  top: 8px;
-  left: 8px;
-  z-index: 99999;
-  padding: 4px 8px;
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.75);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
-`;
-
-const Header = styled.header`
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  height: 84px;
-  padding: 0 44px;
-  border-bottom: 1px solid #d9dddf;
-  background: #f8f9fa;
+const HeaderActionContainer = styled.div`
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  justify-content: space-between;
-
-  @media (max-width: 760px) {
-    height: 72px;
-    padding: 0 16px;
-  }
-`;
-
-const Logo = styled.h1`
-  ${({ theme }) => theme.fonts.title3};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.brand.primary};
-`;
-
-const HeaderActions = styled.div`
-  display: flex;
   gap: 10px;
-  align-items: center;
 `;
 
-const GhostButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: 1px solid #d3d7da;
-  border-radius: 12px;
-  background: #f8f9fa;
-  color: ${({ theme }) => theme.colors.text.text1};
-  padding: 11px 14px;
-`;
-
-const KakaoButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: none;
-  border-radius: 12px;
-  background: #fee500;
-  color: #191919;
-  padding: 11px 16px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-`;
-
-const HeroSection = styled.section`
-  padding: 42px 24px 92px;
-  background: linear-gradient(180deg, #f4f5f6 0%, #c9e8e4 58%, #6ccdc4 100%);
-`;
-
-const SectionInner = styled.div<{ twoColumn?: boolean }>`
-  width: 100%;
-  max-width: 980px;
-  margin: 0 auto;
-  display: ${({ twoColumn }) => (twoColumn ? 'grid' : 'block')};
-  grid-template-columns: 1fr 1.2fr;
-  gap: 28px;
-  align-items: center;
-
-  @media (max-width: 980px) {
-    display: block;
-  }
-`;
-
-const HeroText = styled.div`
-  max-width: 560px;
-`;
-
-const HeroTitle = styled.h2`
-  ${({ theme }) => theme.fonts.title1};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.text.text1};
-
-  @media (max-width: 760px) {
-    ${({ theme }) => theme.fonts.title2};
-  }
-`;
-
-const Highlight = styled.span`
-  color: ${({ theme }) => theme.colors.brand.primary};
-`;
-
-const HeroDescription = styled.p`
-  ${({ theme }) => theme.fonts.body1};
-  margin: 20px 0 0;
-  color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const HeroActions = styled.div`
-  margin-top: 24px;
-  display: flex;
-  gap: 12px;
-`;
-
-const HeroMockStage = styled.div`
-  display: flex;
-  margin-top: 44px;
-  min-height: 260px;
-`;
-
-const HeroImage = styled.img`
-  width: min(580px, 100%);
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  border-radius: 16px;
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.12);
-`;
-
-const FeatureSection = styled.section`
-  padding: 78px 24px;
-  border-top: 1px solid #dde0e3;
-  background: #f4f5f6;
-`;
-
-const TextBlock = styled.div``;
-
-const SectionLabel = styled.p`
-  ${({ theme }) => theme.fonts.labelXS};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.brand.primary};
-`;
-
-const SectionTitle = styled.h3`
-  ${({ theme }) => theme.fonts.title1};
-  margin: 10px 0 0;
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const SectionDescription = styled.p`
-  ${({ theme }) => theme.fonts.body1};
-  margin: 16px 0 0;
-  color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const JoinMockStage = styled.div`
-  display: flex;
-  align-items: flex-end;
-  gap: 16px;
-
-  @media (max-width: 980px) {
-    margin-top: 24px;
-    justify-content: center;
-  }
-
-  @media (max-width: 760px) {
-    flex-direction: column;
-    align-items: center;
-  }
-`;
-
-const JoinCardMock = styled.img`
-  width: min(320px, 100%);
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  border-radius: 16px;
-  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.12);
-`;
-
-const PhoneMock = styled.img`
-  width: min(220px, 100%);
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  border-radius: 24px;
-  box-shadow: 0 12px 18px rgba(0, 0, 0, 0.15);
-`;
-
-const InboxMockStage = styled.div`
-  display: flex;
-  min-height: 420px;
-
-  @media (max-width: 980px) {
-    margin-top: 24px;
-  }
-`;
-
-const InboxMockImage = styled.img`
-  width: min(520px, 100%);
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  border-radius: 18px;
-  box-shadow: 0 10px 16px rgba(0, 0, 0, 0.12);
-`;
-
-const ReportMockStage = styled.div`
-  display: flex;
-  min-height: 320px;
-
-  @media (max-width: 980px) {
-    margin-top: 24px;
-  }
-`;
-
-const ReportMockImage = styled.img`
-  width: min(520px, 100%);
-  max-width: 100%;
-  height: auto;
-  object-fit: contain;
-  border-radius: 14px;
-  box-shadow: 0 8px 14px rgba(0, 0, 0, 0.08);
-`;
-
-const CtaSection = styled.section`
-  padding: 84px 24px 72px;
-  border-top: 1px solid #dde0e3;
-  background: #f4f5f6;
-  text-align: center;
-`;
-
-const CtaTitle = styled.h3`
-  ${({ theme }) => theme.fonts.title1};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const CtaDescription = styled.p`
-  ${({ theme }) => theme.fonts.body1};
-  margin: 18px 0 0;
-  color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const Footer = styled.footer`
-  ${({ theme }) => theme.fonts.body3};
-  text-align: center;
-  padding: 18px 16px 28px;
-  color: #919191;
+const LandingFooter = styled.footer`
+  padding: 16px;
+  border-top: 1px solid ${({ theme }) => theme.colors.border.border1};
 `;

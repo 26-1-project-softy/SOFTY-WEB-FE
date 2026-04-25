@@ -1,15 +1,12 @@
-﻿import { useEffect, type PropsWithChildren } from 'react';
+﻿import type { PropsWithChildren } from 'react';
 import { Loader } from '@/components/common/Loader';
-import { useAuthStore } from '@/stores/authStore';
+import { useAuth } from '@/hooks/useAuth';
+import { useInitializeAuth } from '@/features/auth/hooks/useInitializeAuth';
 
 export const AuthProvider = ({ children }: PropsWithChildren) => {
-  const isAuthInitialized = useAuthStore(state => state.isAuthInitialized);
-  const setAuthInitialized = useAuthStore(state => state.setAuthInitialized);
+  const { isAuthInitialized } = useAuth();
 
-  useEffect(() => {
-    // TODO: 로그인/현재 사용자 조회 로직은 인증 연동 단계에서 연결
-    setAuthInitialized(true);
-  }, [setAuthInitialized]);
+  useInitializeAuth();
 
   if (!isAuthInitialized) {
     return <Loader />;

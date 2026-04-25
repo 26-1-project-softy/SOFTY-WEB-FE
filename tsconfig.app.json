@@ -10,7 +10,7 @@
     "baseUrl": ".",
     "paths": {
       "@/icons": ["src/assets/icons/index.ts"],
-      "@/images": ["src/assets/images/*"],
+      "@/images": ["src/assets/images/index.ts"],
       "@/*": ["src/*"]
     },
 

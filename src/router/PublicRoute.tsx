@@ -1,23 +1,22 @@
-import { Navigate, Outlet } from 'react-router-dom';
-import { Loader } from '@/components/common/Loader';
+﻿import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
 import { ROUTES } from '@/constants/routes';
 
 export const PublicRoute = () => {
-  const { isAuthenticated, isAuthInitialized, role } = useAuth();
+  const { authStatus, role } = useAuth();
+  const location = useLocation();
 
-  if (!isAuthInitialized) {
-    return <Loader />;
+  if (authStatus === 'SIGNUP_REQUIRED') {
+    if (location.pathname === ROUTES.teacherSignUp) {
+      return <Outlet />;
+    }
+
+    return <Navigate to={ROUTES.teacherSignUp} replace />;
   }
 
-  // TODO: 인증 구현 후 role 복원 시점까지 포함해 리다이렉트 동작 최종 검증
-  if (isAuthenticated && role) {
+  if (authStatus === 'SIGNED_IN' && role) {
     return <Navigate to={getDefaultRouteByRole(role)} replace />;
-  }
-
-  if (isAuthenticated && !role) {
-    return <Navigate to={ROUTES.root} replace />;
   }
 
   return <Outlet />;

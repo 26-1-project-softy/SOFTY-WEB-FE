@@ -1,7 +1,8 @@
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
-import { IconBadge, type IconComponent } from '@/components/common/IconBadge';
+import { IconBadge } from '@/components/common/IconBadge';
 import { InlineButton } from '@/components/common/InlineButton';
+import type { IconComponent } from '@/types/icon';
 import { IcError } from '@/icons';
 
 type ErrorPageProps = {
@@ -44,7 +45,7 @@ export const ErrorPage = ({
 
   return (
     <PageContainer>
-      <IconBadge symbol={IcError} size={68} iconSize={34} bgColor="#FCF3F2" color="#FF2C3D" />
+      <IconBadge icon={IcError} size={68} iconSize={34} bgColor="#FCF3F2" color="#FF2C3D" />
       <ContentContainer>
         <Title>{title}</Title>
         <Description>{description}</Description>

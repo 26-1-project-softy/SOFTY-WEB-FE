@@ -1,18 +1,33 @@
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 
-export type SessionAuthStatus = 'SIGNED_OUT' | 'SIGNUP_REQUIRED' | 'SIGNED_IN';
+export type StoredAuthStatus = 'SIGNED_OUT' | 'SIGNUP_REQUIRED' | 'SIGNED_IN';
+
+const isStoredAuthStatus = (value: string | null): value is StoredAuthStatus => {
+  return value === 'SIGNED_OUT' || value === 'SIGNUP_REQUIRED' || value === 'SIGNED_IN';
+};
 
 export const authSession = {
   getAccessToken: () => localStorage.getItem(STORAGE_KEYS.accessToken),
-  getAuthStatus: () => localStorage.getItem(STORAGE_KEYS.authStatus) as SessionAuthStatus | null,
+
+  getRefreshToken: () => localStorage.getItem(STORAGE_KEYS.refreshToken),
 
   setTokens: (tokens: { accessToken: string; refreshToken: string }) => {
     localStorage.setItem(STORAGE_KEYS.accessToken, tokens.accessToken);
     localStorage.setItem(STORAGE_KEYS.refreshToken, tokens.refreshToken);
   },
 
-  setAuthStatus: (status: SessionAuthStatus) => {
-    localStorage.setItem(STORAGE_KEYS.authStatus, status);
+  getAuthStatus: (): StoredAuthStatus => {
+    const storedAuthStatus = localStorage.getItem(STORAGE_KEYS.authStatus);
+
+    if (isStoredAuthStatus(storedAuthStatus)) {
+      return storedAuthStatus;
+    }
+
+    return 'SIGNED_OUT';
+  },
+
+  setAuthStatus: (authStatus: StoredAuthStatus) => {
+    localStorage.setItem(STORAGE_KEYS.authStatus, authStatus);
   },
 
   clearSession: () => {

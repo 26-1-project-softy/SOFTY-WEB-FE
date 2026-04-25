@@ -1,38 +1,58 @@
 import styled from '@emotion/styled';
-import type { IconComponent } from '@/components/common/IconBadge';
+import { useTheme } from '@emotion/react';
+import type { ButtonHTMLAttributes } from 'react';
+import type { IconComponent } from '@/types/icon';
 
 type ButtonSize = 'M' | 'L';
 type ButtonVariants = 'primary' | 'ghost' | 'text';
 
-interface InlineButtonProps {
+type InlineButtonProps = {
   variant: ButtonVariants;
   size: ButtonSize;
   icon?: IconComponent;
-  width?: string; // 버튼 너비 지정
-  label: string; // 버튼 라벨 텍스트
-  disabled?: boolean;
-  onClick?: () => void;
-}
+  width?: string;
+  label: string;
+  bgColor?: string;
+  activeBgColor?: string;
+  color?: string;
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'color'>;
 
 export const InlineButton = ({
+  type = 'button',
   variant,
   size,
   icon: Icon,
   width,
   label,
-  disabled,
-  onClick,
+  bgColor,
+  activeBgColor,
+  color,
+  disabled = false,
+  ...buttonProps
 }: InlineButtonProps) => {
+  const theme = useTheme();
+
+  const contentColor = disabled
+    ? theme.colors.text.text4
+    : color
+      ? color
+      : variant === 'primary'
+        ? theme.colors.text.textW
+        : theme.colors.text.text1;
+
   return (
     <ButtonContainer
+      type={type}
       $variant={variant}
       $size={size}
       $width={width}
-      onClick={onClick}
+      $bgColor={bgColor}
+      $activeBgColor={activeBgColor}
       disabled={disabled}
+      {...buttonProps}
     >
-      {Icon && <Icon />}
-      <ButtonLabel>{label}</ButtonLabel>
+      {Icon && <Icon color={contentColor} />}
+      <ButtonLabel $color={contentColor}>{label}</ButtonLabel>
     </ButtonContainer>
   );
 };
@@ -40,35 +60,46 @@ export const InlineButton = ({
 const ButtonContainer = styled.button<{
   $size: ButtonSize;
   $width?: string;
+  $bgColor?: string;
+  $activeBgColor?: string;
   $variant: ButtonVariants;
 }>`
-  display: flex;
+  display: inline-flex;
   justify-content: center;
   align-items: center;
-  width: ${({ $width }) => ($width ? $width : '')};
-  height: ${({ $size }) => ($size === 'M' ? '32px' : '40px')};
-  background-color: ${({ $variant, theme }) =>
-    $variant === 'primary' ? theme.colors.brand.primary : theme.colors.background.bg1};
+  width: ${({ $width }) => ($width ? $width : 'auto')};
+  height: ${({ $size }) => ($size === 'M' ? '34px' : '42px')};
+  background-color: ${({ $variant, theme, $bgColor }) =>
+    $bgColor
+      ? $bgColor
+      : $variant === 'primary'
+        ? theme.colors.brand.primary
+        : $variant === 'ghost'
+          ? theme.colors.background.bg1
+          : 'transparent'};
   color: ${({ $variant, theme }) =>
     $variant === 'primary' ? theme.colors.text.textW : theme.colors.text.text1};
   border: ${({ $variant, theme }) =>
     $variant === 'ghost' ? `1px solid ${theme.colors.border.border1}` : 'none'};
   border-radius: 10px;
-  margin: 0 auto;
   padding: 12px;
   gap: 10px;
 
   &:hover,
-  &:focus,
   &:active {
-    background-color: ${({ $variant, theme }) =>
-      $variant === 'primary'
-        ? theme.colors.background.brandHover
-        : $variant === 'ghost'
-          ? theme.colors.background.bg1
-          : 'transparent'};
+    background-color: ${({ $variant, theme, $activeBgColor }) =>
+      $activeBgColor
+        ? $activeBgColor
+        : $variant === 'primary'
+          ? theme.colors.background.brandHover
+          : theme.colors.background.bg5};
     border: ${({ $variant, theme }) =>
       $variant === 'ghost' ? `1px solid ${theme.colors.border.border1}` : 'none'};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.brand.primary};
+    outline-offset: 2px;
   }
 
   &:disabled {
@@ -77,6 +108,8 @@ const ButtonContainer = styled.button<{
   }
 `;
 
-const ButtonLabel = styled.span`
-  font: ${({ theme }) => theme.fonts.labelXS};
+const ButtonLabel = styled.span<{ $color: string }>`
+  white-space: nowrap;
+  ${({ theme }) => theme.fonts.labelXS};
+  color: ${({ $color }) => $color};
 `;
