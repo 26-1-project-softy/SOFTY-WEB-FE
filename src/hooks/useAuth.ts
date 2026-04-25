@@ -7,6 +7,7 @@ export const useAuth = () => {
   const isAuthInitialized = useAuthStore(state => state.isAuthInitialized);
   const setSignedOut = useAuthStore(state => state.setSignedOut);
   const setSignupRequired = useAuthStore(state => state.setSignupRequired);
+  const setOnboardingRequired = useAuthStore(state => state.setOnboardingRequired);
   const setSignedIn = useAuthStore(state => state.setSignedIn);
   const setAuthInitialized = useAuthStore(state => state.setAuthInitialized);
 
@@ -17,6 +18,7 @@ export const useAuth = () => {
     isAuthInitialized,
     setSignedOut,
     setSignupRequired,
+    setOnboardingRequired,
     setSignedIn,
     setAuthInitialized,
     isAuthenticated: authStatus !== 'SIGNED_OUT',
