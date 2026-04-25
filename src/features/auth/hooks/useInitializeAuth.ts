@@ -24,6 +24,7 @@ export const useInitializeAuth = () => {
   const setAuthInitialized = useAuthStore(state => state.setAuthInitialized);
   const setSignedOut = useAuthStore(state => state.setSignedOut);
   const setSignupRequired = useAuthStore(state => state.setSignupRequired);
+  const setOnboardingRequired = useAuthStore(state => state.setOnboardingRequired);
   const setSignedIn = useAuthStore(state => state.setSignedIn);
 
   useEffect(() => {
@@ -45,6 +46,18 @@ export const useInitializeAuth = () => {
       if (authStatus === 'SIGNUP_REQUIRED') {
         if (isMounted) {
           setSignupRequired();
+          setAuthInitialized(true);
+        }
+
+        return;
+      }
+
+      if (authStatus === 'ONBOARDING_REQUIRED') {
+        if (isMounted) {
+          setOnboardingRequired({
+            role: 'teacher',
+            user: null,
+          });
           setAuthInitialized(true);
         }
 
@@ -87,5 +100,5 @@ export const useInitializeAuth = () => {
     return () => {
       isMounted = false;
     };
-  }, [setAuthInitialized, setSignedIn, setSignedOut, setSignupRequired]);
+  }, [setAuthInitialized, setOnboardingRequired, setSignedIn, setSignedOut, setSignupRequired]);
 };

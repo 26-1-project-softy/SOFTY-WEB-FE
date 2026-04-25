@@ -52,7 +52,7 @@ const normalizeRole = (role: string): 'teacher' | 'admin' => {
 
 export const useTeacherSignUpForm = () => {
   const navigate = useNavigate();
-  const { authStatus, setSignedIn, setSignedOut } = useAuth();
+  const { authStatus, setOnboardingRequired, setSignedIn, setSignedOut } = useAuth();
   const showToast = useToastStore(state => state.showToast);
 
   const [teacherName, setTeacherName] = useState('');
@@ -193,9 +193,9 @@ export const useTeacherSignUpForm = () => {
         return;
       }
 
-      authSession.setAuthStatus('SIGNED_IN');
       const normalizedRole = normalizeRole(response.data.role);
-      setSignedIn({
+      authSession.setAuthStatus('ONBOARDING_REQUIRED');
+      setOnboardingRequired({
         role: normalizedRole,
         user: {
           name: teacherName.trim(),
@@ -238,6 +238,15 @@ export const useTeacherSignUpForm = () => {
         return;
       }
 
+      authSession.setAuthStatus('SIGNED_IN');
+      setSignedIn({
+        role: 'teacher',
+        user: {
+          name: teacherName.trim(),
+          grade: validationResult.parsedGrade,
+          classNumber: validationResult.parsedClassNumber,
+        },
+      });
       setGeneratedClassCode(response.data.classCode.trim());
       setStep('CLASS_CODE_READY');
     } catch (error) {

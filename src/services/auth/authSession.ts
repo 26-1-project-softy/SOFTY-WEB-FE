@@ -1,6 +1,10 @@
 import { STORAGE_KEYS } from '@/constants/storageKeys';
 
-export type StoredAuthStatus = 'SIGNED_OUT' | 'SIGNUP_REQUIRED' | 'SIGNED_IN';
+export type StoredAuthStatus =
+  | 'SIGNED_OUT'
+  | 'SIGNUP_REQUIRED'
+  | 'ONBOARDING_REQUIRED'
+  | 'SIGNED_IN';
 
 const AUTH_STATUS_KEY = `${STORAGE_KEYS.accessToken}_status`;
 
@@ -20,6 +24,7 @@ export const authSession = {
     if (
       storedAuthStatus === 'SIGNED_OUT' ||
       storedAuthStatus === 'SIGNUP_REQUIRED' ||
+      storedAuthStatus === 'ONBOARDING_REQUIRED' ||
       storedAuthStatus === 'SIGNED_IN'
     ) {
       return storedAuthStatus;
