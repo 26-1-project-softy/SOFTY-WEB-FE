@@ -1,24 +1,24 @@
 import styled from '@emotion/styled';
-import type { IconComponent } from '@/components/common/IconBadge';
 import { useTheme } from '@emotion/react';
+import type { ButtonHTMLAttributes } from 'react';
+import type { IconComponent } from '@/types/icon';
 
 type ButtonSize = 'M' | 'L';
 type ButtonVariants = 'primary' | 'ghost' | 'text';
 
-interface InlineButtonProps {
+type InlineButtonProps = {
   variant: ButtonVariants;
   size: ButtonSize;
   icon?: IconComponent;
-  width?: string; // 버튼 너비 지정
-  label: string; // 버튼 라벨 텍스트
+  width?: string;
+  label: string;
   bgColor?: string;
   activeBgColor?: string;
   color?: string;
-  disabled?: boolean;
-  onClick?: () => void;
-}
+} & Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'children' | 'color'>;
 
 export const InlineButton = ({
+  type = 'button',
   variant,
   size,
   icon: Icon,
@@ -27,8 +27,8 @@ export const InlineButton = ({
   bgColor,
   activeBgColor,
   color,
-  disabled,
-  onClick,
+  disabled = false,
+  ...buttonProps
 }: InlineButtonProps) => {
   const theme = useTheme();
 
@@ -42,13 +42,14 @@ export const InlineButton = ({
 
   return (
     <ButtonContainer
+      type={type}
       $variant={variant}
       $size={size}
       $width={width}
       $bgColor={bgColor}
       $activeBgColor={activeBgColor}
-      onClick={onClick}
       disabled={disabled}
+      {...buttonProps}
     >
       {Icon && <Icon color={contentColor} />}
       <ButtonLabel $color={contentColor}>{label}</ButtonLabel>

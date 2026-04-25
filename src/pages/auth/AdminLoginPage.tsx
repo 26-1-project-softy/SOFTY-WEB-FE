@@ -1,8 +1,13 @@
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
-import { ROUTES } from '@/constants/routes';
-import { IcBack, IcInfo } from '@/icons';
 import { useAdminLoginForm } from '@/features/auth/hooks/useAdminLoginForm';
+import { Alert } from '@/components/common/Alert';
+import { FooterCopyright } from '@/components/common/FooterCopyright';
+import { IconButton } from '@/components/common/IconButton';
+import { InlineButton } from '@/components/common/InlineButton';
+import { TextField } from '@/components/common/TextField';
+import { IcBack } from '@/icons';
+import { ROUTES } from '@/constants/routes';
 
 export const AdminLoginPage = () => {
   const navigate = useNavigate();
@@ -10,7 +15,6 @@ export const AdminLoginPage = () => {
   const {
     loginId,
     password,
-    isSubmitting,
     loginError,
     isLoginEnabled,
     handleChangeLoginId,
@@ -24,217 +28,113 @@ export const AdminLoginPage = () => {
 
   return (
     <AdminLoginPageContainer>
-      <ContentArea>
-        <BackButton type="button" onClick={handleGoBack} aria-label="뒤로가기">
-          <IcBack />
-        </BackButton>
+      <AdminLoginContent>
+        <IconButton
+          icon={IcBack}
+          variant="plain"
+          onClick={handleGoBack}
+          accessibilityLabel="뒤로가기"
+        />
 
-        <LoginCard>
-          <Title>관리자 로그인</Title>
+        <AdminLoginCard>
+          <AdminLoginForm onSubmit={handleSubmit}>
+            <AdminLoginTitle>관리자 로그인</AdminLoginTitle>
 
-          <LoginForm onSubmit={handleSubmit}>
-            <InputGroup>
-              <Label htmlFor="loginId">아이디</Label>
-              <Input
+            <AdminLoginInputSection>
+              <TextField
                 id="loginId"
                 name="loginId"
                 type="text"
                 autoComplete="username"
+                label="아이디"
                 value={loginId}
                 onChange={event => handleChangeLoginId(event.target.value)}
                 placeholder="아이디를 입력해주세요."
               />
-            </InputGroup>
 
-            <InputGroup>
-              <Label htmlFor="password">비밀번호</Label>
-              <Input
+              <TextField
                 id="password"
                 name="password"
                 type="password"
                 autoComplete="current-password"
+                label="비밀번호"
                 value={password}
                 onChange={event => handleChangePassword(event.target.value)}
                 placeholder="비밀번호를 입력해주세요."
               />
-            </InputGroup>
+            </AdminLoginInputSection>
 
-            {loginError ? (
-              <ErrorBox role="alert" aria-live="polite">
-                <ErrorIconWrap>
-                  <IcInfo />
-                </ErrorIconWrap>
-                <ErrorTextWrap>
-                  <ErrorTitle>{loginError.title}</ErrorTitle>
-                  <ErrorDescription>{loginError.description}</ErrorDescription>
-                </ErrorTextWrap>
-              </ErrorBox>
-            ) : null}
+            <AdminLoginActionSection>
+              {loginError && (
+                <Alert
+                  title={loginError.title}
+                  description={loginError.description}
+                  variant="error"
+                />
+              )}
 
-            <LoginButton type="submit" disabled={!isLoginEnabled}>
-              {isSubmitting ? '로그인 중...' : '로그인'}
-            </LoginButton>
-          </LoginForm>
-        </LoginCard>
-      </ContentArea>
+              <InlineButton
+                type="submit"
+                variant="primary"
+                size="L"
+                label="로그인"
+                disabled={!isLoginEnabled}
+              />
+            </AdminLoginActionSection>
+          </AdminLoginForm>
+        </AdminLoginCard>
+      </AdminLoginContent>
 
-      <FooterText>© 2026, 소프티 All rights reserved.</FooterText>
+      <FooterCopyright />
     </AdminLoginPageContainer>
   );
 };
 
 const AdminLoginPageContainer = styled.div`
-  min-height: 100vh;
-  background: #e5e5e5;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 16px 32px;
+  min-height: 100vh;
+  background: ${({ theme }) => theme.colors.background.bg2};
+  padding: 32px 16px;
+  gap: 80px;
 `;
 
-const ContentArea = styled.div`
-  width: 100%;
-  max-width: 620px;
+const AdminLoginContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 `;
 
-const BackButton = styled.button`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
+const AdminLoginCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  border-radius: 16px;
+  padding: 40px;
+`;
+
+const AdminLoginForm = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 36px;
+`;
+
+const AdminLoginTitle = styled.h1`
+  ${({ theme }) => theme.fonts.labelL};
   color: ${({ theme }) => theme.colors.text.text1};
-
-  svg {
-    width: 22px;
-    height: 22px;
-  }
-`;
-
-const LoginCard = styled.div`
-  margin-top: 18px;
-  width: 100%;
-  max-width: 540px;
-  background: #f4f4f4;
-  border-radius: 18px;
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.12);
-  padding: 44px 48px 42px;
-
-  @media (max-width: 640px) {
-    padding: 30px 18px 24px;
-  }
-`;
-
-const Title = styled.h1`
-  ${({ theme }) => theme.fonts.title2};
-  color: ${({ theme }) => theme.colors.text.text1};
-  margin: 0;
   text-align: center;
 `;
 
-const LoginForm = styled.form`
-  margin-top: 28px;
+const AdminLoginInputSection = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
 `;
 
-const InputGroup = styled.div`
+const AdminLoginActionSection = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 10px;
-`;
-
-const Label = styled.label`
-  ${({ theme }) => theme.fonts.labelS};
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const Input = styled.input`
-  ${({ theme }) => theme.fonts.labelS};
-  border: 1px solid #c6c6c6;
-  border-radius: 12px;
-  background: #f4f4f4;
-  padding: 13px 14px;
-  color: ${({ theme }) => theme.colors.text.text1};
-
-  &::placeholder {
-    color: #8d8d8d;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.brand.primary};
-    box-shadow: 0 0 0 2px rgba(85, 181, 166, 0.16);
-  }
-`;
-
-const ErrorBox = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-top: 8px;
-  border-radius: 18px;
-  border: 1px solid #ff5b66;
-  background: #ffe9ec;
-  padding: 14px 16px;
-`;
-
-const ErrorIconWrap = styled.span`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: ${({ theme }) => theme.colors.semantic.error};
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-const ErrorTextWrap = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-`;
-
-const ErrorTitle = styled.p`
-  ${({ theme }) => theme.fonts.labelXS};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
-`;
-
-const ErrorDescription = styled.p`
-  ${({ theme }) => theme.fonts.caption};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
-`;
-
-const LoginButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
-  margin-top: 18px;
-  border: none;
-  border-radius: 14px;
-  padding: 14px;
-  color: ${({ theme }) => theme.colors.text.textW};
-  background: ${({ theme }) => theme.colors.brand.primary};
-  transition: background 0.2s ease;
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.background.brandHover};
-  }
-
-  &:disabled {
-    background: #d0d0d0;
-    color: #747474;
-    cursor: not-allowed;
-  }
-`;
-
-const FooterText = styled.p`
-  ${({ theme }) => theme.fonts.body3};
-  margin: 64px 0 0;
-  color: #919191;
+  gap: 12px;
 `;

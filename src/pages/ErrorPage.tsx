@@ -1,7 +1,8 @@
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
-import { IconBadge, type IconComponent } from '@/components/common/IconBadge';
+import { IconBadge } from '@/components/common/IconBadge';
 import { InlineButton } from '@/components/common/InlineButton';
+import type { IconComponent } from '@/types/icon';
 import { IcError } from '@/icons';
 
 type ErrorPageProps = {

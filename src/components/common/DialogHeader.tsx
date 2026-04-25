@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
 import type { ReactNode } from 'react';
-import { IconBadge, type IconComponent } from '@/components/common/IconBadge';
+import { IconBadge } from '@/components/common/IconBadge';
+import type { IconComponent } from '@/types/icon';
 
 type DialogHeaderProps = {
   icon: IconComponent;

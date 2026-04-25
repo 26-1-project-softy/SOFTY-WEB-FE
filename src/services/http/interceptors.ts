@@ -9,7 +9,11 @@ const AUTH_EXCLUDED_PATHS = [
   '/auth/teachers/signup',
 ];
 
-const shouldSkipUnauthorizedHandling = (url?: string) => {
+type AuthRequestConfig = InternalAxiosRequestConfig & {
+  skipUnauthorizedHandling?: boolean;
+};
+
+const shouldSkipUnauthorizedHandlingByPath = (url?: string) => {
   if (!url) {
     return false;
   }
@@ -23,17 +27,20 @@ const resetAuthState = () => {
 };
 
 const onRequest = (config: InternalAxiosRequestConfig) => {
+  const requestConfig = config as AuthRequestConfig;
   const accessToken = authSession.getAccessToken();
 
-  if (!config.headers) {
-    config.headers = new AxiosHeaders();
+  if (!requestConfig.headers) {
+    requestConfig.headers = new AxiosHeaders();
   }
 
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
+  const hasAuthorizationHeader = requestConfig.headers.has('Authorization');
+
+  if (!hasAuthorizationHeader && accessToken) {
+    requestConfig.headers.set('Authorization', `Bearer ${accessToken}`);
   }
 
-  return config;
+  return requestConfig;
 };
 
 const onRequestError = (error: AxiosError) => Promise.reject(error);
@@ -42,9 +49,13 @@ const onResponse = (response: AxiosResponse) => response;
 
 const onResponseError = (error: AxiosError) => {
   const status = error.response?.status;
-  const requestUrl = error.config?.url;
+  const requestConfig = error.config as AuthRequestConfig | undefined;
+  const requestUrl = requestConfig?.url;
 
-  if (status === 401 && !shouldSkipUnauthorizedHandling(requestUrl)) {
+  const shouldSkipUnauthorizedHandling =
+    requestConfig?.skipUnauthorizedHandling || shouldSkipUnauthorizedHandlingByPath(requestUrl);
+
+  if (status === 401 && !shouldSkipUnauthorizedHandling) {
     resetAuthState();
   }
 

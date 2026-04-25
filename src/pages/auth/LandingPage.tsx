@@ -15,6 +15,7 @@ import {
 } from '@/components/auth/landing';
 import { EXTERNAL_LINKS, landingContent } from '@/constants/landing';
 import { ROUTES } from '@/constants/routes';
+import { FooterCopyright } from '@/components/common/FooterCopyright';
 
 const LANDING_FEATURE_SECTION_ID = 'landing-feature-section';
 
@@ -97,7 +98,9 @@ export const LandingPage = () => {
         onScrollToFeature={handleScrollToFeature}
       />
 
-      <Footer>© 2026, 소프티 All rights reserved.</Footer>
+      <LandingFooter>
+        <FooterCopyright />
+      </LandingFooter>
 
       <ParentAppInstallDialog
         isOpen={isParentAppInstallDialogOpen}
@@ -120,10 +123,7 @@ const HeaderActionContainer = styled.div`
   gap: 10px;
 `;
 
-const Footer = styled.footer`
+const LandingFooter = styled.footer`
   padding: 16px;
-  text-align: center;
   border-top: 1px solid ${({ theme }) => theme.colors.border.border1};
-  ${({ theme }) => theme.fonts.caption};
-  color: ${({ theme }) => theme.colors.text.text4};
 `;

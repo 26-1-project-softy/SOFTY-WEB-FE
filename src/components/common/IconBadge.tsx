@@ -1,7 +1,5 @@
 import styled from '@emotion/styled';
-import type { ComponentType, SVGProps } from 'react';
-
-export type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
+import type { IconComponent } from '@/types/icon';
 
 type IconBadgeProps = {
   icon: IconComponent;
