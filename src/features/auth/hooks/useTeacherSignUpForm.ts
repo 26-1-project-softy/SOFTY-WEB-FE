@@ -2,19 +2,17 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { getAuthErrorMessage } from '@/features/auth/lib/getAuthErrorMessage';
+import {
+  type TeacherSignUpFieldErrors,
+  validateTeacherSignUpForm,
+} from '@/features/auth/lib/teacherSignUpValidation';
 import { authApi, authSession, teacherAuthApi } from '@/services/auth';
 import { ROUTES } from '@/constants/routes';
 import { useToastStore } from '@/stores/toastStore';
 
-type FieldErrors = {
-  teacherName?: string;
-  schoolName?: string;
-  grade?: string;
-  classNumber?: string;
-};
-type TouchedFields = Record<keyof FieldErrors, boolean>;
+type TouchedFields = Record<keyof TeacherSignUpFieldErrors, boolean>;
 
-type GlobalError = {
+export type GlobalError = {
   title: string;
   description: string;
 } | null;
@@ -31,7 +29,6 @@ const EXPIRED_AUTH_ERROR: GlobalError = {
   description: '카카오 로그인을 다시 진행해 주세요.',
 };
 
-const parseNumberText = (value: string) => Number(value.trim());
 const DEFAULT_CLASS_CODE = 'X7K-9P2';
 
 type FormSubmitHandler = NonNullable<ComponentProps<'form'>['onSubmit']>;
@@ -133,30 +130,12 @@ export const useTeacherSignUpForm = () => {
   }, [step, navigate]);
 
   const validationResult = useMemo(() => {
-    const errors: FieldErrors = {};
-
-    if (teacherName.trim().length < 2) {
-      errors.teacherName = '이름은 2자 이상 입력해 주세요.';
-    }
-
-    if (schoolName.trim().length === 0) {
-      errors.schoolName = '학교명을 입력해 주세요.';
-    }
-
-    if (!/^\d+$/.test(grade.trim())) {
-      errors.grade = '숫자만 입력해 주세요.';
-    }
-
-    if (!/^\d+$/.test(classNumber.trim())) {
-      errors.classNumber = '숫자만 입력해 주세요.';
-    }
-
-    return {
-      errors,
-      isValid: Object.keys(errors).length === 0,
-      parsedGrade: parseNumberText(grade),
-      parsedClassNumber: parseNumberText(classNumber),
-    };
+    return validateTeacherSignUpForm({
+      teacherName,
+      schoolName,
+      grade,
+      classNumber,
+    });
   }, [teacherName, schoolName, grade, classNumber]);
 
   const isSignUpEnabled =
@@ -165,15 +144,17 @@ export const useTeacherSignUpForm = () => {
     authStatus === 'SIGNUP_REQUIRED' &&
     step === 'FORM';
 
-  const shouldShowError = (field: keyof FieldErrors) => isSubmitAttempted || touchedFields[field];
-  const fieldErrors: FieldErrors = {
+  const shouldShowError = (field: keyof TeacherSignUpFieldErrors) =>
+    isSubmitAttempted || touchedFields[field];
+
+  const fieldErrors: TeacherSignUpFieldErrors = {
     teacherName: shouldShowError('teacherName') ? validationResult.errors.teacherName : undefined,
     schoolName: shouldShowError('schoolName') ? validationResult.errors.schoolName : undefined,
     grade: shouldShowError('grade') ? validationResult.errors.grade : undefined,
     classNumber: shouldShowError('classNumber') ? validationResult.errors.classNumber : undefined,
   };
 
-  const touchField = (field: keyof FieldErrors) => {
+  const touchField = (field: keyof TeacherSignUpFieldErrors) => {
     setTouchedFields(prev => (prev[field] ? prev : { ...prev, [field]: true }));
   };
 

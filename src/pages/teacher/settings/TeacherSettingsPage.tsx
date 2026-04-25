@@ -1,63 +1,25 @@
-import styled from '@emotion/styled';
-import { AxiosError } from 'axios';
-import { useState } from 'react';
+﻿import styled from '@emotion/styled';
 import { Dialog } from '@/components/common/Dialog';
-import { useLogout } from '@/hooks/useLogout';
+import { useTeacherWithdraw } from '@/features/teacher/settings/hooks/useTeacherWithdraw';
 import { IcInfo } from '@/icons';
-import { userAuthApi } from '@/services/auth';
 
 export const TeacherSettingsPage = () => {
-  const { logout } = useLogout();
-  const [isWithdrawModalOpen, setIsWithdrawModalOpen] = useState(false);
-  const [isWithdrawing, setIsWithdrawing] = useState(false);
-  const [withdrawErrorMessage, setWithdrawErrorMessage] = useState('');
-
-  const handleOpenWithdrawModal = () => {
-    setWithdrawErrorMessage('');
-    setIsWithdrawModalOpen(true);
-  };
-
-  const handleCloseWithdrawModal = () => {
-    if (isWithdrawing) {
-      return;
-    }
-
-    setWithdrawErrorMessage('');
-    setIsWithdrawModalOpen(false);
-  };
-
-  const handleConfirmWithdraw = async () => {
-    try {
-      setIsWithdrawing(true);
-      setWithdrawErrorMessage('');
-
-      const response = await userAuthApi.deleteMe();
-
-      if (!response.success) {
-        setWithdrawErrorMessage(
-          response.message || '회원 탈퇴에 실패했어요. 잠시 후 다시 시도해 주세요.'
-        );
-        return;
-      }
-
-      logout();
-    } catch (error) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      const message =
-        axiosError.response?.data?.message || '회원 탈퇴에 실패했어요. 잠시 후 다시 시도해 주세요.';
-
-      setWithdrawErrorMessage(message);
-    } finally {
-      setIsWithdrawing(false);
-    }
-  };
+  const {
+    isWithdrawModalOpen,
+    isWithdrawing,
+    withdrawErrorMessage,
+    handleOpenWithdrawModal,
+    handleCloseWithdrawModal,
+    handleConfirmWithdraw,
+    handleLogout,
+  } = useTeacherWithdraw();
 
   return (
     <TeacherSettingsPageContainer>
       <SettingsSectionCard>
         <SectionTitle>계정 관리</SectionTitle>
         <ActionList>
-          <ActionButton type="button" onClick={() => logout()}>
+          <ActionButton type="button" onClick={handleLogout}>
             로그아웃
           </ActionButton>
           <ActionButton type="button" onClick={handleOpenWithdrawModal}>
@@ -68,9 +30,9 @@ export const TeacherSettingsPage = () => {
 
       <Dialog isOpen={isWithdrawModalOpen} onClose={handleCloseWithdrawModal}>
         <WithdrawModalBody>
-          <WithdrawIconWrap>
+          <WithdrawIconContainer>
             <IcInfo />
-          </WithdrawIconWrap>
+          </WithdrawIconContainer>
           <WithdrawTitle>정말 탈퇴하시겠어요?</WithdrawTitle>
           <WithdrawDescription>
             탈퇴하면 학급 정보와 대화 내역이 모두 삭제되고,
@@ -139,7 +101,7 @@ const WithdrawModalBody = styled.div`
   gap: 14px;
 `;
 
-const WithdrawIconWrap = styled.span`
+const WithdrawIconContainer = styled.span`
   width: 58px;
   height: 58px;
   border-radius: 999px;
