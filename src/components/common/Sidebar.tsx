@@ -44,7 +44,7 @@ export const Sidebar = () => {
         >
           <IcBrandLogo />
           <BrandLabelSlot isOpen={isSidebarOpen}>
-            <BrandLabel isOpen={isSidebarOpen}>소프티</BrandLabel>
+            <BrandLabel isOpen={isSidebarOpen}>SOFTY</BrandLabel>
           </BrandLabelSlot>
         </SidebarBrandButton>
 
@@ -120,7 +120,7 @@ const SidebarHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border2};
+  height: 62px;
   padding: 12px 16px;
   gap: 10px;
 `;
