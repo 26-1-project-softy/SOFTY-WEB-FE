@@ -96,7 +96,9 @@ const SidebarContainer = styled.aside<{ isOpen: boolean }>`
   flex-shrink: 0;
   overflow: hidden;
   width: ${({ isOpen }) => (isOpen ? '240px' : '100px')};
-  height: 100vh;
+  min-height: 100vh;
+  height: auto;
+  align-self: stretch;
   background: ${({ theme }) => theme.colors.background.bg1};
   border-right: 1px solid ${({ theme }) => theme.colors.border.border2};
   gap: 10px;
