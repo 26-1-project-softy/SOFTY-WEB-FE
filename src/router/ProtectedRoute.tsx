@@ -17,7 +17,7 @@ export const ProtectedRoute = ({ allowedRoles }: ProtectedRouteProps) => {
     return <Navigate to={redirectTo} replace />;
   }
 
-  if (authStatus === 'SIGNUP_REQUIRED') {
+  if (authStatus === 'SIGNUP_REQUIRED' || authStatus === 'ONBOARDING_REQUIRED') {
     return <Navigate to={ROUTES.teacherSignUp} replace />;
   }
 
