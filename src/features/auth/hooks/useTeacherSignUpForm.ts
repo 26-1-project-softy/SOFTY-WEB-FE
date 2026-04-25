@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { getAuthErrorMessage } from '@/features/auth/lib/getAuthErrorMessage';
-import { authSession, teacherAuthApi } from '@/services/auth';
+import { authApi, authSession, teacherAuthApi } from '@/services/auth';
 import { ROUTES } from '@/constants/routes';
 import { useToastStore } from '@/stores/toastStore';
 
@@ -36,7 +36,7 @@ const DEFAULT_CLASS_CODE = 'X7K-9P2';
 
 type FormSubmitHandler = NonNullable<ComponentProps<'form'>['onSubmit']>;
 
-const normalizeRole = (role: string): 'teacher' | 'admin' => {
+const normalizeRole = (role: string): 'teacher' | 'admin' | null => {
   const normalized = role
     .trim()
     .replace(/^ROLE_/i, '')
@@ -46,13 +46,13 @@ const normalizeRole = (role: string): 'teacher' | 'admin' => {
     return normalized;
   }
 
-  // Teacher signup endpoint should resolve to teacher role.
-  return 'teacher';
+  return null;
 };
 
 export const useTeacherSignUpForm = () => {
   const navigate = useNavigate();
-  const { authStatus, setOnboardingRequired, setSignedIn, setSignedOut } = useAuth();
+  const { authStatus, setSignupRequired, setOnboardingRequired, setSignedIn, setSignedOut } =
+    useAuth();
   const showToast = useToastStore(state => state.showToast);
 
   const [teacherName, setTeacherName] = useState('');
@@ -77,10 +77,41 @@ export const useTeacherSignUpForm = () => {
       return;
     }
 
-    // When onboarding is already required, skip the sign-up form and continue flow.
-    setGlobalError(null);
-    setStep('SIGN_UP_SUCCESS');
-  }, [authStatus, step]);
+    let isMounted = true;
+
+    const syncOnboardingState = async () => {
+      try {
+        const me = await authApi.getMe();
+
+        if (!isMounted) {
+          return;
+        }
+
+        if (me.role === 'teacher') {
+          setGlobalError(null);
+          setStep('SIGN_UP_SUCCESS');
+          return;
+        }
+      } catch {
+        // When role is not yet teacher, fall back to signup step.
+      }
+
+      if (!isMounted) {
+        return;
+      }
+
+      authSession.setAuthStatus('SIGNUP_REQUIRED');
+      setSignupRequired();
+      setStep('FORM');
+      setGlobalError(null);
+    };
+
+    void syncOnboardingState();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [authStatus, setSignupRequired, step]);
 
   useEffect(() => {
     if (step === 'FORM') {
@@ -204,6 +235,15 @@ export const useTeacherSignUpForm = () => {
       }
 
       const normalizedRole = normalizeRole(response.data.role);
+
+      if (normalizedRole !== 'teacher') {
+        authSession.clearSession();
+        setSignedOut();
+        navigate(ROUTES.root, { replace: true });
+        showToast('교사 권한 확인에 실패했어요. 다시 로그인해 주세요.', 'error');
+        return;
+      }
+
       authSession.setAuthStatus('ONBOARDING_REQUIRED');
       setOnboardingRequired({
         role: normalizedRole,
@@ -248,15 +288,6 @@ export const useTeacherSignUpForm = () => {
         return;
       }
 
-      authSession.setAuthStatus('SIGNED_IN');
-      setSignedIn({
-        role: 'teacher',
-        user: {
-          name: teacherName.trim(),
-          grade: validationResult.parsedGrade,
-          classNumber: validationResult.parsedClassNumber,
-        },
-      });
       setGeneratedClassCode(response.data.classCode.trim());
       setStep('CLASS_CODE_READY');
     } catch (error) {
@@ -264,6 +295,19 @@ export const useTeacherSignUpForm = () => {
         error,
         '학급 코드 생성에 실패했어요. 다시 시도해 주세요.'
       );
+
+      if (message === '접근 권한이 없어요') {
+        authSession.setAuthStatus('SIGNUP_REQUIRED');
+        setSignupRequired();
+        setStep('FORM');
+        setGlobalError({
+          title: '교사 권한 확인에 실패했어요',
+          description: '회원가입 정보를 다시 입력해 주세요.',
+        });
+        showToast('교사 권한이 확인되지 않았어요. 회원가입을 다시 진행해 주세요.', 'error');
+        return;
+      }
+
       showToast(message, 'error');
     } finally {
       setIsCreatingClassCode(false);
@@ -280,7 +324,31 @@ export const useTeacherSignUpForm = () => {
   };
 
   const handleGoToInbox = () => {
-    navigate(ROUTES.teacherThreadList, { replace: true });
+    const moveToInbox = async () => {
+      try {
+        const me = await authApi.getMe();
+
+        authSession.setAuthStatus('SIGNED_IN');
+        setSignedIn({
+          role: me.role,
+          user: me.user,
+        });
+      } catch {
+        authSession.setAuthStatus('SIGNED_IN');
+        setSignedIn({
+          role: 'teacher',
+          user: {
+            name: teacherName.trim() || '선생님',
+            grade: validationResult.parsedGrade,
+            classNumber: validationResult.parsedClassNumber,
+          },
+        });
+      }
+
+      navigate(ROUTES.teacherThreadList, { replace: true });
+    };
+
+    void moveToInbox();
   };
 
   return {
