@@ -2,6 +2,7 @@ import styled from '@emotion/styled';
 import { LandingActionButtons } from '@/components/auth/landing/LandingActionButtons';
 import { LandingTextLines } from '@/components/auth/landing/LandingTextLines';
 import type { LandingContent } from '@/constants/landing';
+import { HEADER_HEIGHT } from '@/constants/layout';
 
 type LandingHeroSectionProps = {
   content: LandingContent['hero'];
@@ -41,8 +42,6 @@ export const LandingHeroSection = ({
     </HeroSection>
   );
 };
-
-const HEADER_HEIGHT = 74;
 
 const HeroSection = styled.section`
   display: flex;
