@@ -1,37 +1,40 @@
 import styled from '@emotion/styled';
-import type { ComponentType, SVGProps } from 'react';
+import type { IconComponent } from '@/types/icon';
 
-export type IconComponent = ComponentType<SVGProps<SVGSVGElement>>;
-
-type IconProps = {
-  symbol: IconComponent;
+type IconBadgeProps = {
+  icon: IconComponent;
   size?: number;
   iconSize?: number;
-  bgColor?: string;
-  color?: string;
+  bgColor: string;
+  color: string;
 };
 
 export const IconBadge = ({
-  symbol: Symbol,
-  size = 48,
-  iconSize = 24,
+  icon: Icon,
+  size = 68,
+  iconSize = 34,
   bgColor,
   color,
-}: IconProps) => {
+}: IconBadgeProps) => {
   return (
-    <IconContainer $size={size} $bgColor={bgColor} $color={color}>
-      <Symbol width={iconSize} height={iconSize} />
-    </IconContainer>
+    <IconBadgeContainer $size={size} $bgColor={bgColor} $color={color} aria-hidden="true">
+      <Icon width={iconSize} height={iconSize} />
+    </IconBadgeContainer>
   );
 };
 
-const IconContainer = styled.div<{ $size?: number; $bgColor?: string; $color?: string }>`
-  display: flex;
+const IconBadgeContainer = styled.span<{
+  $size: number;
+  $bgColor: string;
+  $color: string;
+}>`
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: ${({ $size }) => `${$size}px`};
-  aspect-ratio: 1;
+  height: ${({ $size }) => `${$size}px`};
+  border-radius: 999px;
   background-color: ${({ $bgColor }) => $bgColor};
   color: ${({ $color }) => $color};
-  border-radius: 999px;
+  flex-shrink: 0;
 `;

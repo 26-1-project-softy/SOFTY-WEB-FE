@@ -1,20 +1,21 @@
 import { createBrowserRouter, Navigate } from 'react-router-dom';
-import { ROUTES } from '@/constants/routes';
-import { IcBack, IcHome } from '@/icons';
 import { AppLayout } from '@/layouts/AppLayout';
+import { LandingPage } from '@/pages/auth/LandingPage';
+import { ErrorPage } from '@/pages/ErrorPage';
+import { AdminLoginPage } from '@/pages/auth/AdminLoginPage';
+import { TeacherSignUpPage } from '@/pages/auth/TeacherSignUpPage';
+import { TeacherKakaoCallbackPage } from '@/pages/auth/TeacherKakaoCallbackPage';
 import { AdminAiModelPage } from '@/pages/admin/aiModel/AdminAiModelPage';
 import { AdminDashboardPage } from '@/pages/admin/dashboard/AdminDashboardPage';
-import { AdminErrorReviewPage } from '@/pages/admin/errorReview/AdminErrorReviewPage';
-import { AdminLoginPage } from '@/pages/auth/AdminLoginPage';
-import { LandingPage } from '@/pages/auth/LandingPage';
-import { TeacherSignUpPage } from '@/pages/auth/TeacherSignUpPage';
-import { ErrorPage } from '@/pages/ErrorPage';
 import { TeacherReportsPage } from '@/pages/teacher/reports/TeacherReportsPage';
+import { AdminErrorReviewPage } from '@/pages/admin/errorReview/AdminErrorReviewPage';
 import { TeacherSettingsPage } from '@/pages/teacher/settings/TeacherSettingsPage';
 import { TeacherThreadDetailPage } from '@/pages/teacher/threadDetail/TeacherThreadDetailPage';
 import { TeacherThreadListPage } from '@/pages/teacher/threadList/TeacherThreadListPage';
 import { ProtectedRoute } from './ProtectedRoute';
 import { PublicRoute } from './PublicRoute';
+import { ROUTES } from '@/constants/routes';
+import { IcBack, IcHome } from '@/icons';
 
 export const router = createBrowserRouter([
   {
@@ -32,25 +33,39 @@ export const router = createBrowserRouter([
         path: ROUTES.teacherSignUp,
         element: <TeacherSignUpPage />,
       },
+      {
+        path: ROUTES.teacherKakaoCallback,
+        element: <TeacherKakaoCallbackPage />,
+      },
     ],
   },
   {
     element: <ProtectedRoute allowedRoles={['teacher']} />,
     children: [
       {
+        path: ROUTES.teacherThreadList,
+        element: <AppLayout />,
+        children: [
+          {
+            index: true,
+            element: <TeacherThreadListPage />,
+            handle: {
+              title: '수신함',
+            },
+          },
+        ],
+      },
+      {
         path: ROUTES.teacher,
         element: <AppLayout />,
         children: [
           {
             index: true,
-            element: <Navigate to="thread-list" />,
+            element: <Navigate to={ROUTES.teacherThreadList} replace />,
           },
           {
             path: 'thread-list',
-            element: <TeacherThreadListPage />,
-            handle: {
-              title: '\uC218\uC2E0\uD568',
-            },
+            element: <Navigate to={ROUTES.teacherThreadList} replace />,
           },
           {
             path: 'thread-detail/:threadId',
@@ -61,14 +76,14 @@ export const router = createBrowserRouter([
             path: 'reports',
             element: <TeacherReportsPage />,
             handle: {
-              title: '\uC99D\uBE59 \uB9AC\uD3EC\uD2B8',
+              title: '증빙 리포트',
             },
           },
           {
             path: 'settings',
             element: <TeacherSettingsPage />,
             handle: {
-              title: '\uC124\uC815',
+              title: '설정',
             },
           },
         ],
@@ -84,27 +99,27 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <Navigate to="dashboard" />,
+            element: <Navigate to="dashboard" replace />,
           },
           {
             path: 'dashboard',
             element: <AdminDashboardPage />,
             handle: {
-              title: '\uB300\uC2DC\uBCF4\uB4DC',
+              title: '대시보드',
             },
           },
           {
             path: 'error-review',
             element: <AdminErrorReviewPage />,
             handle: {
-              title: '\uC624\uB958 \uAC80\uD1A0',
+              title: '오류 검토',
             },
           },
           {
             path: 'ai-model',
             element: <AdminAiModelPage />,
             handle: {
-              title: 'AI \uBAA8\uB378 \uAD00\uB9AC',
+              title: 'AI 모델 관리',
             },
           },
         ],
@@ -116,11 +131,11 @@ export const router = createBrowserRouter([
     element: (
       <ErrorPage
         title="403 Forbidden"
-        description={`\uAD8C\uD55C\uC774 \uC5C6\uAC70\uB098, \uC0AC\uC6A9\uD560 \uC218 \uC5C6\uB294 \uD398\uC774\uC9C0\uC608\uC694.\n\uB85C\uADF8\uC778 \uC815\uBCF4\uB97C \uB2E4\uC2DC \uD55C \uBC88 \uD655\uC778\uD574\uC8FC\uC138\uC694.`}
-        primaryBtnLabel="\uD648\uC73C\uB85C \uC774\uB3D9"
+        description={`권한이 없어 접근할 수 없는 페이지예요.\n로그인 정보를 다시 확인해주세요.`}
+        primaryBtnLabel="홈으로 이동"
         primaryBtnIcon={IcHome}
         primaryTo={ROUTES.root}
-        ghostBtnLabel="\uC774\uC804\uC73C\uB85C"
+        ghostBtnLabel="이전으로"
         ghostBtnIcon={IcBack}
         isGhostGoBack
       />
@@ -131,8 +146,8 @@ export const router = createBrowserRouter([
     element: (
       <ErrorPage
         title="404 Not Found"
-        description={`\uD398\uC774\uC9C0\uB97C \uCC3E\uC744 \uC218 \uC5C6\uC5B4\uC694.\n\uC8FC\uC18C\uAC00 \uC798\uBABB\uB418\uC5C8\uAC70\uB098, \uC0AD\uC81C\uB418\uC5C8\uC744 \uC218 \uC788\uC5B4\uC694.`}
-        primaryBtnLabel="\uD648\uC73C\uB85C \uC774\uB3D9"
+        description={`페이지를 찾을 수 없어요.\n주소가 잘못되었거나, 삭제되었을 수 있어요.`}
+        primaryBtnLabel="홈으로 이동"
         primaryBtnIcon={IcHome}
         primaryTo={ROUTES.root}
       />

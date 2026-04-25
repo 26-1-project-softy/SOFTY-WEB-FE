@@ -3,6 +3,7 @@ export const ROUTES = {
 
   adminLogin: '/admin/login',
   teacherSignUp: '/teacher/signup',
+  teacherKakaoCallback: '/oauth/kakao/callback',
 
   teacher: '/teacher',
   teacherThreadList: '/teacher/thread-list',

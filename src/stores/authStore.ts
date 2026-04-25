@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 
 export type AuthRole = 'teacher' | 'admin' | null;
+export type AuthStatus = 'SIGNED_OUT' | 'SIGNUP_REQUIRED' | 'SIGNED_IN';
 
 export type AuthUserSummary = {
   name: string;
@@ -9,28 +10,39 @@ export type AuthUserSummary = {
 };
 
 type AuthState = {
-  isAuthenticated: boolean;
+  authStatus: AuthStatus;
   role: AuthRole;
   user: AuthUserSummary | null;
   isAuthInitialized: boolean;
-  setAuth: (payload: {
-    isAuthenticated: boolean;
-    role: AuthRole;
-    user: AuthUserSummary | null;
-  }) => void;
+  setSignedOut: () => void;
+  setSignupRequired: () => void;
+  setSignedIn: (payload: { role: Exclude<AuthRole, null>; user: AuthUserSummary }) => void;
   setAuthInitialized: (isAuthInitialized: boolean) => void;
-  clearAuth: () => void;
 };
 
 export const useAuthStore = create<AuthState>(set => ({
-  isAuthenticated: false,
+  authStatus: 'SIGNED_OUT',
   role: null,
   user: null,
   isAuthInitialized: false,
 
-  setAuth: ({ isAuthenticated, role, user }) =>
+  setSignedOut: () =>
     set({
-      isAuthenticated,
+      authStatus: 'SIGNED_OUT',
+      role: null,
+      user: null,
+    }),
+
+  setSignupRequired: () =>
+    set({
+      authStatus: 'SIGNUP_REQUIRED',
+      role: null,
+      user: null,
+    }),
+
+  setSignedIn: ({ role, user }) =>
+    set({
+      authStatus: 'SIGNED_IN',
       role,
       user,
     }),
@@ -38,12 +50,5 @@ export const useAuthStore = create<AuthState>(set => ({
   setAuthInitialized: isAuthInitialized =>
     set({
       isAuthInitialized,
-    }),
-
-  clearAuth: () =>
-    set({
-      isAuthenticated: false,
-      role: null,
-      user: null,
     }),
 }));

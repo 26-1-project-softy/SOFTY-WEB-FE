@@ -77,7 +77,7 @@ export const Sidebar = () => {
         })}
       </SidebarNavigation>
       <SidebarProfileSection isOpen={isSidebarOpen}>
-        <IconBadge symbol={IcDefaultProfile} bgColor="#F2FDFA" color="#35746E" />
+        <IconBadge icon={IcDefaultProfile} bgColor="#F2FDFA" color="#35746E" />
         <ProfileSummarySlot isOpen={isSidebarOpen}>
           <ProfileSummary isOpen={isSidebarOpen}>
             <ProfileName>{userName}</ProfileName>

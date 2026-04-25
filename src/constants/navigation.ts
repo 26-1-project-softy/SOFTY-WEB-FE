@@ -1,5 +1,5 @@
 import type { AuthRole } from '@/stores/authStore';
-import type { IconComponent } from '@/components/common/IconBadge.tsx';
+import type { IconComponent } from '@/types/icon';
 import { ROUTES } from '@/constants/routes';
 import { IcInbox, IcReport, IcSettings, IcDashboard, IcErrorReview, IcModel } from '@/icons';
 

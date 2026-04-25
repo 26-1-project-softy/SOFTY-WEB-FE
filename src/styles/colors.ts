@@ -3,6 +3,10 @@ export const colors = {
     primary: '#55B5A6',
     dark: '#35746E',
   },
+  kakao: {
+    primary: '#FEE500',
+    active: '#F6D500',
+  },
   text: {
     text1: '#000000',
     text2: '#333333',

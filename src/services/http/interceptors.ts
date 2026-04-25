@@ -1,33 +1,62 @@
-import type { AxiosError, AxiosInstance, InternalAxiosRequestConfig } from 'axios';
+import type { AxiosError, AxiosInstance, AxiosResponse, InternalAxiosRequestConfig } from 'axios';
+import { AxiosHeaders } from 'axios';
 import { authSession } from '@/services/auth/authSession';
+import { useAuthStore } from '@/stores/authStore';
 
-const onRequest = (config: InternalAxiosRequestConfig) => {
-  const accessToken = authSession.getAccessToken();
+const AUTH_EXCLUDED_PATHS = [
+  '/auth/kakao/login/teacher',
+  '/admin/auth/login',
+  '/auth/teachers/signup',
+];
 
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
+type AuthRequestConfig = InternalAxiosRequestConfig & {
+  skipUnauthorizedHandling?: boolean;
+};
+
+const shouldSkipUnauthorizedHandlingByPath = (url?: string) => {
+  if (!url) {
+    return false;
   }
 
-  return config;
+  return AUTH_EXCLUDED_PATHS.some(path => url.includes(path));
 };
 
-const onRequestError = (error: AxiosError) => {
-  return Promise.reject(error);
+const resetAuthState = () => {
+  authSession.clearSession();
+  useAuthStore.getState().setSignedOut();
 };
+
+const onRequest = (config: InternalAxiosRequestConfig) => {
+  const requestConfig = config as AuthRequestConfig;
+  const accessToken = authSession.getAccessToken();
+
+  if (!requestConfig.headers) {
+    requestConfig.headers = new AxiosHeaders();
+  }
+
+  const hasAuthorizationHeader = requestConfig.headers.has('Authorization');
+
+  if (!hasAuthorizationHeader && accessToken) {
+    requestConfig.headers.set('Authorization', `Bearer ${accessToken}`);
+  }
+
+  return requestConfig;
+};
+
+const onRequestError = (error: AxiosError) => Promise.reject(error);
+
+const onResponse = (response: AxiosResponse) => response;
 
 const onResponseError = (error: AxiosError) => {
   const status = error.response?.status;
+  const requestConfig = error.config as AuthRequestConfig | undefined;
+  const requestUrl = requestConfig?.url;
 
-  if (status === 401) {
-    // TODO: 인증 만료/미인증 처리
-  }
+  const shouldSkipUnauthorizedHandling =
+    requestConfig?.skipUnauthorizedHandling || shouldSkipUnauthorizedHandlingByPath(requestUrl);
 
-  if (status === 403) {
-    // TODO: 권한 없음 처리
-  }
-
-  if (status === 404) {
-    // TODO: 공통 not found UX
+  if (status === 401 && !shouldSkipUnauthorizedHandling) {
+    resetAuthState();
   }
 
   return Promise.reject(error);
@@ -35,7 +64,7 @@ const onResponseError = (error: AxiosError) => {
 
 export const setupInterceptors = (instance: AxiosInstance) => {
   instance.interceptors.request.use(onRequest, onRequestError);
-  instance.interceptors.response.use(response => response, onResponseError);
+  instance.interceptors.response.use(onResponse, onResponseError);
 
   return instance;
 };
