@@ -3,4 +3,4 @@ export const SIDEBAR_WIDTH = {
   closed: 100,
 } as const;
 
-export const HEADER_HEIGHT = 74;
+export const HEADER_HEIGHT = 62;

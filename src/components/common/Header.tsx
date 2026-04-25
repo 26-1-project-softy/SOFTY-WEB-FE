@@ -34,8 +34,8 @@ const HeaderContainer = styled.header`
   justify-content: space-between;
   width: 100%;
   height: ${HEADER_HEIGHT}px;
-  padding: 16px 24px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
+  padding: 10px 24px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border2};
   background: ${({ theme }) => theme.colors.background.bg1};
 `;
 
