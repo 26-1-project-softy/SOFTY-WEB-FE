@@ -73,6 +73,11 @@ const FieldInput = styled.input<{ $hasError: boolean }>`
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.text4};
   }
+
+  &:focus {
+    outline: 1px solid ${({ theme }) => theme.colors.brand.primary};
+    border-color: ${({ theme }) => theme.colors.brand.primary};
+  }
 `;
 
 const HelperText = styled.p<{ $hasError: boolean }>`
