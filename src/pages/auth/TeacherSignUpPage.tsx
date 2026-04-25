@@ -255,12 +255,17 @@ const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
 `;
 
 const InlineTwoColumn = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 10px;
+
+  @media (max-width: 520px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const Label = styled.label<{ hasError?: boolean }>`
@@ -275,6 +280,9 @@ const RequiredMark = styled.span`
 
 const Input = styled.input<{ hasError?: boolean }>`
   ${({ theme }) => theme.fonts.body2};
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   border: 1px solid ${({ hasError }) => (hasError ? '#ff5b66' : '#c6c6c6')};
   border-radius: 10px;
   background: #f4f4f4;
