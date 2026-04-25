@@ -98,7 +98,10 @@ export const useTeacherSignUpForm = () => {
   }, [teacherName, schoolName, grade, classNumber]);
 
   const isSignUpEnabled =
-    validationResult.isValid && !isSubmitting && authStatus === 'SIGNUP_REQUIRED' && step === 'FORM';
+    validationResult.isValid &&
+    !isSubmitting &&
+    authStatus === 'SIGNUP_REQUIRED' &&
+    step === 'FORM';
 
   const handleSubmit: FormSubmitHandler = async event => {
     event.preventDefault();
