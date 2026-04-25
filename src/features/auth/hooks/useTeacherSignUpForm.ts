@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState, type ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { getAuthErrorMessage } from '@/features/auth/lib/getAuthErrorMessage';
-import { authApi, authSession, teacherAuthApi } from '@/services/auth';
+import { authSession, teacherAuthApi } from '@/services/auth';
 import { ROUTES } from '@/constants/routes';
 import { useToastStore } from '@/stores/toastStore';
 
@@ -34,6 +34,20 @@ const parseNumberText = (value: string) => Number(value.trim());
 const DEFAULT_CLASS_CODE = 'X7K-9P2';
 
 type FormSubmitHandler = NonNullable<ComponentProps<'form'>['onSubmit']>;
+
+const normalizeRole = (role: string): 'teacher' | 'admin' => {
+  const normalized = role
+    .trim()
+    .replace(/^ROLE_/i, '')
+    .toLowerCase();
+
+  if (normalized === 'teacher' || normalized === 'admin') {
+    return normalized;
+  }
+
+  // Teacher signup endpoint should resolve to teacher role.
+  return 'teacher';
+};
 
 export const useTeacherSignUpForm = () => {
   const navigate = useNavigate();
@@ -141,12 +155,15 @@ export const useTeacherSignUpForm = () => {
         return;
       }
 
-      const me = await authApi.getMe();
-
       authSession.setAuthStatus('SIGNED_IN');
+      const normalizedRole = normalizeRole(response.data.role);
       setSignedIn({
-        role: me.role,
-        user: me.user,
+        role: normalizedRole,
+        user: {
+          name: teacherName.trim(),
+          grade: validationResult.parsedGrade,
+          classNumber: validationResult.parsedClassNumber,
+        },
       });
 
       setStep('SIGN_UP_SUCCESS');
