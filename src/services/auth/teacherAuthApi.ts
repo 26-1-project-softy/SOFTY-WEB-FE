@@ -34,6 +34,15 @@ export type TeacherSignUpResponse = {
   };
 };
 
+export type TeacherClassCodeResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data: {
+    classCode: string;
+  };
+};
+
 export const teacherAuthApi = {
   loginWithKakao: async (payload: TeacherKakaoLoginRequest) => {
     const { data } = await apiClient.post<TeacherKakaoLoginResponse>(
@@ -53,6 +62,12 @@ export const teacherAuthApi = {
       requestBody,
       { headers }
     );
+
+    return data;
+  },
+
+  createClassCode: async () => {
+    const { data } = await apiClient.post<TeacherClassCodeResponse>('/auth/teachers/classcode');
 
     return data;
   },

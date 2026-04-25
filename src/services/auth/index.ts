@@ -5,6 +5,7 @@ export { teacherAuthApi } from '@/services/auth/teacherAuthApi';
 export type {
   TeacherSignUpRequest,
   TeacherSignUpResponse,
+  TeacherClassCodeResponse,
   TeacherKakaoLoginRequest,
   TeacherKakaoLoginResponse,
 } from '@/services/auth/teacherAuthApi';

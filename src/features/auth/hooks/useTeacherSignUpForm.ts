@@ -12,6 +12,7 @@ type FieldErrors = {
   grade?: string;
   classNumber?: string;
 };
+type TouchedFields = Record<keyof FieldErrors, boolean>;
 
 type GlobalError = {
   title: string;
@@ -58,12 +59,18 @@ export const useTeacherSignUpForm = () => {
   const [schoolName, setSchoolName] = useState('');
   const [grade, setGrade] = useState('');
   const [classNumber, setClassNumber] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
   const [globalError, setGlobalError] = useState<GlobalError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCreatingClassCode, setIsCreatingClassCode] = useState(false);
   const [step, setStep] = useState<SignUpStep>('FORM');
   const [generatedClassCode, setGeneratedClassCode] = useState(DEFAULT_CLASS_CODE);
+  const [touchedFields, setTouchedFields] = useState<TouchedFields>({
+    teacherName: false,
+    schoolName: false,
+    grade: false,
+    classNumber: false,
+  });
 
   useEffect(() => {
     if (step === 'FORM') {
@@ -117,11 +124,42 @@ export const useTeacherSignUpForm = () => {
     authStatus === 'SIGNUP_REQUIRED' &&
     step === 'FORM';
 
+  const shouldShowError = (field: keyof FieldErrors) => isSubmitAttempted || touchedFields[field];
+  const fieldErrors: FieldErrors = {
+    teacherName: shouldShowError('teacherName') ? validationResult.errors.teacherName : undefined,
+    schoolName: shouldShowError('schoolName') ? validationResult.errors.schoolName : undefined,
+    grade: shouldShowError('grade') ? validationResult.errors.grade : undefined,
+    classNumber: shouldShowError('classNumber') ? validationResult.errors.classNumber : undefined,
+  };
+
+  const touchField = (field: keyof FieldErrors) => {
+    setTouchedFields(prev => (prev[field] ? prev : { ...prev, [field]: true }));
+  };
+
+  const handleChangeTeacherName = (value: string) => {
+    touchField('teacherName');
+    setTeacherName(value);
+  };
+
+  const handleChangeSchoolName = (value: string) => {
+    touchField('schoolName');
+    setSchoolName(value);
+  };
+
+  const handleChangeGrade = (value: string) => {
+    touchField('grade');
+    setGrade(value);
+  };
+
+  const handleChangeClassNumber = (value: string) => {
+    touchField('classNumber');
+    setClassNumber(value);
+  };
+
   const handleSubmit: FormSubmitHandler = async event => {
     event.preventDefault();
 
     setIsSubmitAttempted(true);
-    setFieldErrors(validationResult.errors);
     setGlobalError(null);
 
     if (authStatus !== 'SIGNUP_REQUIRED') {
@@ -189,9 +227,28 @@ export const useTeacherSignUpForm = () => {
     }
   };
 
-  const handleOpenClassCodeModal = () => {
-    setGeneratedClassCode(DEFAULT_CLASS_CODE);
-    setStep('CLASS_CODE_READY');
+  const handleOpenClassCodeModal = async () => {
+    try {
+      setIsCreatingClassCode(true);
+
+      const response = await teacherAuthApi.createClassCode();
+
+      if (!response.success || !response.data?.classCode?.trim()) {
+        showToast(response.message || '학급 코드 생성에 실패했어요. 다시 시도해 주세요.', 'error');
+        return;
+      }
+
+      setGeneratedClassCode(response.data.classCode.trim());
+      setStep('CLASS_CODE_READY');
+    } catch (error) {
+      const message = getAuthErrorMessage(
+        error,
+        '학급 코드 생성에 실패했어요. 다시 시도해 주세요.'
+      );
+      showToast(message, 'error');
+    } finally {
+      setIsCreatingClassCode(false);
+    }
   };
 
   const handleCopyClassCode = async () => {
@@ -215,14 +272,15 @@ export const useTeacherSignUpForm = () => {
     fieldErrors,
     globalError,
     isSubmitting,
+    isCreatingClassCode,
     isSubmitAttempted,
     isSignUpEnabled,
     step,
     generatedClassCode,
-    setTeacherName,
-    setSchoolName,
-    setGrade,
-    setClassNumber,
+    setTeacherName: handleChangeTeacherName,
+    setSchoolName: handleChangeSchoolName,
+    setGrade: handleChangeGrade,
+    setClassNumber: handleChangeClassNumber,
     handleSubmit,
     handleOpenClassCodeModal,
     handleCopyClassCode,
