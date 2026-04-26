@@ -3,7 +3,6 @@ import { LandingActionButtons } from '@/components/auth/landing/LandingActionBut
 import { LandingTextLines } from '@/components/auth/landing/LandingTextLines';
 import { HEADER_HEIGHT } from '@/constants/layout';
 import type { LandingContent } from '@/constants/landing';
-import { HEADER_HEIGHT } from '@/constants/layout';
 
 type LandingHeroSectionProps = {
   content: LandingContent['hero'];
