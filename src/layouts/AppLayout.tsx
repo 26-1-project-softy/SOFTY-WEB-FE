@@ -63,7 +63,7 @@ export const AppLayout = () => {
 
         <Content>
           <Outlet
-            context={{ 
+            context={{
               setHeaderActions,
               activeTab: validActiveTab,
             }}
