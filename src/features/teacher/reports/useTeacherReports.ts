@@ -1,12 +1,12 @@
-import { AxiosError } from 'axios';
+﻿import { AxiosError } from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useToastStore } from '@/stores/toastStore';
 import { reportDownloadService } from '@/services/teacher/reportDownloadService';
 import {
   reportsApi,
   type ReportChatPreviewMessage,
   type ReportChatRoomItem,
 } from '@/services/teacher/reportsApi';
+import { useToastStore } from '@/stores/toastStore';
 import { formatDateOnly } from '@/utils/reports/reportFormatters';
 
 const PREVIEW_PAGE_SIZE = 30;
@@ -41,10 +41,10 @@ export const useTeacherReports = () => {
 
   const defaultReportFileName = useMemo(() => {
     if (!selectedReport?.lastMessageAt) {
-      return '증빙리포트_0000-00-00.pdf';
+      return '채팅리포트_0000-00-00.pdf';
     }
 
-    return `증빙리포트_${formatDateOnly(selectedReport.lastMessageAt)}.pdf`;
+    return `채팅리포트_${formatDateOnly(selectedReport.lastMessageAt)}.pdf`;
   }, [selectedReport]);
   const reportFileName = generatedPdfFileName || defaultReportFileName;
 
@@ -70,10 +70,11 @@ export const useTeacherReports = () => {
       const isServerError = typeof status === 'number' && status >= 500;
 
       if (isNetworkError || isServerError) {
-        setErrorMessage('서비스에 문제가 생겼습니다. 잠시 후 다시 시도해주세요.');
+        setErrorMessage('서비스에 문제가 생겼습니다. 잠시 후 다시 시도해 주세요.');
       } else {
         setErrorMessage(axiosError.response?.data?.message || '채팅방 목록을 불러오지 못했어요.');
       }
+
       setReportItems([]);
       setSelectedReportId(null);
       setIsPreviewLoadError(false);
@@ -122,6 +123,7 @@ export const useTeacherReports = () => {
         if (!append) {
           setPreviewMessages([]);
         }
+
         setPreviewNextCursor(null);
         setPreviewHasNext(false);
         setIsPreviewLoadError(true);
@@ -221,7 +223,7 @@ export const useTeacherReports = () => {
       setIsDownloadingPdf(true);
       await reportDownloadService.downloadPdfFromPresignedUrl(
         generatedPdfDownloadUrl,
-        reportFileName || '증빙리포트.pdf'
+        reportFileName || '채팅리포트.pdf'
       );
     } catch {
       setIsPdfDownloadErrorVisible(true);

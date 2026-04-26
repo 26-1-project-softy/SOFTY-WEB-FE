@@ -1,4 +1,8 @@
-﻿import styled from '@emotion/styled';
+import styled from '@emotion/styled';
+import { useTheme } from '@emotion/react';
+import { Dialog } from '@/components/common/Dialog';
+import { DialogFooter } from '@/components/common/DialogFooter';
+import { DialogHeader } from '@/components/common/DialogHeader';
 import { InlineButton } from '@/components/common/InlineButton';
 import { IcChat, IcDownload, IcError, IcFile, IcRefresh } from '@/icons';
 import { useTeacherReports } from '@/features/teacher/reports/useTeacherReports';
@@ -10,6 +14,7 @@ import {
 } from '@/utils/reports/reportFormatters';
 
 export const TeacherReportsPage = () => {
+  const theme = useTheme();
   const {
     reportItems,
     selectedReport,
@@ -208,54 +213,53 @@ export const TeacherReportsPage = () => {
         </PreviewBody>
       </PreviewSection>
 
-      {isReportCompleteModalOpen ? (
-        <ModalOverlay onClick={handleCloseReportCompleteModal}>
-          <ModalCard onClick={event => event.stopPropagation()}>
-            <ModalIconWrap>
-              <IcFile />
-            </ModalIconWrap>
+      <Dialog isOpen={isReportCompleteModalOpen} onClose={handleCloseReportCompleteModal}>
+        <ModalContent>
+          <DialogHeader
+            icon={IcFile}
+            title="리포트 생성 완료"
+            description="PDF 파일이 준비되었습니다."
+            iconBgColor={theme.colors.background.bg3}
+            iconColor={theme.colors.text.text4}
+          />
 
-            <ModalTitle>리포트 생성 완료</ModalTitle>
-            <ModalDescription>PDF 파일이 준비되었습니다.</ModalDescription>
+          <FileInfoCard>
+            <FileInfoLabel>파일명</FileInfoLabel>
+            <FileInfoValue>{reportFileName}</FileInfoValue>
+          </FileInfoCard>
 
-            <FileInfoCard>
-              <FileInfoLabel>파일명</FileInfoLabel>
-              <FileInfoValue>{reportFileName}</FileInfoValue>
-            </FileInfoCard>
+          {isPdfDownloadErrorVisible ? (
+            <ModalErrorBox role="alert">
+              <ModalErrorIcon>
+                <IcError />
+              </ModalErrorIcon>
+              <ModalErrorTextWrap>
+                <ModalErrorTitle>PDF 다운로드에 실패했어요.</ModalErrorTitle>
+                <ModalErrorDescription>잠시 후 다시 시도해 주세요.</ModalErrorDescription>
+              </ModalErrorTextWrap>
+            </ModalErrorBox>
+          ) : null}
 
-            {isPdfDownloadErrorVisible ? (
-              <ModalErrorBox role="alert">
-                <ModalErrorIcon>
-                  <IcError />
-                </ModalErrorIcon>
-                <ModalErrorTextWrap>
-                  <ModalErrorTitle>PDF 다운로드에 실패했어요.</ModalErrorTitle>
-                  <ModalErrorDescription>잠시 후 다시 시도해 주세요.</ModalErrorDescription>
-                </ModalErrorTextWrap>
-              </ModalErrorBox>
-            ) : null}
-
-            <ModalActionRow>
-              <InlineButton
-                variant="ghost"
-                size="L"
-                label="닫기"
-                width="100%"
-                onClick={handleCloseReportCompleteModal}
-              />
-              <InlineButton
-                variant="primary"
-                size="L"
-                icon={IcDownload}
-                label={isDownloadingPdf ? '다운로드 중...' : '다운로드'}
-                width="100%"
-                disabled={isDownloadingPdf}
-                onClick={() => void handleDownloadGeneratedPdf()}
-              />
-            </ModalActionRow>
-          </ModalCard>
-        </ModalOverlay>
-      ) : null}
+          <DialogFooter>
+            <InlineButton
+              variant="ghost"
+              size="L"
+              label="닫기"
+              width="100%"
+              onClick={handleCloseReportCompleteModal}
+            />
+            <InlineButton
+              variant="primary"
+              size="L"
+              icon={IcDownload}
+              label={isDownloadingPdf ? '다운로드 중...' : '다운로드'}
+              width="100%"
+              disabled={isDownloadingPdf}
+              onClick={() => void handleDownloadGeneratedPdf()}
+            />
+          </DialogFooter>
+        </ModalContent>
+      </Dialog>
     </ReportsPageContainer>
   );
 };
@@ -553,50 +557,12 @@ const EmptyDescription = styled.p`
   color: ${({ theme }) => theme.colors.text.text4};
 `;
 
-const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: ${({ theme }) => theme.colors.overlay.dim1};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
-`;
-
-const ModalCard = styled.div`
+const ModalContent = styled.div`
   width: 100%;
   max-width: 520px;
-  border-radius: 16px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  box-shadow: ${({ theme }) => theme.colors.shadow.modal};
-  padding: 20px;
-`;
-
-const ModalIconWrap = styled.div`
-  width: 56px;
-  height: 56px;
-  margin: 0 auto;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.background.bg3};
-  color: ${({ theme }) => theme.colors.text.text4};
   display: flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const ModalTitle = styled.h3`
-  ${({ theme }) => theme.fonts.labelM};
-  margin: 14px 0 0;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const ModalDescription = styled.p`
-  ${({ theme }) => theme.fonts.labelS};
-  margin: 10px 0 0;
-  text-align: center;
-  color: ${({ theme }) => theme.colors.text.text2};
+  flex-direction: column;
+  gap: 18px;
 `;
 
 const FileInfoCard = styled.div`
@@ -616,12 +582,6 @@ const FileInfoValue = styled.p`
   ${({ theme }) => theme.fonts.labelS};
   margin: 8px 0 0;
   color: ${({ theme }) => theme.colors.text.text2};
-`;
-
-const ModalActionRow = styled.div`
-  margin-top: 18px;
-  display: flex;
-  gap: 10px;
 `;
 
 const ModalErrorBox = styled.div`
