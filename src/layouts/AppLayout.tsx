@@ -93,21 +93,3 @@ const Content = styled.main`
   min-height: 0;
   margin-top: ${HEADER_HEIGHT}px;
 `;
-
-const GhostButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  padding: 10px 18px;
-`;
-
-const PrimaryButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: none;
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.brand.primary};
-  color: ${({ theme }) => theme.colors.text.textW};
-  padding: 10px 18px;
-`;
