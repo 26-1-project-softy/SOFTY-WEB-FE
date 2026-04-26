@@ -68,8 +68,6 @@ const Main = styled.div`
 `;
 
 const Content = styled.main`
-  overflow-x: hidden;
-  overflow-y: auto;
   height: calc(100vh - ${HEADER_HEIGHT}px);
   min-height: 0;
   margin-top: ${HEADER_HEIGHT}px;
