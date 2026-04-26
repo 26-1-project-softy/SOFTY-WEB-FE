@@ -23,7 +23,6 @@ export const colors = {
     bg5: '#E6E6E6',
     bg6: '#808080',
     heroGradient: 'linear-gradient(180deg, #FFFFFF 0%, #E7F5F2 55%, #7CCFC2 100%)',
-    errorBadge: '#FCF3F2',
     brandHover: '#32A6A1',
   },
   border: {

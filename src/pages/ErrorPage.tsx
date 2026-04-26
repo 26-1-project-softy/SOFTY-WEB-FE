@@ -51,7 +51,7 @@ export const ErrorPage = ({
         icon={IcError}
         size={68}
         iconSize={34}
-        bgColor={theme.colors.background.errorBadge}
+        bgColor={theme.colors.semantic.errorSoft}
         color={theme.colors.semantic.error}
       />
       <ContentContainer>
