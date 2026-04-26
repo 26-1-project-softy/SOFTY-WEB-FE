@@ -54,7 +54,7 @@ const TabsContainer = styled.div`
   display: flex;
   overflow-x: auto;
   background-color: ${({ theme }) => theme.colors.background.bg1};
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border2};
   padding: 8px 12px 0;
   gap: 12px;
 
