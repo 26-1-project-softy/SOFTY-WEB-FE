@@ -98,4 +98,3 @@ const globalStyles = css`
 export const GlobalStyle = () => {
   return <Global styles={globalStyles} />;
 };
-
