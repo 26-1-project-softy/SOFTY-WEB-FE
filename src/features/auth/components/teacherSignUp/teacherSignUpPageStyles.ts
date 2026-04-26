@@ -2,7 +2,7 @@ import styled from '@emotion/styled';
 
 export const PageContainer = styled.div`
   min-height: 100vh;
-  background: #e5e5e5;
+  background: ${({ theme }) => theme.colors.background.bg5};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -14,8 +14,8 @@ export const Card = styled.section`
   width: 100%;
   max-width: 430px;
   border-radius: 16px;
-  background: #f4f4f4;
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.16);
+  background: ${({ theme }) => theme.colors.background.bg3};
+  box-shadow: 0 10px 20px ${({ theme }) => `${theme.colors.neutral.neutral1100}29`};
   padding: 18px 36px 30px;
 
   @media (max-width: 640px) {
@@ -28,7 +28,7 @@ export const ProgressTrack = styled.div`
   width: 100%;
   height: 3px;
   border-radius: 999px;
-  background: #bdbdbd;
+  background: ${({ theme }) => theme.colors.neutral.neutral400};
   overflow: hidden;
 `;
 
@@ -91,21 +91,26 @@ export const Input = styled.input<{ hasError?: boolean }>`
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-  border: 1px solid ${({ hasError }) => (hasError ? '#ff5b66' : '#c6c6c6')};
+  border: 1px solid
+    ${({ hasError, theme }) =>
+      hasError ? theme.colors.semantic.error : theme.colors.border.border2};
   border-radius: 10px;
-  background: #f4f4f4;
+  background: ${({ theme }) => theme.colors.background.bg3};
   padding: 11px 12px;
   color: ${({ theme }) => theme.colors.text.text1};
 
   &::placeholder {
-    color: #9a9a9a;
+    color: ${({ theme }) => theme.colors.neutral.neutral500};
   }
 
   &:focus {
     outline: none;
-    border-color: ${({ hasError, theme }) => (hasError ? '#ff5b66' : theme.colors.brand.primary)};
-    box-shadow: ${({ hasError }) =>
-      hasError ? '0 0 0 2px rgba(255, 44, 61, 0.14)' : '0 0 0 2px rgba(85, 181, 166, 0.16)'};
+    border-color: ${({ hasError, theme }) =>
+      hasError ? theme.colors.semantic.error : theme.colors.brand.primary};
+    box-shadow: ${({ hasError, theme }) =>
+      hasError
+        ? `0 0 0 2px ${theme.colors.semantic.error}24`
+        : `0 0 0 2px ${theme.colors.brand.primary}29`};
   }
 `;
 
@@ -120,8 +125,8 @@ export const ErrorBox = styled.div`
   gap: 12px;
   align-items: center;
   border-radius: 14px;
-  border: 1px solid #ff5b66;
-  background: #fff1f3;
+  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
   padding: 14px 16px;
 `;
 
@@ -169,8 +174,8 @@ export const PrimaryButton = styled.button`
   }
 
   &:disabled {
-    background: #d0d0d0;
-    color: #7a7a7a;
+    background: ${({ theme }) => theme.colors.neutral.neutral300};
+    color: ${({ theme }) => theme.colors.neutral.neutral600};
     cursor: not-allowed;
   }
 `;
@@ -189,8 +194,8 @@ export const SuccessIconContainer = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #e8f3f1;
-  color: #5b8f8a;
+  background: ${({ theme }) => theme.colors.background.bg4};
+  color: ${({ theme }) => theme.colors.brand.dark};
 
   svg {
     width: 30px;
@@ -216,8 +221,8 @@ export const ClassCodeCard = styled.div`
   width: 100%;
   margin-top: 18px;
   border-radius: 14px;
-  border: 1px solid #c9e6e1;
-  background: #ddebe8;
+  border: 1px solid ${({ theme }) => theme.colors.threadStatus.processing.border};
+  background: ${({ theme }) => theme.colors.threadStatus.processing.background};
   padding: 18px 14px;
   display: flex;
   flex-direction: column;
@@ -228,7 +233,7 @@ export const ClassCodeCard = styled.div`
 export const ClassLabel = styled.p`
   ${({ theme }) => theme.fonts.caption};
   margin: 0;
-  color: #4a7b76;
+  color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
 export const ClassCode = styled.p`
@@ -243,7 +248,7 @@ export const CopyButton = styled.button`
   margin-top: 16px;
   width: 100%;
   border-radius: 10px;
-  border: 1px solid #d2d2d2;
+  border: 1px solid ${({ theme }) => theme.colors.border.border2};
   padding: 12px;
   background: ${({ theme }) => theme.colors.background.bg1};
   color: ${({ theme }) => theme.colors.text.text1};
@@ -260,6 +265,6 @@ export const CopyButton = styled.button`
 
 export const FooterText = styled.p`
   ${({ theme }) => theme.fonts.body3};
-  color: #919191;
+  color: ${({ theme }) => theme.colors.text.text4};
   margin: 18px 0 0;
 `;

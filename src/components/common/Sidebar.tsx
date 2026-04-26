@@ -17,10 +17,10 @@ export const Sidebar = () => {
   const toggleSidebar = useUiStore(state => state.toggleSidebar);
 
   const items = role ? NAVIGATION_BY_ROLE[role] : [];
-  const userName = user?.name ?? '\uC0AC\uC6A9\uC790';
+  const userName = user?.name ?? '사용자';
   const userMeta =
     role === 'teacher' && user?.grade && user?.classNumber
-      ? `${user.grade}\uD559\uB144 ${user.classNumber}\uBC18`
+      ? `${user.grade}학년 ${user.classNumber}반`
       : '';
 
   const handleClickBrand = () => {
