@@ -65,7 +65,7 @@ const ToastCard = styled.button<{ toastType: ToastItem['type'] }>`
     toastType === 'success' ? theme.colors.semantic.successSoft : theme.colors.semantic.errorSoft};
   padding: 8px;
   gap: 8px;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+  box-shadow: ${({ theme }) => theme.colors.shadow.toast};
   pointer-events: auto;
   animation: ${toastSlideIn} 0.2s ease-out;
   transition:
@@ -74,7 +74,7 @@ const ToastCard = styled.button<{ toastType: ToastItem['type'] }>`
 
   &:hover {
     transform: translateY(-1px);
-    box-shadow: 0 10px 22px rgba(0, 0, 0, 0.15);
+    box-shadow: ${({ theme }) => theme.colors.shadow.toastHover};
   }
 
   &:active {
@@ -87,7 +87,8 @@ const ToastStatusIcon = styled.span<{ toastType: ToastItem['type'] }>`
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  color: ${({ toastType }) => (toastType === 'success' ? '#55b85d' : '#ff5a5a')};
+  color: ${({ toastType, theme }) =>
+    toastType === 'success' ? theme.colors.semantic.success : theme.colors.semantic.error};
 
   & > svg {
     width: 18px;

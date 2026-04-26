@@ -22,6 +22,8 @@ export const colors = {
     bg4: '#F2FDFA',
     bg5: '#E6E6E6',
     bg6: '#808080',
+    heroGradient: 'linear-gradient(180deg, #FFFFFF 0%, #E7F5F2 55%, #7CCFC2 100%)',
+    errorBadge: '#FCF3F2',
     brandHover: '#32A6A1',
   },
   border: {
@@ -45,6 +47,9 @@ export const colors = {
   },
   shadow: {
     modal: '0 12px 22px rgba(0, 0, 0, 0.25)',
+    dialog: '0 20px 48px rgba(0, 0, 0, 0.18)',
+    toast: '0 8px 20px rgba(0, 0, 0, 0.08)',
+    toastHover: '0 10px 22px rgba(0, 0, 0, 0.15)',
   },
   reports: {
     toastErrorBorder: '#FF7F89',

@@ -133,7 +133,7 @@ export const TeacherSignUpPage = () => {
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: #e5e5e5;
+  background: ${({ theme }) => theme.colors.background.bg5};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -145,8 +145,8 @@ const Card = styled.section`
   width: 100%;
   max-width: 560px;
   border-radius: 20px;
-  background: #f4f4f4;
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.14);
+  background: ${({ theme }) => theme.colors.background.bg3};
+  box-shadow: ${({ theme }) => theme.colors.shadow.modal};
   padding: 28px 30px;
 
   @media (max-width: 640px) {
@@ -199,21 +199,26 @@ const RequiredMark = styled.span`
 
 const Input = styled.input<{ hasError?: boolean }>`
   ${({ theme }) => theme.fonts.body2};
-  border: 1px solid ${({ hasError }) => (hasError ? '#ff5b66' : '#c6c6c6')};
+  border: 1px solid
+    ${({ hasError, theme }) =>
+      hasError ? theme.colors.semantic.error : theme.colors.border.border2};
   border-radius: 10px;
-  background: #f4f4f4;
+  background: ${({ theme }) => theme.colors.background.bg3};
   padding: 11px 12px;
   color: ${({ theme }) => theme.colors.text.text1};
 
   &::placeholder {
-    color: #9a9a9a;
+    color: ${({ theme }) => theme.colors.neutral.neutral500};
   }
 
   &:focus {
     outline: none;
-    border-color: ${({ hasError, theme }) => (hasError ? '#ff5b66' : theme.colors.brand.primary)};
-    box-shadow: ${({ hasError }) =>
-      hasError ? '0 0 0 2px rgba(255, 44, 61, 0.14)' : '0 0 0 2px rgba(85, 181, 166, 0.16)'};
+    border-color: ${({ hasError, theme }) =>
+      hasError ? theme.colors.semantic.error : theme.colors.brand.primary};
+    box-shadow: ${({ hasError, theme }) =>
+      hasError
+        ? `0 0 0 2px ${theme.colors.semantic.error}24`
+        : `0 0 0 2px ${theme.colors.brand.primary}29`};
   }
 `;
 
@@ -228,8 +233,8 @@ const ErrorBox = styled.div`
   gap: 10px;
   align-items: center;
   border-radius: 16px;
-  border: 1px solid #ff5b66;
-  background: #ffe9ec;
+  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
   padding: 12px 14px;
 `;
 
@@ -277,14 +282,14 @@ const PrimaryButton = styled.button`
   }
 
   &:disabled {
-    background: #d0d0d0;
-    color: #7a7a7a;
+    background: ${({ theme }) => theme.colors.neutral.neutral300};
+    color: ${({ theme }) => theme.colors.neutral.neutral600};
     cursor: not-allowed;
   }
 `;
 
 const FooterText = styled.p`
   ${({ theme }) => theme.fonts.body3};
-  color: #919191;
+  color: ${({ theme }) => theme.colors.text.text4};
   margin: 18px 0 0;
 `;

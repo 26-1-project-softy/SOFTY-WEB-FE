@@ -1,4 +1,5 @@
 import { Global, css } from '@emotion/react';
+import { colors } from './colors';
 
 const globalStyles = css`
   html {
@@ -7,7 +8,7 @@ const globalStyles = css`
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     scrollbar-width: thin;
-    scrollbar-color: #b2b2b2 transparent;
+    scrollbar-color: ${colors.neutral.neutral400} transparent;
   }
 
   html::-webkit-scrollbar,
@@ -27,19 +28,19 @@ const globalStyles = css`
   html::-webkit-scrollbar-thumb,
   body::-webkit-scrollbar-thumb,
   *::-webkit-scrollbar-thumb {
-    background: #b2b2b2;
+    background: ${colors.neutral.neutral400};
     border-radius: 999px;
   }
 
   html::-webkit-scrollbar-thumb:hover,
   body::-webkit-scrollbar-thumb:hover,
   *::-webkit-scrollbar-thumb:hover {
-    background: #8c8c8c;
+    background: ${colors.neutral.neutral600};
   }
 
   * {
     box-sizing: border-box;
-    -webkit-tap-highlight-color: rgba(255, 255, 255, 0);
+    -webkit-tap-highlight-color: transparent;
     -webkit-touch-callout: none;
   }
 
@@ -59,7 +60,7 @@ const globalStyles = css`
     padding: 0;
     min-height: 100%;
     overflow: hidden;
-    background-color: #ffffff;
+    background-color: ${colors.background.bg1};
   }
 
   button,
@@ -97,3 +98,4 @@ const globalStyles = css`
 export const GlobalStyle = () => {
   return <Global styles={globalStyles} />;
 };
+

@@ -46,7 +46,7 @@ export const LandingHeroSection = ({
 const HeroSection = styled.section`
   display: flex;
   align-items: center;
-  background: linear-gradient(180deg, #ffffff 0%, #e7f5f2 55%, #7ccfc2 100%);
+  background: ${({ theme }) => theme.colors.background.heroGradient};
   padding: ${HEADER_HEIGHT + 16}px 16px 80px;
 `;
 
