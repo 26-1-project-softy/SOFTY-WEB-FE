@@ -3,6 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '@emotion/react';
 import { useAuth } from '@/hooks/useAuth';
 import { IconBadge } from '@/components/common/IconBadge';
+import { IconButton } from '@/components/common/IconButton';
 import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
 import { NAVIGATION_BY_ROLE } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
@@ -99,17 +100,14 @@ export const Sidebar = () => {
             {userMeta && <ProfileMeta>{userMeta}</ProfileMeta>}
           </ProfileSummary>
         </ProfileSummarySlot>
-        {role === 'admin' ? (
-          <LogoutIconButton
-            type="button"
-            isOpen={isSidebarOpen}
-            aria-label="로그아웃"
-            title="로그아웃"
-            onClick={handleClickLogout}
-          >
-            <IcLogout />
-          </LogoutIconButton>
-        ) : null}
+        <LogoutButton
+          icon={IcLogout}
+          variant="plain"
+          isOpen={isSidebarOpen}
+          accessibilityLabel="로그아웃"
+          title="로그아웃"
+          onClick={handleClickLogout}
+        />
       </SidebarProfileSection>
     </SidebarContainer>
   );
@@ -311,13 +309,11 @@ const ProfileMeta = styled.span`
   white-space: nowrap;
 `;
 
-const LogoutIconButton = styled.button<{ isOpen: boolean }>`
+const LogoutButton = styled(IconButton)<{ isOpen: boolean }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
   border-radius: 8px;
   color: ${({ theme }) => theme.colors.text.text4};
   opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
