@@ -330,18 +330,37 @@ export const TeacherSettingsPage = () => {
       })
     );
   };
+  const hasWorkHoursChanges = useMemo(() => {
+    if (initialWorkdays.length !== workdays.length) {
+      return true;
+    }
 
+    return workdays.some((day, index) => {
+      const initialDay = initialWorkdays[index];
+
+      if (!initialDay) {
+        return true;
+      }
+
+      return (
+        day.key !== initialDay.key ||
+        day.enabled !== initialDay.enabled ||
+        day.start !== initialDay.start ||
+        day.end !== initialDay.end
+      );
+    });
+  }, [initialWorkdays, workdays]);
   const handleResetWorkHours = useCallback(() => {
-    if (isLoading) {
+    if (isLoading || !hasWorkHoursChanges) {
       return;
     }
 
     setWorkdays(initialWorkdays);
     showToast('근무시간 입력값을 되돌렸어요.', 'success');
-  }, [initialWorkdays, isLoading, showToast]);
+  }, [hasWorkHoursChanges, initialWorkdays, isLoading, showToast]);
 
   const handleSaveWorkHours = useCallback(async () => {
-    if (isLoading || isSavingWorkHours) {
+    if (isLoading || isSavingWorkHours || !hasWorkHoursChanges) {
       return;
     }
 
@@ -426,7 +445,7 @@ export const TeacherSettingsPage = () => {
     } finally {
       setIsSavingWorkHours(false);
     }
-  }, [isLoading, isSavingWorkHours, showToast, workdays]);
+  }, [hasWorkHoursChanges, isLoading, isSavingWorkHours, showToast, workdays]);
 
   const headerActions = useMemo(
     () => (
@@ -435,21 +454,21 @@ export const TeacherSettingsPage = () => {
           variant="ghost"
           size="L"
           label="취소"
-          disabled={isLoading || isSavingWorkHours}
+          disabled={isLoading || isSavingWorkHours || !hasWorkHoursChanges}
           onClick={handleResetWorkHours}
         />
         <InlineButton
           variant="primary"
           size="L"
           label={isSavingWorkHours ? '저장 중...' : '변경사항 저장'}
-          disabled={isLoading || isSavingWorkHours}
+          disabled={isLoading || isSavingWorkHours || !hasWorkHoursChanges}
           onClick={() => {
             void handleSaveWorkHours();
           }}
         />
       </>
     ),
-    [handleResetWorkHours, handleSaveWorkHours, isLoading, isSavingWorkHours]
+    [handleResetWorkHours, handleSaveWorkHours, hasWorkHoursChanges, isLoading, isSavingWorkHours]
   );
 
   useEffect(() => {
