@@ -1,4 +1,4 @@
-import type { FormEventHandler } from 'react';
+﻿import type { FormEventHandler } from 'react';
 import { IcInfo } from '@/icons';
 import type { TeacherSignUpFieldErrors } from '@/features/auth/lib/teacherSignUpValidation';
 import type { AuthErrorMessage } from '@/features/auth/lib/getAuthErrorMessage';
@@ -76,7 +76,7 @@ export const TeacherSignUpFormSection = ({
 
         <InputGroup>
           <Label htmlFor="schoolName" hasError={Boolean(fieldErrors.schoolName)}>
-            학교명 <RequiredMark>*</RequiredMark>
+            학교명<RequiredMark>*</RequiredMark>
           </Label>
           <Input
             id="schoolName"
@@ -109,7 +109,7 @@ export const TeacherSignUpFormSection = ({
 
           <InputGroup>
             <Label htmlFor="classNumber" hasError={Boolean(fieldErrors.classNumber)}>
-              반 <RequiredMark>*</RequiredMark>
+              반<RequiredMark>*</RequiredMark>
             </Label>
             <Input
               id="classNumber"
@@ -137,9 +137,14 @@ export const TeacherSignUpFormSection = ({
           </ErrorBox>
         ) : null}
 
-        <PrimaryButton type="submit" disabled={!isSignUpEnabled}>
-          {isSubmitting ? '가입 중...' : '가입하기'}
-        </PrimaryButton>
+        <PrimaryButton
+          type="submit"
+          variant="primary"
+          size="L"
+          width="100%"
+          label={isSubmitting ? '가입 중...' : '가입하기'}
+          disabled={!isSignUpEnabled}
+        />
       </SignUpForm>
     </>
   );

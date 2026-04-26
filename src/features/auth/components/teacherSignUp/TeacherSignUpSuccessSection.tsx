@@ -1,4 +1,4 @@
-import { IcCheck } from '@/icons';
+﻿import { IcCheck } from '@/icons';
 import {
   PrimaryButton,
   SuccessDescription,
@@ -27,9 +27,15 @@ export const TeacherSignUpSuccessSection = ({
         <br />
         이제 학급을 개설하고, 학부모님과 안전한 소통을 시작해보세요.
       </SuccessDescription>
-      <PrimaryButton type="button" onClick={onOpenClassCodeModal} disabled={isCreatingClassCode}>
-        {isCreatingClassCode ? '학급 코드 생성 중...' : '학급 개설하기'}
-      </PrimaryButton>
+      <PrimaryButton
+        type="button"
+        variant="primary"
+        size="L"
+        width="100%"
+        label={isCreatingClassCode ? '학급 코드 생성 중...' : '학급 개설하기'}
+        onClick={onOpenClassCodeModal}
+        disabled={isCreatingClassCode}
+      />
     </SuccessSection>
   );
 };

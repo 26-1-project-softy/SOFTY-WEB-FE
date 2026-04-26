@@ -1,4 +1,4 @@
-import { IcCopy, IcSparkles } from '@/icons';
+﻿import { IcCopy, IcSparkles } from '@/icons';
 import {
   ClassCode,
   ClassCodeCard,
@@ -47,14 +47,24 @@ export const TeacherClassCodeReadySection = ({
         <ClassCode>{generatedClassCode}</ClassCode>
       </ClassCodeCard>
 
-      <CopyButton type="button" onClick={onCopyClassCode}>
-        <IcCopy />
-        학급코드 복사하기
-      </CopyButton>
+      <CopyButton
+        type="button"
+        variant="ghost"
+        size="L"
+        width="100%"
+        icon={IcCopy}
+        label="학급코드 복사하기"
+        onClick={onCopyClassCode}
+      />
 
-      <PrimaryButton type="button" onClick={onGoToInbox}>
-        수신함으로 이동
-      </PrimaryButton>
+      <PrimaryButton
+        type="button"
+        variant="primary"
+        size="L"
+        width="100%"
+        label="수신함으로 이동"
+        onClick={onGoToInbox}
+      />
     </SuccessSection>
   );
 };
