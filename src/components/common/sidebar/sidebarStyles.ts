@@ -2,11 +2,15 @@ import styled from '@emotion/styled';
 import { NavLink } from 'react-router-dom';
 
 export const SidebarContainer = styled.aside<{ isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
-  width: ${({ isOpen }) => (isOpen ? '240px' : '100px')};
+  width: ${({ isOpen }) => (isOpen ? `${SIDEBAR_WIDTH.open}px` : `${SIDEBAR_WIDTH.closed}px`)};
   height: 100vh;
   background: ${({ theme }) => theme.colors.background.bg1};
   border-right: 1px solid ${({ theme }) => theme.colors.border.border2};
@@ -18,8 +22,8 @@ export const SidebarHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border2};
-  padding: 16px 12px;
+  height: 62px;
+  padding: 12px 16px;
   gap: 10px;
 `;
 
