@@ -131,4 +131,8 @@ const KpiGrid = styled.div`
 const RecommendationChartContainer = styled.div`
   width: 100%;
   height: 180px;
+
+  .recharts-wrapper *:focus {
+    outline: none;
+  }
 `;
