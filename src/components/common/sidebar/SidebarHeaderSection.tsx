@@ -18,7 +18,7 @@ export const SidebarHeaderSection = ({
         type="button"
         onClick={onBrandClick}
         isOpen={isOpen}
-        aria-label={'\uD648\uC73C\uB85C \uC774\uB3D9'}
+        aria-label="홈으로 이동"
       >
         <IcBrandLogo />
         <BrandLabelSlot isOpen={isOpen}>
@@ -29,7 +29,7 @@ export const SidebarHeaderSection = ({
       <SidebarToggleButton
         type="button"
         onClick={onToggleClick}
-        aria-label={isOpen ? '\uBA54\uB274 \uB2EB\uAE30' : '\uBA54\uB274 \uC5F4\uAE30'}
+        aria-label={isOpen ? '메뉴 닫기' : '메뉴 열기'}
         aria-expanded={isOpen}
       >
         <SidebarToggleLine isOpen={isOpen} />
