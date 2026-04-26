@@ -6,8 +6,8 @@ import { InlineButton } from '@/components/common/InlineButton';
 import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
 import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
 import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
-import { useLogout } from '@/hooks/useLogout';
 import { useToast } from '@/hooks/useToast';
+import { useTeacherWithdraw } from '@/features/teacher/settings/hooks/useTeacherWithdraw';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
@@ -108,7 +108,6 @@ const extractClassNumber = (raw: string) => {
 
 export const TeacherSettingsPage = () => {
   const { showToast } = useToast();
-  const { logout } = useLogout();
   const { setHeaderActions } = useOutletContext<AppLayoutOutletContext>();
   const [setting, setSetting] = useState<TeacherSetting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,7 +126,15 @@ export const TeacherSettingsPage = () => {
   const [initialWorkdays, setInitialWorkdays] = useState<Workday[]>([]);
   const [workdays, setWorkdays] = useState<Workday[]>([]);
   const [isSavingWorkHours, setIsSavingWorkHours] = useState(false);
-  const handleLogout = () => logout();
+  const {
+    isWithdrawModalOpen,
+    isWithdrawing,
+    withdrawErrorMessage,
+    handleOpenWithdrawModal,
+    handleCloseWithdrawModal,
+    handleConfirmWithdraw,
+    handleLogout,
+  } = useTeacherWithdraw();
 
   useEffect(() => {
     let isMounted = true;
@@ -595,10 +602,56 @@ export const TeacherSettingsPage = () => {
             <AccountLinkButton type="button" onClick={handleLogout}>
               로그아웃
             </AccountLinkButton>
-            <DangerLinkButton type="button">회원 탈퇴</DangerLinkButton>
+            <DangerLinkButton type="button" onClick={handleOpenWithdrawModal}>
+              회원 탈퇴
+            </DangerLinkButton>
           </AccountLinkList>
         </CardSection>
       </ContentArea>
+
+      {isWithdrawModalOpen ? (
+        <ModalOverlay onClick={handleCloseWithdrawModal}>
+          <ModalCard onClick={event => event.stopPropagation()}>
+            <ConfirmIconWrap>
+              <IcInfo />
+            </ConfirmIconWrap>
+
+            <ModalTitle>회원 탈퇴하시겠어요?</ModalTitle>
+            <ModalDescription>
+              탈퇴하면 계정 정보가 삭제되며 복구할 수 없어요.
+              <br />
+              정말 탈퇴하시려면 아래 버튼을 눌러 주세요.
+            </ModalDescription>
+
+            {withdrawErrorMessage ? (
+              <ConfirmErrorBox role="alert">
+                <ConfirmErrorIcon>
+                  <IcError />
+                </ConfirmErrorIcon>
+                <ConfirmErrorTextWrap>
+                  <ConfirmErrorTitle>{withdrawErrorMessage}</ConfirmErrorTitle>
+                  <ConfirmErrorDescription>잠시 후 다시 시도해 주세요.</ConfirmErrorDescription>
+                </ConfirmErrorTextWrap>
+              </ConfirmErrorBox>
+            ) : null}
+
+            <ModalButtonRow>
+              <ModalGhostButton type="button" onClick={handleCloseWithdrawModal}>
+                취소
+              </ModalGhostButton>
+              <ModalPrimaryButton
+                type="button"
+                onClick={() => {
+                  void handleConfirmWithdraw();
+                }}
+                disabled={isWithdrawing}
+              >
+                {isWithdrawing ? '탈퇴 중...' : '회원 탈퇴'}
+              </ModalPrimaryButton>
+            </ModalButtonRow>
+          </ModalCard>
+        </ModalOverlay>
+      ) : null}
 
       {isClassChangeModalOpen ? (
         <ModalOverlay onClick={handleCloseClassChangeModal}>
