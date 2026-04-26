@@ -7,13 +7,15 @@ import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
 import { NAVIGATION_BY_ROLE } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
 import { useUiStore } from '@/stores/uiStore';
-import { IcBrandLogo, IcDefaultProfile } from '@/icons';
+import { IcBrandLogo, IcDefaultProfile, IcLogout } from '@/icons';
 import { SIDEBAR_WIDTH } from '@/constants/layout';
+import { useLogout } from '@/hooks/useLogout';
 
 export const Sidebar = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { role, user } = useAuth();
+  const { logout } = useLogout();
   const isSidebarOpen = useUiStore(state => state.isSidebarOpen);
   const toggleSidebar = useUiStore(state => state.toggleSidebar);
   const items = role ? NAVIGATION_BY_ROLE[role] : [];
@@ -31,6 +33,10 @@ export const Sidebar = () => {
     }
 
     navigate(getDefaultRouteByRole(role), { replace: true });
+  };
+
+  const handleClickLogout = () => {
+    logout();
   };
 
   return (
@@ -93,7 +99,17 @@ export const Sidebar = () => {
             {userMeta && <ProfileMeta>{userMeta}</ProfileMeta>}
           </ProfileSummary>
         </ProfileSummarySlot>
-        {/* TODO: 로그아웃 버튼 */}
+        {role === 'admin' ? (
+          <LogoutIconButton
+            type="button"
+            isOpen={isSidebarOpen}
+            aria-label="로그아웃"
+            title="로그아웃"
+            onClick={handleClickLogout}
+          >
+            <IcLogout />
+          </LogoutIconButton>
+        ) : null}
       </SidebarProfileSection>
     </SidebarContainer>
   );
@@ -293,4 +309,29 @@ const ProfileMeta = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`;
+
+const LogoutIconButton = styled.button<{ isOpen: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: ${({ theme }) => theme.colors.text.text4};
+  opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
+  pointer-events: ${({ isOpen }) => (isOpen ? 'auto' : 'none')};
+  transform: ${({ isOpen }) => (isOpen ? 'translateX(0)' : 'translateX(-4px)')};
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    background-color 0.16s ease,
+    color 0.16s ease;
+  transition-delay: ${({ isOpen }) => (isOpen ? '120ms' : '0ms')};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.bg3};
+    color: ${({ theme }) => theme.colors.text.text1};
+  }
 `;
