@@ -1,6 +1,6 @@
 import styled from '@emotion/styled';
-import { useState } from 'react';
-import { Outlet, useMatches } from 'react-router-dom';
+import { type ReactNode, useState } from 'react';
+import { Outlet, useLocation, useMatches } from 'react-router-dom';
 import { useDashboardTabs } from '@/features/admin/dashboard/hooks/useDashboardTabs';
 import { Sidebar } from '@/components/common/Sidebar';
 import { Header } from '@/components/common/Header';
@@ -12,9 +12,24 @@ type AppRouteMatch = {
   handle?: AppRouteHandle;
 };
 
+export type AppLayoutOutletContext = {
+  setHeaderActions: (actions?: ReactNode) => void;
+  activeTab?: string;
+};
+
 export const AppLayout = () => {
   const matches = useMatches() as AppRouteMatch[];
+  const { pathname } = useLocation();
+  const [headerActionState, setHeaderActionState] = useState<{
+    pathname: string;
+    actions?: ReactNode;
+  }>({ pathname });
 
+  const headerActions =
+    headerActionState.pathname === pathname ? headerActionState.actions : undefined;
+  const setHeaderActions = (actions?: ReactNode) => {
+    setHeaderActionState({ pathname, actions });
+  };
   const currentMatch = [...matches].reverse().find(match => match.handle);
 
   const title = currentMatch?.handle?.title;
@@ -34,7 +49,7 @@ export const AppLayout = () => {
     <Shell>
       <Sidebar />
       <Main>
-        {title && <Header title={title} />}
+        {title && <Header title={title} actions={headerActions} />}
 
         {tabsConfig?.items.length ? (
           <Tabs
@@ -47,7 +62,12 @@ export const AppLayout = () => {
         ) : null}
 
         <Content>
-          <Outlet context={{ activeTab: validActiveTab }} />
+          <Outlet
+            context={{
+              setHeaderActions,
+              activeTab: validActiveTab,
+            }}
+          />
         </Content>
       </Main>
     </Shell>
