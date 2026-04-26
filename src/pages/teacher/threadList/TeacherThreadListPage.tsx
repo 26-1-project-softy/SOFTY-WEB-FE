@@ -1,4 +1,5 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
+import { InlineButton } from '@/components/common/InlineButton';
 import { IcError, IcRefresh } from '@/icons';
 
 type InboxLoadState = 'error' | 'empty' | 'success';
@@ -7,7 +8,7 @@ export const TeacherThreadListPage = () => {
   const loadState: InboxLoadState = 'error';
 
   const handleRetry = () => {
-    // TODO: 대화 목록 조회 API 연결 시 재시도 로직 연동
+    // TODO: 대화 목록 조회 API 연결 후 재시도 로직 연동
   };
 
   return (
@@ -18,11 +19,15 @@ export const TeacherThreadListPage = () => {
             <IcError />
           </ErrorIconWrap>
           <ErrorTitle>대화 목록을 불러올 수 없어요</ErrorTitle>
-          <ErrorDescription>잠시 후 다시 시도해주세요.</ErrorDescription>
-          <RetryButton type="button" onClick={handleRetry}>
-            <IcRefresh />
-            다시 시도
-          </RetryButton>
+          <ErrorDescription>잠시 후 다시 시도해 주세요.</ErrorDescription>
+          <RetryButton
+            type="button"
+            variant="primary"
+            size="L"
+            icon={IcRefresh}
+            label="다시 시도"
+            onClick={handleRetry}
+          />
         </ErrorStateSection>
       ) : null}
     </ThreadListPageContainer>
@@ -66,17 +71,8 @@ const ErrorDescription = styled.p`
   color: ${({ theme }) => theme.colors.text.text3};
 `;
 
-const RetryButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
+const RetryButton = styled(InlineButton)`
   margin-top: 14px;
-  border: none;
-  border-radius: 10px;
-  padding: 10px 14px;
-  background: ${({ theme }) => theme.colors.brand.primary};
-  color: ${({ theme }) => theme.colors.text.textW};
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
 
   svg {
     width: 16px;

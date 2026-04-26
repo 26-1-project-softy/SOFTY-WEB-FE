@@ -1,4 +1,5 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
+import { InlineButton } from '@/components/common/InlineButton';
 
 export const Title = styled.h1`
   ${({ theme }) => theme.fonts.title2};
@@ -120,24 +121,8 @@ export const ErrorDescription = styled.p`
   color: ${({ theme }) => theme.colors.semantic.error};
 `;
 
-export const PrimaryButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
+export const PrimaryButton = styled(InlineButton)`
   margin-top: 8px;
   width: 100%;
-  border: none;
-  border-radius: 10px;
-  padding: 14px;
-  color: ${({ theme }) => theme.colors.text.textW};
-  background: ${({ theme }) => theme.colors.brand.primary};
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.background.brandHover};
-  }
-
-  &:disabled {
-    background: ${({ theme }) => theme.colors.neutral.neutral300};
-    color: ${({ theme }) => theme.colors.neutral.neutral600};
-    cursor: not-allowed;
-  }
+  height: 52px;
 `;

@@ -1,4 +1,5 @@
 ﻿import styled from '@emotion/styled';
+import { InlineButton } from '@/components/common/InlineButton';
 import { IcCheck, IcCopy, IcInfo, IcSparkles } from '@/icons';
 import { useTeacherSignUpForm } from '@/features/auth/hooks/useTeacherSignUpForm';
 
@@ -133,9 +134,14 @@ export const TeacherSignUpPage = () => {
                 </ErrorBox>
               ) : null}
 
-              <PrimaryButton type="submit" disabled={!isSignUpEnabled}>
-                {isSubmitting ? '가입 중...' : '가입하기'}
-              </PrimaryButton>
+              <PrimaryButton
+                type="submit"
+                variant="primary"
+                size="L"
+                width="100%"
+                label={isSubmitting ? '가입 중...' : '가입하기'}
+                disabled={!isSignUpEnabled}
+              />
             </SignUpForm>
           </>
         ) : null}
@@ -166,11 +172,13 @@ export const TeacherSignUpPage = () => {
 
             <PrimaryButton
               type="button"
+              variant="primary"
+              size="L"
+              width="100%"
+              label={isCreatingClassCode ? '학급 코드 생성 중...' : '학급 개설하기'}
               onClick={handleOpenClassCodeModal}
               disabled={isCreatingClassCode}
-            >
-              {isCreatingClassCode ? '학급 코드 생성 중...' : '학급 개설하기'}
-            </PrimaryButton>
+            />
           </SuccessSection>
         ) : null}
 
@@ -193,13 +201,24 @@ export const TeacherSignUpPage = () => {
               <ClassCode>{generatedClassCode}</ClassCode>
             </ClassCodeCard>
 
-            <CopyButton type="button" onClick={handleCopyClassCode}>
-              <IcCopy /> 학급코드 복사하기
-            </CopyButton>
+            <CopyButton
+              type="button"
+              variant="ghost"
+              size="L"
+              width="100%"
+              icon={IcCopy}
+              label="학급코드 복사하기"
+              onClick={handleCopyClassCode}
+            />
 
-            <PrimaryButton type="button" onClick={handleGoToInbox}>
-              수신함으로 이동
-            </PrimaryButton>
+            <PrimaryButton
+              type="button"
+              variant="primary"
+              size="L"
+              width="100%"
+              label="수신함으로 이동"
+              onClick={handleGoToInbox}
+            />
           </SuccessSection>
         ) : null}
       </Card>
@@ -354,26 +373,11 @@ const ErrorDescription = styled.p`
   color: ${({ theme }) => theme.colors.semantic.error};
 `;
 
-const PrimaryButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
+const PrimaryButton = styled(InlineButton)`
   margin-top: 14px;
   width: 100%;
-  border: none;
+  height: 52px;
   border-radius: 12px;
-  padding: 14px;
-  color: ${({ theme }) => theme.colors.text.textW};
-  background: ${({ theme }) => theme.colors.brand.primary};
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.background.brandHover};
-  }
-
-  &:disabled {
-    background: #d0d0d0;
-    color: #7a7a7a;
-    cursor: not-allowed;
-  }
 `;
 
 const SuccessSection = styled.section`
@@ -439,19 +443,9 @@ const ClassCode = styled.p`
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
-const CopyButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
+const CopyButton = styled(InlineButton)`
   margin-top: 16px;
   width: 100%;
-  border-radius: 10px;
-  border: 1px solid #d2d2d2;
-  padding: 12px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
 
   svg {
     width: 18px;

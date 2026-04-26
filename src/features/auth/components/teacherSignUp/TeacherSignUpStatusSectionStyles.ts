@@ -1,4 +1,5 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
+import { InlineButton } from '@/components/common/InlineButton';
 
 export const SuccessSection = styled.section`
   display: flex;
@@ -63,19 +64,9 @@ export const ClassCode = styled.p`
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
-export const CopyButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
+export const CopyButton = styled(InlineButton)`
   margin-top: 16px;
   width: 100%;
-  border-radius: 10px;
-  border: 1px solid ${({ theme }) => theme.colors.border.border2};
-  padding: 12px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
 
   svg {
     width: 18px;
@@ -83,24 +74,8 @@ export const CopyButton = styled.button`
   }
 `;
 
-export const PrimaryButton = styled.button`
-  ${({ theme }) => theme.fonts.labelS};
+export const PrimaryButton = styled(InlineButton)`
   margin-top: 8px;
   width: 100%;
-  border: none;
-  border-radius: 10px;
-  padding: 14px;
-  color: ${({ theme }) => theme.colors.text.textW};
-  background: ${({ theme }) => theme.colors.brand.primary};
-  cursor: pointer;
-
-  &:hover:not(:disabled) {
-    background: ${({ theme }) => theme.colors.background.brandHover};
-  }
-
-  &:disabled {
-    background: ${({ theme }) => theme.colors.neutral.neutral300};
-    color: ${({ theme }) => theme.colors.neutral.neutral600};
-    cursor: not-allowed;
-  }
+  height: 52px;
 `;
