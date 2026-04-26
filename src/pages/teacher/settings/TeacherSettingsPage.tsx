@@ -3,12 +3,10 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
 import { useOutletContext } from 'react-router-dom';
 import { InlineButton } from '@/components/common/InlineButton';
-import { ToggleSwitch } from '@/components/common/ToggleSwitch';
 import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
 import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
 import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
 import { useToast } from '@/hooks/useToast';
-import { useTeacherWithdraw } from '@/features/teacher/settings/hooks/useTeacherWithdraw';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
@@ -127,15 +125,6 @@ export const TeacherSettingsPage = () => {
   const [initialWorkdays, setInitialWorkdays] = useState<Workday[]>([]);
   const [workdays, setWorkdays] = useState<Workday[]>([]);
   const [isSavingWorkHours, setIsSavingWorkHours] = useState(false);
-  const {
-    isWithdrawModalOpen,
-    isWithdrawing,
-    withdrawErrorMessage,
-    handleOpenWithdrawModal,
-    handleCloseWithdrawModal,
-    handleConfirmWithdraw,
-    handleLogout,
-  } = useTeacherWithdraw();
 
   useEffect(() => {
     let isMounted = true;
@@ -496,11 +485,15 @@ export const TeacherSettingsPage = () => {
             <WorkdayList>
               {workdays.map(day => (
                 <WorkdayRow key={day.key}>
-                  <ToggleSwitch
-                    checked={day.enabled}
-                    ariaLabel={`${day.label}?붿씪 洹쇰Т?쒓컙 ?ъ슜`}
-                    onToggle={() => handleToggleWorkday(day.key)}
-                  />
+                  <ToggleButton
+                    type="button"
+                    isEnabled={day.enabled}
+                    aria-pressed={day.enabled}
+                    aria-label={`${day.label}요일 근무시간 사용`}
+                    onClick={() => handleToggleWorkday(day.key)}
+                  >
+                    <ToggleThumb isEnabled={day.enabled} />
+                  </ToggleButton>
 
                   <DayLabel>{day.label}</DayLabel>
 
@@ -538,13 +531,9 @@ export const TeacherSettingsPage = () => {
         <CardSection>
           <ClassHeader>
             <SectionTitle>학급 관리</SectionTitle>
-            <PrimaryActionButton
-              type="button"
-              variant="primary"
-              size="L"
-              label="학급 변경하기"
-              onClick={handleOpenClassChangeModal}
-            />
+            <PrimaryActionButton type="button" onClick={handleOpenClassChangeModal}>
+              학급 변경하기
+            </PrimaryActionButton>
           </ClassHeader>
 
           <ClassInfoGrid>
@@ -568,13 +557,12 @@ export const TeacherSettingsPage = () => {
               </ClassCodeBadge>
               <CodeCopyButton
                 type="button"
-                variant="ghost"
-                size="L"
-                icon={IcCopy}
-                label="학급코드 복사하기"
                 onClick={handleCopyClassCode}
                 disabled={!setting?.classCode?.trim()}
-              />
+              >
+                <IcCopy />
+                학급코드 복사하기
+              </CodeCopyButton>
             </ClassCodeActions>
           </ClassCodeWrap>
         </CardSection>
@@ -582,72 +570,11 @@ export const TeacherSettingsPage = () => {
         <CardSection>
           <SectionTitle>계정 관리</SectionTitle>
           <AccountLinkList>
-            <AccountLinkButton
-              type="button"
-              variant="text"
-              size="M"
-              label="로그아웃"
-              onClick={handleLogout}
-            />
-            <DangerLinkButton
-              type="button"
-              variant="text"
-              size="M"
-              label="회원 탈퇴"
-              onClick={handleOpenWithdrawModal}
-            />
+            <AccountLinkButton type="button">로그아웃</AccountLinkButton>
+            <DangerLinkButton type="button">회원 탈퇴</DangerLinkButton>
           </AccountLinkList>
         </CardSection>
       </ContentArea>
-
-      {isWithdrawModalOpen ? (
-        <ModalOverlay onClick={handleCloseWithdrawModal}>
-          <ModalCard onClick={event => event.stopPropagation()}>
-            <ConfirmIconWrap>
-              <IcInfo />
-            </ConfirmIconWrap>
-
-            <ModalTitle>회원 탈퇴하시겠어요?</ModalTitle>
-            <ModalDescription>
-              탈퇴하면 계정 정보가 삭제되며 복구할 수 없어요.
-              <br />
-              정말 탈퇴하시려면 아래 버튼을 눌러 주세요.
-            </ModalDescription>
-
-            {withdrawErrorMessage ? (
-              <ConfirmErrorBox role="alert">
-                <ConfirmErrorIcon>
-                  <IcError />
-                </ConfirmErrorIcon>
-                <ConfirmErrorTextWrap>
-                  <ConfirmErrorTitle>{withdrawErrorMessage}</ConfirmErrorTitle>
-                  <ConfirmErrorDescription>잠시 후 다시 시도해 주세요.</ConfirmErrorDescription>
-                </ConfirmErrorTextWrap>
-              </ConfirmErrorBox>
-            ) : null}
-
-            <ModalButtonRow>
-              <ModalGhostButton
-                type="button"
-                variant="ghost"
-                size="L"
-                label="취소"
-                onClick={handleCloseWithdrawModal}
-              />
-              <ModalPrimaryButton
-                type="button"
-                variant="primary"
-                size="L"
-                label={isWithdrawing ? '탈퇴 중...' : '회원 탈퇴'}
-                onClick={() => {
-                  void handleConfirmWithdraw();
-                }}
-                disabled={isWithdrawing}
-              />
-            </ModalButtonRow>
-          </ModalCard>
-        </ModalOverlay>
-      ) : null}
 
       {isClassChangeModalOpen ? (
         <ModalOverlay onClick={handleCloseClassChangeModal}>
@@ -708,21 +635,16 @@ export const TeacherSettingsPage = () => {
             </ModalForm>
 
             <ModalButtonRow>
-              <ModalGhostButton
-                type="button"
-                variant="ghost"
-                size="L"
-                label="취소"
-                onClick={handleCloseClassChangeModal}
-              />
+              <ModalGhostButton type="button" onClick={handleCloseClassChangeModal}>
+                취소
+              </ModalGhostButton>
               <ModalPrimaryButton
                 type="button"
-                variant="primary"
-                size="L"
-                label="변경하기"
                 disabled={!isClassChangeEnabled}
                 onClick={handleOpenClassChangeConfirmModal}
-              />
+              >
+                변경하기
+              </ModalPrimaryButton>
             </ModalButtonRow>
           </ModalCard>
         </ModalOverlay>
@@ -765,21 +687,16 @@ export const TeacherSettingsPage = () => {
             ) : null}
 
             <ModalButtonRow>
-              <ModalGhostButton
-                type="button"
-                variant="ghost"
-                size="L"
-                label="취소"
-                onClick={handleCloseClassChangeConfirmModal}
-              />
+              <ModalGhostButton type="button" onClick={handleCloseClassChangeConfirmModal}>
+                취소
+              </ModalGhostButton>
               <ModalPrimaryButton
                 type="button"
-                variant="primary"
-                size="L"
-                label={isClassChangeSubmitting ? '변경 중...' : '변경하기'}
                 onClick={handleConfirmClassChange}
                 disabled={isClassChangeSubmitting}
-              />
+              >
+                {isClassChangeSubmitting ? '변경 중...' : '변경하기'}
+              </ModalPrimaryButton>
             </ModalButtonRow>
           </ModalCard>
         </ModalOverlay>
@@ -808,23 +725,16 @@ export const TeacherSettingsPage = () => {
 
             <SuccessCopyButton
               type="button"
-              variant="ghost"
-              size="L"
-              width="100%"
-              icon={IcCopy}
-              label="학급코드 복사하기"
               onClick={handleCopyNewClassCode}
               disabled={!newClassCode}
-            />
+            >
+              <IcCopy />
+              학급코드 복사하기
+            </SuccessCopyButton>
 
-            <SuccessConfirmButton
-              type="button"
-              variant="primary"
-              size="L"
-              width="100%"
-              label="확인"
-              onClick={handleCloseClassChangeSuccessModal}
-            />
+            <SuccessConfirmButton type="button" onClick={handleCloseClassChangeSuccessModal}>
+              확인
+            </SuccessConfirmButton>
           </ModalCard>
         </ModalOverlay>
       ) : null}
@@ -889,7 +799,7 @@ const AvatarCircle = styled.span`
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  background: #d6f3ee;
+  background: ${({ theme }) => theme.colors.teacherSettings.avatarBackground};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: inline-flex;
   align-items: center;
@@ -912,7 +822,7 @@ const WorkdayList = styled.div`
 const WorkdayRow = styled.div`
   border-radius: 14px;
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  background: #f7f8f8;
+  background: ${({ theme }) => theme.colors.teacherSettings.workdayRowBackground};
   padding: 12px 14px;
   display: flex;
   align-items: center;
@@ -922,6 +832,31 @@ const WorkdayRow = styled.div`
     flex-wrap: wrap;
     gap: 10px;
   }
+`;
+
+const ToggleButton = styled.button<{ isEnabled: boolean }>`
+  width: 44px;
+  height: 26px;
+  border: none;
+  border-radius: 999px;
+  padding: 3px;
+  background: ${({ isEnabled, theme }) =>
+    isEnabled ? theme.colors.brand.primary : theme.colors.teacherSettings.toggleOffBackground};
+  display: flex;
+  align-items: center;
+  justify-content: ${({ isEnabled }) => (isEnabled ? 'flex-end' : 'flex-start')};
+  cursor: pointer;
+`;
+
+const ToggleThumb = styled.span<{ isEnabled: boolean }>`
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: ${({ isEnabled, theme }) =>
+    isEnabled
+      ? theme.colors.background.bg1
+      : theme.colors.teacherSettings.toggleThumbOffBackground};
+  box-shadow: ${({ theme }) => theme.colors.shadow.toggleThumb};
 `;
 
 const DayLabel = styled.span`
@@ -956,7 +891,7 @@ const TimeInput = styled.input`
   }
 
   &:disabled {
-    background: #f4f5f6;
+    background: ${({ theme }) => theme.colors.teacherSettings.inputDisabledBackground};
     color: ${({ theme }) => theme.colors.text.text4};
     cursor: not-allowed;
   }
@@ -978,7 +913,7 @@ const ClassHeader = styled.div`
   gap: 12px;
 `;
 
-const PrimaryActionButton = styled(InlineButton)`
+const PrimaryActionButton = styled.button`
   ${({ theme }) => theme.fonts.labelXS};
   border: none;
   border-radius: 10px;
@@ -1028,13 +963,13 @@ const ClassCodeActions = styled.div`
 const ClassCodeBadge = styled.span`
   ${({ theme }) => theme.fonts.labelS};
   border-radius: 12px;
-  border: 1px solid #cceee8;
-  background: #e7f8f5;
+  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.classCodeBadgeBorder};
+  background: ${({ theme }) => theme.colors.teacherSettings.classCodeBadgeBackground};
   color: ${({ theme }) => theme.colors.text.text1};
   padding: 10px 18px;
 `;
 
-const CodeCopyButton = styled(InlineButton)`
+const CodeCopyButton = styled.button`
   ${({ theme }) => theme.fonts.labelXS};
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
   border-radius: 10px;
@@ -1064,12 +999,12 @@ const AccountLinkList = styled.div`
   align-items: flex-start;
 `;
 
-const AccountLinkButton = styled(InlineButton)`
+const AccountLinkButton = styled.button`
   ${({ theme }) => theme.fonts.body2};
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
-const DangerLinkButton = styled(InlineButton)`
+const DangerLinkButton = styled.button`
   ${({ theme }) => theme.fonts.body2};
   color: ${({ theme }) => theme.colors.semantic.error};
 `;
@@ -1078,7 +1013,7 @@ const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: rgba(0, 0, 0, 0.45);
+  background: ${({ theme }) => theme.colors.overlay.dim2};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1090,7 +1025,7 @@ const ModalCard = styled.section`
   max-width: 420px;
   border-radius: 16px;
   background: ${({ theme }) => theme.colors.background.bg1};
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: ${({ theme }) => theme.colors.shadow.modalLarge};
   padding: 28px 28px 24px;
 `;
 
@@ -1098,7 +1033,7 @@ const ModalIconWrap = styled.div`
   width: 58px;
   height: 58px;
   border-radius: 999px;
-  background: #e7f8f5;
+  background: ${({ theme }) => theme.colors.teacherSettings.modalIconBackground};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: flex;
   align-items: center;
@@ -1112,12 +1047,12 @@ const ModalIconWrap = styled.div`
 `;
 
 const ConfirmIconWrap = styled(ModalIconWrap)`
-  background: #fdf7e8;
-  color: #e59b2d;
+  background: ${({ theme }) => theme.colors.teacherSettings.confirmIconBackground};
+  color: ${({ theme }) => theme.colors.teacherSettings.confirmIconColor};
 `;
 
 const SuccessIconWrap = styled(ModalIconWrap)`
-  background: #e7f8f5;
+  background: ${({ theme }) => theme.colors.teacherSettings.modalIconBackground};
   color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
@@ -1197,8 +1132,8 @@ const FormSelect = styled.select`
 const ConfirmSummaryBox = styled.div`
   margin-top: 18px;
   border-radius: 12px;
-  border: 1px solid #d2ebe6;
-  background: #eaf6f3;
+  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBorder};
+  background: ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBackground};
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -1225,8 +1160,8 @@ const ConfirmSummaryValue = styled.span`
 const ConfirmErrorBox = styled.div`
   margin-top: 14px;
   border-radius: 12px;
-  border: 1px solid #ff8e96;
-  background: #fff2f3;
+  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmErrorBorder};
+  background: ${({ theme }) => theme.colors.teacherSettings.confirmErrorBackground};
   padding: 10px 12px;
   display: flex;
   align-items: center;
@@ -1264,8 +1199,8 @@ const ConfirmErrorDescription = styled.p`
 const SuccessCodeCard = styled.div`
   margin-top: 16px;
   border-radius: 14px;
-  border: 1px solid #d2ebe6;
-  background: #eaf6f3;
+  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBorder};
+  background: ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBackground};
   padding: 14px;
   text-align: center;
 `;
@@ -1282,7 +1217,7 @@ const SuccessCodeValue = styled.p`
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
-const SuccessCopyButton = styled(InlineButton)`
+const SuccessCopyButton = styled.button`
   ${({ theme }) => theme.fonts.labelXS};
   margin-top: 10px;
   width: 100%;
@@ -1307,7 +1242,7 @@ const SuccessCopyButton = styled(InlineButton)`
   }
 `;
 
-const SuccessConfirmButton = styled(InlineButton)`
+const SuccessConfirmButton = styled.button`
   ${({ theme }) => theme.fonts.labelXS};
   margin-top: 14px;
   width: 100%;
@@ -1325,7 +1260,7 @@ const ModalButtonRow = styled.div`
   gap: 10px;
 `;
 
-const ModalGhostButton = styled(InlineButton)`
+const ModalGhostButton = styled.button`
   ${({ theme }) => theme.fonts.labelXS};
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
   border-radius: 10px;
@@ -1334,7 +1269,7 @@ const ModalGhostButton = styled(InlineButton)`
   padding: 11px 12px;
 `;
 
-const ModalPrimaryButton = styled(InlineButton)`
+const ModalPrimaryButton = styled.button`
   ${({ theme }) => theme.fonts.labelXS};
   border: none;
   border-radius: 10px;
@@ -1343,8 +1278,8 @@ const ModalPrimaryButton = styled(InlineButton)`
   padding: 11px 12px;
 
   &:disabled {
-    background: #dbdee2;
-    color: #8f949d;
+    background: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledBackground};
+    color: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledText};
     cursor: not-allowed;
   }
 `;

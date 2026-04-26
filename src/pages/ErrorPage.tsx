@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { useTheme } from '@emotion/react';
 import { useNavigate } from 'react-router-dom';
 import { IconBadge } from '@/components/common/IconBadge';
 import { InlineButton } from '@/components/common/InlineButton';
@@ -29,6 +30,7 @@ export const ErrorPage = ({
   isGhostGoBack = false,
 }: ErrorPageProps) => {
   const navigate = useNavigate();
+  const theme = useTheme();
 
   const handleClickGhost = () => {
     if (isGhostGoBack) {
@@ -45,7 +47,13 @@ export const ErrorPage = ({
 
   return (
     <PageContainer>
-      <IconBadge icon={IcError} size={68} iconSize={34} bgColor="#FCF3F2" color="#FF2C3D" />
+      <IconBadge
+        icon={IcError}
+        size={68}
+        iconSize={34}
+        bgColor={theme.colors.semantic.errorSoft}
+        color={theme.colors.semantic.error}
+      />
       <ContentContainer>
         <Title>{title}</Title>
         <Description>{description}</Description>
