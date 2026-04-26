@@ -18,7 +18,7 @@ import {
   RequiredMark,
   SignUpForm,
   Title,
-} from '@/features/auth/components/teacherSignUp/teacherSignUpPageStyles';
+} from '@/features/auth/components/teacherSignUp/TeacherSignUpFormSectionStyles';
 
 type TeacherSignUpFormSectionProps = {
   teacherName: string;

@@ -1,5 +1,6 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
+import { TextField } from '@/components/common/TextField';
 import { ROUTES } from '@/constants/routes';
 import { IcBack, IcInfo } from '@/icons';
 import { useAdminLoginForm } from '@/features/auth/hooks/useAdminLoginForm';
@@ -33,31 +34,27 @@ export const AdminLoginPage = () => {
           <Title>관리자 로그인</Title>
 
           <LoginForm onSubmit={handleSubmit}>
-            <InputGroup>
-              <Label htmlFor="loginId">아이디</Label>
-              <Input
-                id="loginId"
-                name="loginId"
-                type="text"
-                autoComplete="username"
-                value={loginId}
-                onChange={event => handleChangeLoginId(event.target.value)}
-                placeholder="아이디를 입력해주세요."
-              />
-            </InputGroup>
+            <TextField
+              id="loginId"
+              name="loginId"
+              type="text"
+              autoComplete="username"
+              label="아이디"
+              value={loginId}
+              onChange={event => handleChangeLoginId(event.target.value)}
+              placeholder="아이디를 입력해주세요."
+            />
 
-            <InputGroup>
-              <Label htmlFor="password">비밀번호</Label>
-              <Input
-                id="password"
-                name="password"
-                type="password"
-                autoComplete="current-password"
-                value={password}
-                onChange={event => handleChangePassword(event.target.value)}
-                placeholder="비밀번호를 입력해주세요."
-              />
-            </InputGroup>
+            <TextField
+              id="password"
+              name="password"
+              type="password"
+              autoComplete="current-password"
+              label="비밀번호"
+              value={password}
+              onChange={event => handleChangePassword(event.target.value)}
+              placeholder="비밀번호를 입력해주세요."
+            />
 
             {loginError ? (
               <ErrorBox role="alert" aria-live="polite">
@@ -85,7 +82,7 @@ export const AdminLoginPage = () => {
 
 const AdminLoginPageContainer = styled.div`
   min-height: 100vh;
-  background: #e5e5e5;
+  background: ${({ theme }) => theme.colors.background.bg5};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -116,9 +113,9 @@ const LoginCard = styled.div`
   margin-top: 18px;
   width: 100%;
   max-width: 540px;
-  background: #f4f4f4;
+  background: ${({ theme }) => theme.colors.background.bg3};
   border-radius: 18px;
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.12);
+  box-shadow: 0 12px 22px ${({ theme }) => `${theme.colors.neutral.neutral1100}1f`};
   padding: 44px 48px 42px;
 
   @media (max-width: 640px) {
@@ -140,44 +137,14 @@ const LoginForm = styled.form`
   gap: 16px;
 `;
 
-const InputGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-`;
-
-const Label = styled.label`
-  ${({ theme }) => theme.fonts.labelS};
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const Input = styled.input`
-  ${({ theme }) => theme.fonts.labelS};
-  border: 1px solid #c6c6c6;
-  border-radius: 12px;
-  background: #f4f4f4;
-  padding: 13px 14px;
-  color: ${({ theme }) => theme.colors.text.text1};
-
-  &::placeholder {
-    color: #8d8d8d;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.brand.primary};
-    box-shadow: 0 0 0 2px rgba(85, 181, 166, 0.16);
-  }
-`;
-
 const ErrorBox = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
   margin-top: 8px;
   border-radius: 18px;
-  border: 1px solid #ff5b66;
-  background: #ffe9ec;
+  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
   padding: 14px 16px;
 `;
 
@@ -227,8 +194,8 @@ const LoginButton = styled.button`
   }
 
   &:disabled {
-    background: #d0d0d0;
-    color: #747474;
+    background: ${({ theme }) => theme.colors.neutral.neutral300};
+    color: ${({ theme }) => theme.colors.neutral.neutral600};
     cursor: not-allowed;
   }
 `;
@@ -236,5 +203,5 @@ const LoginButton = styled.button`
 const FooterText = styled.p`
   ${({ theme }) => theme.fonts.body3};
   margin: 64px 0 0;
-  color: #919191;
+  color: ${({ theme }) => theme.colors.text.text4};
 `;
