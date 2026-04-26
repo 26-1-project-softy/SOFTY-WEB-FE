@@ -1,7 +1,7 @@
 import type { FormEventHandler } from 'react';
 import { IcInfo } from '@/icons';
 import type { TeacherSignUpFieldErrors } from '@/features/auth/lib/teacherSignUpValidation';
-import type { GlobalError } from '@/features/auth/hooks/useTeacherSignUpForm';
+import type { AuthErrorMessage } from '@/features/auth/lib/getAuthErrorMessage';
 import {
   Description,
   ErrorBox,
@@ -26,7 +26,7 @@ type TeacherSignUpFormSectionProps = {
   grade: string;
   classNumber: string;
   fieldErrors: TeacherSignUpFieldErrors;
-  globalError: GlobalError;
+  globalError: AuthErrorMessage | null;
   isSignUpEnabled: boolean;
   isSubmitting: boolean;
   onTeacherNameChange: (value: string) => void;
