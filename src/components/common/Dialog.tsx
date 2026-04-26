@@ -78,7 +78,7 @@ const DialogOverlay = styled.div`
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: rgba(0, 0, 0, 0.5);
+  background: ${({ theme }) => theme.colors.overlay.dim1};
 
   @media (max-width: 393px) {
     padding: 16px;
@@ -92,7 +92,7 @@ const DialogPanel = styled.div`
   overflow-y: auto;
   border-radius: 16px;
   background: ${({ theme }) => theme.colors.background.bg1};
-  box-shadow: 0 20px 48px rgba(0, 0, 0, 0.18);
+  box-shadow: ${({ theme }) => theme.colors.shadow.dialog};
   padding: 40px;
   gap: 40px;
   outline: none;

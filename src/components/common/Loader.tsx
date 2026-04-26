@@ -11,5 +11,5 @@ const Wrapper = styled.div`
   justify-content: center;
   width: 100%;
   height: 100%;
-  color: #4b5563;
+  color: ${({ theme }) => theme.colors.text.text2};
 `;
