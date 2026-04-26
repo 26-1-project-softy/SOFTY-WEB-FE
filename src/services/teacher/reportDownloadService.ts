@@ -1,5 +1,3 @@
-import axios from 'axios';
-
 const clickDownloadLink = (url: string, fileName: string, openInNewTab = false) => {
   const link = document.createElement('a');
   link.href = url;
@@ -18,13 +16,18 @@ const clickDownloadLink = (url: string, fileName: string, openInNewTab = false) 
 export const reportDownloadService = {
   downloadPdfFromPresignedUrl: async (downloadUrl: string, fileName: string) => {
     try {
-      const response = await axios.get<Blob>(downloadUrl, {
-        responseType: 'blob',
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
         headers: {
           Accept: 'application/pdf',
         },
       });
-      const blob = response.data;
+
+      if (!response.ok) {
+        throw new Error(`Failed to download PDF: ${response.status}`);
+      }
+
+      const blob = await response.blob();
 
       if (!(blob instanceof Blob) || blob.size === 0) {
         throw new Error('Downloaded blob is empty');
