@@ -1,15 +1,17 @@
+import { colors } from '@/styles/colors';
+
 export const chartColors = {
   recommendation: {
-    usedAsIs: '#55B5A6',
-    modified: '#8F86F8',
-    notUsed: '#808080',
+    usedAsIs: colors.chart.recommendationUsedAsIs,
+    modified: colors.chart.recommendationModified,
+    notUsed: colors.chart.recommendationNotUsed,
   },
   riskDetection: {
-    low: '#55B5A6',
-    high: '#FF6B6B',
+    low: colors.chart.riskLow,
+    high: colors.chart.riskHigh,
   },
   pdfReport: {
-    primary: '#55B5A6',
+    primary: colors.chart.pdfPrimary,
   },
   performEvaluation: {
     precision: '#60CDE4',
