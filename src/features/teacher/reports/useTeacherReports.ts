@@ -1,6 +1,6 @@
 import { AxiosError } from 'axios';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useToast } from '@/hooks/useToast';
+import { useToastStore } from '@/stores/toastStore';
 import { reportDownloadService } from '@/services/teacher/reportDownloadService';
 import {
   reportsApi,
@@ -29,7 +29,7 @@ export const useTeacherReports = () => {
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isPdfDownloadErrorVisible, setIsPdfDownloadErrorVisible] = useState(false);
   const previewRequestIdRef = useRef(0);
-  const { showToast } = useToast();
+  const showToast = useToastStore(state => state.showToast);
 
   const selectedReport = useMemo(
     () => reportItems.find(item => item.chatRoomId === selectedReportId) ?? null,
