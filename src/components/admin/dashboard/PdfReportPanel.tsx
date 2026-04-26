@@ -153,6 +153,10 @@ const PdfChartScrollArea = styled.div<{ $height: number; $isScrollable: boolean 
 const PdfChartInner = styled.div<{ $height: number }>`
   width: 100%;
   height: ${({ $height }) => `${$height}px`};
+
+  .recharts-wrapper *:focus {
+    outline: none;
+  }
 `;
 
 const PdfTable = styled.table`

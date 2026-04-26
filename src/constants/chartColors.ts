@@ -11,4 +11,9 @@ export const chartColors = {
   pdfReport: {
     primary: '#55B5A6',
   },
+  performEvaluation: {
+    precision: '#60CDE4',
+    recall: '#8F86F8',
+    f1Score: '#55B5A6',
+  },
 } as const;

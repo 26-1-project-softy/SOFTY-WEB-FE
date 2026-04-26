@@ -124,6 +124,10 @@ const KpiGrid = styled.div`
 const RiskChartContainer = styled.div`
   width: 100%;
   height: 120px;
+
+  .recharts-wrapper *:focus {
+    outline: none;
+  }
 `;
 
 const LegendLabel = styled.span`
