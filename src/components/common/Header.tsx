@@ -2,6 +2,7 @@ import styled from '@emotion/styled';
 import type { ReactNode } from 'react';
 import { useTheme } from '@emotion/react';
 import { IcBrandLogo } from '@/icons';
+import { HEADER_HEIGHT } from '@/constants/layout';
 
 type HeaderProps = {
   title: string;
@@ -32,9 +33,9 @@ const HeaderContainer = styled.header`
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 74px;
-  padding: 16px 24px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
+  height: ${HEADER_HEIGHT}px;
+  padding: 10px 24px;
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border2};
   background: ${({ theme }) => theme.colors.background.bg1};
 `;
 

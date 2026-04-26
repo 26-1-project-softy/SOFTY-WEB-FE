@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import { NavLink, useNavigate } from 'react-router-dom';
+import { useTheme } from '@emotion/react';
 import { useAuth } from '@/hooks/useAuth';
 import { IconBadge } from '@/components/common/IconBadge';
 import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
@@ -7,8 +8,10 @@ import { NAVIGATION_BY_ROLE } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
 import { useUiStore } from '@/stores/uiStore';
 import { IcBrandLogo, IcDefaultProfile } from '@/icons';
+import { SIDEBAR_WIDTH } from '@/constants/layout';
 
 export const Sidebar = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { role, user } = useAuth();
   const isSidebarOpen = useUiStore(state => state.isSidebarOpen);
@@ -41,7 +44,7 @@ export const Sidebar = () => {
         >
           <IcBrandLogo />
           <BrandLabelSlot isOpen={isSidebarOpen}>
-            <BrandLabel isOpen={isSidebarOpen}>소프티</BrandLabel>
+            <BrandLabel isOpen={isSidebarOpen}>SOFTY</BrandLabel>
           </BrandLabelSlot>
         </SidebarBrandButton>
 
@@ -77,7 +80,13 @@ export const Sidebar = () => {
         })}
       </SidebarNavigation>
       <SidebarProfileSection isOpen={isSidebarOpen}>
-        <IconBadge icon={IcDefaultProfile} bgColor="#F2FDFA" color="#35746E" />
+        <IconBadge
+          icon={IcDefaultProfile}
+          size={36}
+          iconSize={24}
+          bgColor={theme.colors.background.bg4}
+          color={theme.colors.brand.dark}
+        />
         <ProfileSummarySlot isOpen={isSidebarOpen}>
           <ProfileSummary isOpen={isSidebarOpen}>
             <ProfileName>{userName}</ProfileName>
@@ -91,11 +100,15 @@ export const Sidebar = () => {
 };
 
 const SidebarContainer = styled.aside<{ isOpen: boolean }>`
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 100;
   display: flex;
   flex-direction: column;
   flex-shrink: 0;
   overflow: hidden;
-  width: ${({ isOpen }) => (isOpen ? '240px' : '100px')};
+  width: ${({ isOpen }) => (isOpen ? `${SIDEBAR_WIDTH.open}px` : `${SIDEBAR_WIDTH.closed}px`)};
   height: 100vh;
   background: ${({ theme }) => theme.colors.background.bg1};
   border-right: 1px solid ${({ theme }) => theme.colors.border.border2};
@@ -107,8 +120,8 @@ const SidebarHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border2};
-  padding: 16px 12px;
+  height: 62px;
+  padding: 12px 16px;
   gap: 10px;
 `;
 
@@ -240,7 +253,7 @@ const SidebarProfileSection = styled.div<{ isOpen: boolean }>`
   justify-content: ${({ isOpen }) => (isOpen ? 'flex-start' : 'center')};
   overflow: hidden;
   border-top: 1px solid ${({ theme }) => theme.colors.border.border2};
-  padding: 20px 16px;
+  padding: 12px 16px;
   gap: ${({ isOpen }) => (isOpen ? '10px' : 0)};
 `;
 
