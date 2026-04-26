@@ -7,7 +7,7 @@ import {
   PageContainer,
   ProgressFill,
   ProgressTrack,
-} from '@/features/auth/components/teacherSignUp/teacherSignUpPageStyles';
+} from '@/features/auth/components/teacherSignUp/TeacherSignUpPageLayoutStyles';
 import { useTeacherSignUpForm } from '@/features/auth/hooks/useTeacherSignUpForm';
 
 export const TeacherSignUpPage = () => {

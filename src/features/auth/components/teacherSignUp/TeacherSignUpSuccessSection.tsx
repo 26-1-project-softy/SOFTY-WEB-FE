@@ -5,7 +5,7 @@ import {
   SuccessIconContainer,
   SuccessSection,
   SuccessTitle,
-} from '@/features/auth/components/teacherSignUp/teacherSignUpPageStyles';
+} from '@/features/auth/components/teacherSignUp/TeacherSignUpStatusSectionStyles';
 
 type TeacherSignUpSuccessSectionProps = {
   isCreatingClassCode: boolean;
