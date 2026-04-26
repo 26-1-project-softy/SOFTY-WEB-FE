@@ -1,6 +1,19 @@
-﻿import { apiClient } from '@/services/http/apiClient';
+import type { AxiosRequestConfig } from 'axios';
+import { apiClient } from '@/services/http/apiClient';
+import type { AuthRole } from '@/stores/authStore';
 
-type BackendRole = 'teacher' | 'admin' | 'TEACHER' | 'ADMIN' | 'ROLE_TEACHER' | 'ROLE_ADMIN';
+type BackendRole = 'TEACHER' | 'ADMIN';
+
+type AuthRequestConfig = AxiosRequestConfig & {
+  skipUnauthorizedHandling?: boolean;
+};
+
+export class InvalidAuthenticatedUserResponseError extends Error {
+  constructor() {
+    super('유효하지 않은 사용자 인증 응답입니다.');
+    this.name = 'InvalidAuthenticatedUserResponseError';
+  }
+}
 
 export type MeResponse = {
   success: boolean;
@@ -18,26 +31,30 @@ export type MeResponse = {
   class?: number | null;
 };
 
-const normalizeRole = (role: BackendRole): 'teacher' | 'admin' => {
-  const normalized = role
-    .trim()
-    .replace(/^ROLE_/i, '')
-    .toLowerCase();
-
-  if (normalized === 'teacher' || normalized === 'admin') {
-    return normalized;
+const normalizeRole = (role: BackendRole): Exclude<AuthRole, null> => {
+  if (role === 'TEACHER') {
+    return 'teacher';
   }
 
-  throw new Error('유효하지 않은 사용자 역할입니다.');
+  if (role === 'ADMIN') {
+    return 'admin';
+  }
+
+  throw new InvalidAuthenticatedUserResponseError();
 };
 
 export const authApi = {
-  getMe: async () => {
-    const { data } = await apiClient.get<MeResponse>('/users/me');
+  getMe: async (accessToken?: string) => {
+    const requestConfig: AuthRequestConfig = {
+      headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : undefined,
+      skipUnauthorizedHandling: Boolean(accessToken),
+    };
+
+    const { data } = await apiClient.get<MeResponse>('/users/me', requestConfig);
     const profile = data.data ?? data;
 
     if (!profile.role || !profile.name?.trim()) {
-      throw new Error('유효하지 않은 사용자 정보 응답입니다.');
+      throw new InvalidAuthenticatedUserResponseError();
     }
 
     return {

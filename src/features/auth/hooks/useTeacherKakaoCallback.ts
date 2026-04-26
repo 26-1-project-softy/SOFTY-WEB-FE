@@ -1,30 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { authApi, authSession, teacherAuthApi } from '@/services/auth';
+import { authSession } from '@/services/auth';
 import { useToastStore } from '@/stores/toastStore';
 import { ROUTES } from '@/constants/routes';
 import { getKakaoLoginErrorMessage } from '@/features/auth/lib/getKakaoLoginErrorMessage';
-
-const KAKAO_LOGIN_ERROR_MESSAGE = '카카오 로그인에 실패했어요. 잠시 후 다시 시도해 주세요.';
-
-const getKakaoCodeFromQuery = (search: string) => {
-  const searchParams = new URLSearchParams(search);
-
-  return searchParams.get('code') || '';
-};
-
-const getKakaoErrorFromQuery = (search: string) => {
-  const searchParams = new URLSearchParams(search);
-
-  return searchParams.get('error') || '';
-};
-
-const getKakaoErrorDescriptionFromQuery = (search: string) => {
-  const searchParams = new URLSearchParams(search);
-
-  return searchParams.get('error_description') || '';
-};
+import { parseKakaoCallbackQuery } from '@/features/auth/lib/parseKakaoCallbackQuery';
+import { processTeacherKakaoCallback } from '@/features/auth/lib/processTeacherKakaoCallback';
 
 export const useTeacherKakaoCallback = () => {
   const navigate = useNavigate();
@@ -42,13 +24,10 @@ export const useTeacherKakaoCallback = () => {
       isHandledRef.current = true;
 
       try {
-        const kakaoError = getKakaoErrorFromQuery(location.search);
-        const kakaoErrorDescription = getKakaoErrorDescriptionFromQuery(location.search);
+        const { code, error, errorDescription } = parseKakaoCallbackQuery(location.search);
 
-        if (kakaoError) {
-          const toastMessage = getKakaoLoginErrorMessage(
-            new Error(kakaoErrorDescription || kakaoError)
-          );
+        if (error) {
+          const toastMessage = getKakaoLoginErrorMessage(new Error(errorDescription || error));
 
           if (toastMessage) {
             showToast(toastMessage, 'error');
@@ -58,58 +37,42 @@ export const useTeacherKakaoCallback = () => {
           return;
         }
 
-        const code = getKakaoCodeFromQuery(location.search);
         const redirectUri = import.meta.env.VITE_KAKAO_REDIRECT_URI as string | undefined;
 
-        if (!code || !redirectUri) {
-          const toastMessage = getKakaoLoginErrorMessage(new Error(KAKAO_LOGIN_ERROR_MESSAGE));
-
-          if (toastMessage) {
-            showToast(toastMessage, 'error');
-          }
-
-          navigate(ROUTES.root, { replace: true });
-          return;
-        }
-
-        const response = await teacherAuthApi.loginWithKakao({
+        const result = await processTeacherKakaoCallback({
           code,
           redirectUri,
         });
 
-        if (!response.success || !response.data?.accessToken || !response.data?.refreshToken) {
-          const toastMessage = getKakaoLoginErrorMessage(
-            new Error(response.message || KAKAO_LOGIN_ERROR_MESSAGE)
-          );
-
-          if (toastMessage) {
-            showToast(toastMessage, 'error');
-          }
-
+        if (result.status === 'error') {
           authSession.clearSession();
           setSignedOut();
+          showToast(result.message, 'error');
           navigate(ROUTES.root, { replace: true });
           return;
         }
 
-        authSession.setTokens({
-          accessToken: response.data.accessToken,
-          refreshToken: response.data.refreshToken,
-        });
-
-        if (response.data.registrationRequired) {
+        if (result.status === 'signup_required') {
+          authSession.setTokens({
+            accessToken: result.accessToken,
+            refreshToken: result.refreshToken,
+          });
           authSession.setAuthStatus('SIGNUP_REQUIRED');
+
           setSignupRequired();
           navigate(ROUTES.teacherSignUp, { replace: true });
           return;
         }
 
-        const me = await authApi.getMe();
-
+        authSession.setTokens({
+          accessToken: result.accessToken,
+          refreshToken: result.refreshToken,
+        });
         authSession.setAuthStatus('SIGNED_IN');
+
         setSignedIn({
-          role: me.role,
-          user: me.user,
+          role: result.role,
+          user: result.user,
         });
 
         navigate(ROUTES.teacherThreadList, { replace: true });

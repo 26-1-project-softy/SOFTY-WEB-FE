@@ -106,6 +106,13 @@ export const router = createBrowserRouter([
             element: <AdminDashboardPage />,
             handle: {
               title: '대시보드',
+              tabs: {
+                items: [
+                  { id: 'recommendation', label: 'AI 추천 문장 채택률' },
+                  { id: 'risk', label: 'AI 리스크 탐지 현황' },
+                  { id: 'pdf', label: 'PDF 리포트 현황' },
+                ],
+              },
             },
           },
           {

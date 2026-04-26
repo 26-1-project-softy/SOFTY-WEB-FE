@@ -53,9 +53,8 @@ const ToastStack = styled.div`
 `;
 
 const ToastCard = styled.button<{ toastType: ToastItem['type'] }>`
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  min-width: 220px;
   max-width: 360px;
   border-radius: 10px;
   border: 1px solid
@@ -96,7 +95,9 @@ const ToastStatusIcon = styled.span<{ toastType: ToastItem['type'] }>`
 `;
 
 const ToastMessage = styled.span`
+  flex: 1;
+  text-align: left;
   ${({ theme }) => theme.fonts.body3};
   color: ${({ theme }) => theme.colors.text.text1};
-  white-space: nowrap;
+  word-break: break-word;
 `;

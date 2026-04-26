@@ -8,6 +8,8 @@ const globalStyles = css`
     -moz-osx-font-smoothing: grayscale;
     scrollbar-width: thin;
     scrollbar-color: #b2b2b2 transparent;
+    overflow-x: hidden;
+    overflow-y: auto;
   }
 
   html::-webkit-scrollbar,

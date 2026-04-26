@@ -1,16 +1,11 @@
 ﻿import { Navigate, Outlet, useLocation } from 'react-router-dom';
-import { Loader } from '@/components/common/Loader';
 import { useAuth } from '@/hooks/useAuth';
 import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
 import { ROUTES } from '@/constants/routes';
 
 export const PublicRoute = () => {
-  const { authStatus, isAuthInitialized, role } = useAuth();
+  const { authStatus, role } = useAuth();
   const location = useLocation();
-
-  if (!isAuthInitialized) {
-    return <Loader />;
-  }
 
   if (authStatus === 'SIGNUP_REQUIRED') {
     if (location.pathname === ROUTES.teacherSignUp) {

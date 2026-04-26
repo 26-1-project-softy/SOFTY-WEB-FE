@@ -1,26 +1,18 @@
+import { useShallow } from 'zustand/react/shallow';
 import { useAuthStore } from '@/stores/authStore';
 
 export const useAuth = () => {
-  const authStatus = useAuthStore(state => state.authStatus);
-  const role = useAuthStore(state => state.role);
-  const user = useAuthStore(state => state.user);
-  const isAuthInitialized = useAuthStore(state => state.isAuthInitialized);
-  const setSignedOut = useAuthStore(state => state.setSignedOut);
-  const setSignupRequired = useAuthStore(state => state.setSignupRequired);
-  const setOnboardingRequired = useAuthStore(state => state.setOnboardingRequired);
-  const setSignedIn = useAuthStore(state => state.setSignedIn);
-  const setAuthInitialized = useAuthStore(state => state.setAuthInitialized);
-
-  return {
-    authStatus,
-    role,
-    user,
-    isAuthInitialized,
-    setSignedOut,
-    setSignupRequired,
-    setOnboardingRequired,
-    setSignedIn,
-    setAuthInitialized,
-    isAuthenticated: authStatus !== 'SIGNED_OUT',
-  };
+  return useAuthStore(
+    useShallow(state => ({
+      authStatus: state.authStatus,
+      role: state.role,
+      user: state.user,
+      isAuthInitialized: state.isAuthInitialized,
+      setSignedOut: state.setSignedOut,
+      setSignupRequired: state.setSignupRequired,
+      setSignedIn: state.setSignedIn,
+      setAuthInitialized: state.setAuthInitialized,
+      isAuthenticated: state.authStatus !== 'SIGNED_OUT',
+    }))
+  );
 };
