@@ -2,18 +2,20 @@ import styled from '@emotion/styled';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '@emotion/react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLogout } from '@/hooks/useLogout';
 import { IconBadge } from '@/components/common/IconBadge';
 import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
 import { NAVIGATION_BY_ROLE } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
 import { useUiStore } from '@/stores/uiStore';
-import { IcBrandLogo, IcDefaultProfile } from '@/icons';
+import { IcBrandLogo, IcDefaultProfile, IcLogout } from '@/icons';
 import { SIDEBAR_WIDTH } from '@/constants/layout';
 
 export const Sidebar = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { role, user } = useAuth();
+  const { logout } = useLogout();
   const isSidebarOpen = useUiStore(state => state.isSidebarOpen);
   const toggleSidebar = useUiStore(state => state.toggleSidebar);
   const items = role ? NAVIGATION_BY_ROLE[role] : [];
@@ -31,6 +33,10 @@ export const Sidebar = () => {
     }
 
     navigate(getDefaultRouteByRole(role), { replace: true });
+  };
+
+  const handleClickLogout = () => {
+    logout();
   };
 
   return (
@@ -93,7 +99,17 @@ export const Sidebar = () => {
             {userMeta && <ProfileMeta>{userMeta}</ProfileMeta>}
           </ProfileSummary>
         </ProfileSummarySlot>
-        {/* TODO: 로그아웃 버튼 */}
+        <LogoutButtonSlot isOpen={isSidebarOpen}>
+          <LogoutButton
+            type="button"
+            onClick={handleClickLogout}
+            isOpen={isSidebarOpen}
+            aria-label="로그아웃"
+            title="로그아웃"
+          >
+            <IcLogout />
+          </LogoutButton>
+        </LogoutButtonSlot>
       </SidebarProfileSection>
     </SidebarContainer>
   );
@@ -293,4 +309,44 @@ const ProfileMeta = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`;
+
+const LogoutButtonSlot = styled.div<{ isOpen: boolean }>`
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+  overflow: hidden;
+  max-width: ${({ isOpen }) => (isOpen ? '36px' : '0')};
+  transition: max-width 0.28s ease;
+  transition-delay: ${({ isOpen }) => (isOpen ? '0ms' : '90ms')};
+`;
+
+const LogoutButton = styled.button<{ isOpen: boolean }>`
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  color: ${({ theme }) => theme.colors.text.text4};
+  opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
+  transform: ${({ isOpen }) => (isOpen ? 'translateX(0)' : 'translateX(-4px)')};
+  transition:
+    opacity 0.16s ease,
+    transform 0.16s ease,
+    color 0.2s ease,
+    background-color 0.2s ease;
+  transition-delay: ${({ isOpen }) => (isOpen ? '120ms' : '0ms')};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.bg3};
+    color: ${({ theme }) => theme.colors.text.text1};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.brand.primary};
+    outline-offset: 2px;
+  }
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
 `;
