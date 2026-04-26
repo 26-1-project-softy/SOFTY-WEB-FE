@@ -114,41 +114,6 @@ const ensureResponseData = <T>(payload: T | null | undefined, context: string): 
   return payload;
 };
 
-export type ReportChatPreviewMessageResponse = {
-  messageId?: number;
-  isMine?: boolean;
-  content?: string | null;
-  createdAt?: string | null;
-};
-
-export type ReportChatPreviewResponse = {
-  success: boolean;
-  code: number;
-  message: string;
-  data?: {
-    chatRoomId?: number;
-    messages?: ReportChatPreviewMessageResponse[] | null;
-    nextCursor?: string | number | null;
-    hasNext?: boolean;
-  } | null;
-};
-
-export type ReportChatPreviewMessage = {
-  messageId: number;
-  isMine: boolean;
-  content: string;
-  createdAt: string;
-};
-
-export type ReportChatPreviewResult = {
-  success: boolean;
-  message: string;
-  chatRoomId: number | null;
-  messages: ReportChatPreviewMessage[];
-  nextCursor: string;
-  hasNext: boolean;
-};
-
 export const reportsApi = {
   getReportChatRooms: async (params?: { page?: number; size?: number }) => {
     const { data } = await apiClient.get<ReportChatRoomsResponse>('/reports/chat-rooms', {
@@ -220,41 +185,6 @@ export const reportsApi = {
       messages: payload.messages,
       nextCursor: payload.nextCursor,
       hasNext: payload.hasNext,
-    } satisfies ReportChatPreviewResult;
-  },
-  getReportChatRoomPreview: async (
-    chatRoomId: number,
-    params?: {
-      cursor?: string;
-      size?: number;
-    }
-  ) => {
-    const { data } = await apiClient.get<ReportChatPreviewResponse>(
-      `/reports/chat-rooms/${chatRoomId}/preview`,
-      {
-        params: {
-          cursor: params?.cursor ?? '',
-          size: params?.size ?? 30,
-        },
-      }
-    );
-    const payload = data.data;
-    const messages = payload?.messages;
-
-    return {
-      success: data.success,
-      message: data.message,
-      chatRoomId: payload?.chatRoomId ?? null,
-      messages: Array.isArray(messages)
-        ? messages.map(message => ({
-            messageId: message.messageId ?? 0,
-            isMine: message.isMine ?? false,
-            content: message.content ?? '',
-            createdAt: message.createdAt ?? '',
-          }))
-        : [],
-      nextCursor: payload?.nextCursor == null ? '' : String(payload.nextCursor),
-      hasNext: payload?.hasNext ?? false,
     } satisfies ReportChatPreviewResult;
   },
 };
