@@ -1,6 +1,7 @@
 import styled from '@emotion/styled';
 import type { ReactNode } from 'react';
 import { useTheme } from '@emotion/react';
+import { HEADER_HEIGHT } from '@/constants/layout';
 import { IcBrandLogo } from '@/icons';
 
 type HeaderProps = {
@@ -32,7 +33,7 @@ const HeaderContainer = styled.header`
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  height: 74px;
+  height: ${HEADER_HEIGHT}px;
   padding: 16px 24px;
   border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
   background: ${({ theme }) => theme.colors.background.bg1};
