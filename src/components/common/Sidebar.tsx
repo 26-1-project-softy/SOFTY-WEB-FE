@@ -2,36 +2,33 @@ import styled from '@emotion/styled';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useTheme } from '@emotion/react';
 import { useAuth } from '@/hooks/useAuth';
+import { useLogout } from '@/hooks/useLogout';
 import { IconBadge } from '@/components/common/IconBadge';
+import { IconButton } from '@/components/common/IconButton';
 import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
 import { NAVIGATION_BY_ROLE } from '@/constants/navigation';
-import { ROUTES } from '@/constants/routes';
 import { useUiStore } from '@/stores/uiStore';
-import { IcBrandLogo, IcDefaultProfile } from '@/icons';
+import { IcBrandLogo, IcDefaultProfile, IcLogout } from '@/icons';
 import { SIDEBAR_WIDTH } from '@/constants/layout';
 
 export const Sidebar = () => {
   const theme = useTheme();
   const navigate = useNavigate();
   const { role, user } = useAuth();
+  const { logout } = useLogout();
   const isSidebarOpen = useUiStore(state => state.isSidebarOpen);
   const toggleSidebar = useUiStore(state => state.toggleSidebar);
-  const items = role ? NAVIGATION_BY_ROLE[role] : [];
+  const items = NAVIGATION_BY_ROLE[role ?? 'teacher'];
 
   const userName = user?.name ?? '사용자';
   const userMeta =
-    role === 'teacher' && user?.grade && user?.classNumber
-      ? `${user.grade}학년 ${user.classNumber}반`
-      : '';
+    user?.grade && user?.classNumber ? `${user.grade}학년 ${user.classNumber}반` : '';
 
   const handleClickBrand = () => {
-    if (!role) {
-      navigate(ROUTES.root, { replace: true });
-      return;
-    }
-
     navigate(getDefaultRouteByRole(role), { replace: true });
   };
+
+  const handleLogout = () => logout();
 
   return (
     <SidebarContainer isOpen={isSidebarOpen}>
@@ -93,7 +90,14 @@ export const Sidebar = () => {
             {userMeta && <ProfileMeta>{userMeta}</ProfileMeta>}
           </ProfileSummary>
         </ProfileSummarySlot>
-        {/* TODO: 로그아웃 버튼 */}
+        {isSidebarOpen ? (
+          <LogoutButton
+            icon={IcLogout}
+            variant="plain"
+            accessibilityLabel="로그아웃"
+            onClick={handleLogout}
+          />
+        ) : null}
       </SidebarProfileSection>
     </SidebarContainer>
   );
@@ -293,4 +297,23 @@ const ProfileMeta = styled.span`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+`;
+
+const LogoutButton = styled(IconButton)`
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  margin-left: auto;
+  border-radius: 8px;
+  color: ${({ theme }) => theme.colors.text.text4};
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.background.bg3};
+    color: ${({ theme }) => theme.colors.text.text1};
+  }
+
+  &:focus-visible {
+    outline: 2px solid ${({ theme }) => theme.colors.brand.primary};
+    outline-offset: 2px;
+  }
 `;

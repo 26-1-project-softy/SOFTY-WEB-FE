@@ -6,6 +6,7 @@ import { InlineButton } from '@/components/common/InlineButton';
 import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
 import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
 import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
+import { useLogout } from '@/hooks/useLogout';
 import { useToast } from '@/hooks/useToast';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
@@ -107,6 +108,7 @@ const extractClassNumber = (raw: string) => {
 
 export const TeacherSettingsPage = () => {
   const { showToast } = useToast();
+  const { logout } = useLogout();
   const { setHeaderActions } = useOutletContext<AppLayoutOutletContext>();
   const [setting, setSetting] = useState<TeacherSetting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -125,6 +127,7 @@ export const TeacherSettingsPage = () => {
   const [initialWorkdays, setInitialWorkdays] = useState<Workday[]>([]);
   const [workdays, setWorkdays] = useState<Workday[]>([]);
   const [isSavingWorkHours, setIsSavingWorkHours] = useState(false);
+  const handleLogout = () => logout();
 
   useEffect(() => {
     let isMounted = true;
@@ -570,7 +573,9 @@ export const TeacherSettingsPage = () => {
         <CardSection>
           <SectionTitle>계정 관리</SectionTitle>
           <AccountLinkList>
-            <AccountLinkButton type="button">로그아웃</AccountLinkButton>
+            <AccountLinkButton type="button" onClick={handleLogout}>
+              로그아웃
+            </AccountLinkButton>
             <DangerLinkButton type="button">회원 탈퇴</DangerLinkButton>
           </AccountLinkList>
         </CardSection>
