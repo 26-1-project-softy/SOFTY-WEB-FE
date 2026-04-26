@@ -799,7 +799,7 @@ const AvatarCircle = styled.span`
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  background: #d6f3ee;
+  background: ${({ theme }) => theme.colors.teacherSettings.avatarBackground};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: inline-flex;
   align-items: center;
@@ -822,7 +822,7 @@ const WorkdayList = styled.div`
 const WorkdayRow = styled.div`
   border-radius: 14px;
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  background: #f7f8f8;
+  background: ${({ theme }) => theme.colors.teacherSettings.workdayRowBackground};
   padding: 12px 14px;
   display: flex;
   align-items: center;
@@ -840,7 +840,8 @@ const ToggleButton = styled.button<{ isEnabled: boolean }>`
   border: none;
   border-radius: 999px;
   padding: 3px;
-  background: ${({ isEnabled, theme }) => (isEnabled ? theme.colors.brand.primary : '#e5e7e9')};
+  background: ${({ isEnabled, theme }) =>
+    isEnabled ? theme.colors.brand.primary : theme.colors.teacherSettings.toggleOffBackground};
   display: flex;
   align-items: center;
   justify-content: ${({ isEnabled }) => (isEnabled ? 'flex-end' : 'flex-start')};
@@ -851,8 +852,11 @@ const ToggleThumb = styled.span<{ isEnabled: boolean }>`
   width: 20px;
   height: 20px;
   border-radius: 999px;
-  background: ${({ isEnabled }) => (isEnabled ? '#ffffff' : '#f3f4f5')};
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.18);
+  background: ${({ isEnabled, theme }) =>
+    isEnabled
+      ? theme.colors.background.bg1
+      : theme.colors.teacherSettings.toggleThumbOffBackground};
+  box-shadow: ${({ theme }) => theme.colors.shadow.toggleThumb};
 `;
 
 const DayLabel = styled.span`
@@ -887,7 +891,7 @@ const TimeInput = styled.input`
   }
 
   &:disabled {
-    background: #f4f5f6;
+    background: ${({ theme }) => theme.colors.teacherSettings.inputDisabledBackground};
     color: ${({ theme }) => theme.colors.text.text4};
     cursor: not-allowed;
   }
@@ -959,8 +963,8 @@ const ClassCodeActions = styled.div`
 const ClassCodeBadge = styled.span`
   ${({ theme }) => theme.fonts.labelS};
   border-radius: 12px;
-  border: 1px solid #cceee8;
-  background: #e7f8f5;
+  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.classCodeBadgeBorder};
+  background: ${({ theme }) => theme.colors.teacherSettings.classCodeBadgeBackground};
   color: ${({ theme }) => theme.colors.text.text1};
   padding: 10px 18px;
 `;
@@ -1009,7 +1013,7 @@ const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: rgba(0, 0, 0, 0.45);
+  background: ${({ theme }) => theme.colors.overlay.dim2};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1021,7 +1025,7 @@ const ModalCard = styled.section`
   max-width: 420px;
   border-radius: 16px;
   background: ${({ theme }) => theme.colors.background.bg1};
-  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.25);
+  box-shadow: ${({ theme }) => theme.colors.shadow.modalLarge};
   padding: 28px 28px 24px;
 `;
 
@@ -1029,7 +1033,7 @@ const ModalIconWrap = styled.div`
   width: 58px;
   height: 58px;
   border-radius: 999px;
-  background: #e7f8f5;
+  background: ${({ theme }) => theme.colors.teacherSettings.modalIconBackground};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: flex;
   align-items: center;
@@ -1043,12 +1047,12 @@ const ModalIconWrap = styled.div`
 `;
 
 const ConfirmIconWrap = styled(ModalIconWrap)`
-  background: #fdf7e8;
-  color: #e59b2d;
+  background: ${({ theme }) => theme.colors.teacherSettings.confirmIconBackground};
+  color: ${({ theme }) => theme.colors.teacherSettings.confirmIconColor};
 `;
 
 const SuccessIconWrap = styled(ModalIconWrap)`
-  background: #e7f8f5;
+  background: ${({ theme }) => theme.colors.teacherSettings.modalIconBackground};
   color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
@@ -1128,8 +1132,8 @@ const FormSelect = styled.select`
 const ConfirmSummaryBox = styled.div`
   margin-top: 18px;
   border-radius: 12px;
-  border: 1px solid #d2ebe6;
-  background: #eaf6f3;
+  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBorder};
+  background: ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBackground};
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -1156,8 +1160,8 @@ const ConfirmSummaryValue = styled.span`
 const ConfirmErrorBox = styled.div`
   margin-top: 14px;
   border-radius: 12px;
-  border: 1px solid #ff8e96;
-  background: #fff2f3;
+  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmErrorBorder};
+  background: ${({ theme }) => theme.colors.teacherSettings.confirmErrorBackground};
   padding: 10px 12px;
   display: flex;
   align-items: center;
@@ -1195,8 +1199,8 @@ const ConfirmErrorDescription = styled.p`
 const SuccessCodeCard = styled.div`
   margin-top: 16px;
   border-radius: 14px;
-  border: 1px solid #d2ebe6;
-  background: #eaf6f3;
+  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBorder};
+  background: ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBackground};
   padding: 14px;
   text-align: center;
 `;
@@ -1274,8 +1278,8 @@ const ModalPrimaryButton = styled.button`
   padding: 11px 12px;
 
   &:disabled {
-    background: #dbdee2;
-    color: #8f949d;
+    background: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledBackground};
+    color: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledText};
     cursor: not-allowed;
   }
 `;

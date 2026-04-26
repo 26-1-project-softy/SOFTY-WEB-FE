@@ -22,6 +22,7 @@ export const colors = {
     bg4: '#F2FDFA',
     bg5: '#E6E6E6',
     bg6: '#808080',
+    heroGradient: 'linear-gradient(180deg, #FFFFFF 0%, #E7F5F2 55%, #7CCFC2 100%)',
     brandHover: '#32A6A1',
   },
   border: {
@@ -39,6 +40,35 @@ export const colors = {
     warningSoft: '#FEFBEC',
     error: '#FF2C3D',
     errorSoft: '#FAE3E2',
+  },
+  overlay: {
+    dim1: 'rgba(0, 0, 0, 0.42)',
+    dim2: 'rgba(0, 0, 0, 0.45)',
+  },
+  shadow: {
+    modal: '0 12px 22px rgba(0, 0, 0, 0.25)',
+    modalLarge: '0 18px 40px rgba(0, 0, 0, 0.25)',
+    toggleThumb: '0 1px 2px rgba(0, 0, 0, 0.18)',
+    dialog: '0 20px 48px rgba(0, 0, 0, 0.18)',
+    toast: '0 8px 20px rgba(0, 0, 0, 0.08)',
+    toastHover: '0 10px 22px rgba(0, 0, 0, 0.15)',
+  },
+  reports: {
+    toastErrorBorder: '#FF7F89',
+    toastErrorBackground: '#FFF4F5',
+    previewBackground: '#DBE7E3',
+    senderAvatarBackground: '#B8EADD',
+    modalErrorBorder: '#FF6B77',
+    modalErrorBackground: '#FFF5F6',
+    modalErrorText: '#EB4955',
+  },
+  chart: {
+    recommendationUsedAsIs: '#55B5A6',
+    recommendationModified: '#8F86F8',
+    recommendationNotUsed: '#808080',
+    riskLow: '#55B5A6',
+    riskHigh: '#FF6B6B',
+    pdfPrimary: '#55B5A6',
   },
   intent: {
     absenceLate: {
@@ -88,6 +118,24 @@ export const colors = {
     neutral100: '#F2F2F2',
     neutral50: '#F7F7F7',
     neutral0: '#FFFFFF',
+  },
+  teacherSettings: {
+    avatarBackground: '#D6F3EE',
+    workdayRowBackground: '#F7F8F8',
+    toggleOffBackground: '#E5E7E9',
+    toggleThumbOffBackground: '#F3F4F5',
+    inputDisabledBackground: '#F4F5F6',
+    classCodeBadgeBorder: '#CCEEE8',
+    classCodeBadgeBackground: '#E7F8F5',
+    modalIconBackground: '#E7F8F5',
+    confirmIconBackground: '#FDF7E8',
+    confirmIconColor: '#E59B2D',
+    confirmSummaryBorder: '#D2EBE6',
+    confirmSummaryBackground: '#EAF6F3',
+    confirmErrorBorder: '#FF8E96',
+    confirmErrorBackground: '#FFF2F3',
+    primaryDisabledBackground: '#DBDEE2',
+    primaryDisabledText: '#8F949D',
   },
 } as const;
 
