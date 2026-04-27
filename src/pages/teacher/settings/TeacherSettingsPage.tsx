@@ -135,15 +135,6 @@ export const TeacherSettingsPage = () => {
   const [initialWorkdays, setInitialWorkdays] = useState<Workday[]>([]);
   const [workdays, setWorkdays] = useState<Workday[]>([]);
   const [isSavingWorkHours, setIsSavingWorkHours] = useState(false);
-  const {
-    isWithdrawModalOpen,
-    isWithdrawing,
-    withdrawErrorMessage,
-    handleOpenWithdrawModal,
-    handleCloseWithdrawModal,
-    handleConfirmWithdraw,
-    handleLogout,
-  } = useTeacherWithdraw();
 
   useEffect(() => {
     let isMounted = true;

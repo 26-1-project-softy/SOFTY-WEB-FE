@@ -19,17 +19,20 @@ export type GlobalError = {
 
 export type SignUpStep = 'FORM' | 'SIGN_UP_SUCCESS' | 'CLASS_CODE_READY';
 
-const FORM_ERROR_FALLBACK: GlobalError = {
+const FORM_ERROR_FALLBACK: NonNullable<GlobalError> = {
   title: '회원가입 중 문제가 발생했어요',
   description: '잠시 후 다시 시도해 주세요.',
 };
 
-const EXPIRED_AUTH_ERROR: GlobalError = {
+const EXPIRED_AUTH_ERROR: NonNullable<GlobalError> = {
   title: '인증 정보가 만료되었어요',
   description: '카카오 로그인을 다시 진행해 주세요.',
 };
 
-const DEFAULT_CLASS_CODE = 'X7K-9P2';
+const CLASS_CODE_ERROR_FALLBACK: NonNullable<GlobalError> = {
+  title: '학급 코드 생성에 실패했어요',
+  description: '잠시 후 다시 시도해 주세요.',
+};
 
 type FormSubmitHandler = NonNullable<ComponentProps<'form'>['onSubmit']>;
 
@@ -46,10 +49,19 @@ const normalizeRole = (role: string): 'teacher' | 'admin' | null => {
   return null;
 };
 
+const toGlobalError = (errorMessage: {
+  title: string;
+  description?: string;
+}): NonNullable<GlobalError> => {
+  return {
+    title: errorMessage.title,
+    description: errorMessage.description ?? '잠시 후 다시 시도해 주세요.',
+  };
+};
+
 export const useTeacherSignUpForm = () => {
   const navigate = useNavigate();
-  const { authStatus, setSignupRequired, setOnboardingRequired, setSignedIn, setSignedOut } =
-    useAuth();
+  const { authStatus, setSignupRequired, setSignedIn, setSignedOut } = useAuth();
   const showToast = useToastStore(state => state.showToast);
 
   const [teacherName, setTeacherName] = useState('');
@@ -61,7 +73,7 @@ export const useTeacherSignUpForm = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingClassCode, setIsCreatingClassCode] = useState(false);
   const [step, setStep] = useState<SignUpStep>('FORM');
-  const [generatedClassCode, setGeneratedClassCode] = useState(DEFAULT_CLASS_CODE);
+  const [generatedClassCode, setGeneratedClassCode] = useState('');
   const [touchedFields, setTouchedFields] = useState<TouchedFields>({
     teacherName: false,
     schoolName: false,
@@ -70,52 +82,10 @@ export const useTeacherSignUpForm = () => {
   });
 
   useEffect(() => {
-    if (authStatus !== 'ONBOARDING_REQUIRED' || step !== 'FORM') {
-      return;
-    }
-
-    let isMounted = true;
-
-    const syncOnboardingState = async () => {
-      try {
-        const me = await authApi.getMe();
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (me.role === 'teacher') {
-          setGlobalError(null);
-          setStep('SIGN_UP_SUCCESS');
-          return;
-        }
-      } catch {
-        // When role is not yet teacher, fall back to signup step.
-      }
-
-      if (!isMounted) {
-        return;
-      }
-
-      authSession.setAuthStatus('SIGNUP_REQUIRED');
-      setSignupRequired();
-      setStep('FORM');
-      setGlobalError(null);
-    };
-
-    void syncOnboardingState();
-
-    return () => {
-      isMounted = false;
-    };
-  }, [authStatus, setSignupRequired, step]);
-
-  useEffect(() => {
     if (step === 'FORM') {
       return;
     }
 
-    // Prevent navigating back to the teacher info form after completion.
     window.history.pushState({ signUpFlowCompleted: true }, '', window.location.href);
 
     const handlePopState = () => {
@@ -144,8 +114,9 @@ export const useTeacherSignUpForm = () => {
     authStatus === 'SIGNUP_REQUIRED' &&
     step === 'FORM';
 
-  const shouldShowError = (field: keyof TeacherSignUpFieldErrors) =>
-    isSubmitAttempted || touchedFields[field];
+  const shouldShowError = (field: keyof TeacherSignUpFieldErrors) => {
+    return isSubmitAttempted || touchedFields[field];
+  };
 
   const fieldErrors: TeacherSignUpFieldErrors = {
     teacherName: shouldShowError('teacherName') ? validationResult.errors.teacherName : undefined,
@@ -195,6 +166,7 @@ export const useTeacherSignUpForm = () => {
 
     try {
       setIsSubmitting(true);
+
       const kakaoAccessToken = authSession.getAccessToken();
 
       if (!kakaoAccessToken) {
@@ -225,23 +197,13 @@ export const useTeacherSignUpForm = () => {
         return;
       }
 
-      authSession.setAuthStatus('ONBOARDING_REQUIRED');
-      setOnboardingRequired({
-        role: normalizedRole,
-        user: {
-          name: teacherName.trim(),
-          grade: validationResult.parsedGrade,
-          classNumber: validationResult.parsedClassNumber,
-        },
-      });
-
       setStep('SIGN_UP_SUCCESS');
     } catch (error) {
-      const message = getAuthErrorMessage(error, FORM_ERROR_FALLBACK.title);
+      const errorMessage = getAuthErrorMessage(error, FORM_ERROR_FALLBACK);
 
       if (
-        message === '인증 정보가 유효하지 않아 다시 시도해 주세요.' ||
-        message === '접근 권한이 없어요'
+        errorMessage.title === '인증 정보가 유효하지 않아 다시 시도해 주세요.' ||
+        errorMessage.title === '접근 권한이 없어요'
       ) {
         authSession.clearSession();
         setSignedOut();
@@ -249,35 +211,31 @@ export const useTeacherSignUpForm = () => {
         return;
       }
 
-      setGlobalError({
-        title: message || FORM_ERROR_FALLBACK.title,
-        description: FORM_ERROR_FALLBACK.description,
-      });
+      setGlobalError(toGlobalError(errorMessage));
     } finally {
       setIsSubmitting(false);
     }
   };
 
   const handleOpenClassCodeModal = async () => {
+    setGlobalError(null);
+
     try {
       setIsCreatingClassCode(true);
 
       const response = await teacherAuthApi.createClassCode();
 
       if (!response.success || !response.data?.classCode?.trim()) {
-        showToast(response.message || '학급 코드 생성에 실패했어요. 다시 시도해 주세요.', 'error');
+        showToast(response.message || CLASS_CODE_ERROR_FALLBACK.title, 'error');
         return;
       }
 
       setGeneratedClassCode(response.data.classCode.trim());
       setStep('CLASS_CODE_READY');
     } catch (error) {
-      const message = getAuthErrorMessage(
-        error,
-        '학급 코드 생성에 실패했어요. 다시 시도해 주세요.'
-      );
+      const errorMessage = getAuthErrorMessage(error, CLASS_CODE_ERROR_FALLBACK);
 
-      if (message === '접근 권한이 없어요') {
+      if (errorMessage.title === '접근 권한이 없어요') {
         authSession.setAuthStatus('SIGNUP_REQUIRED');
         setSignupRequired();
         setStep('FORM');
@@ -289,13 +247,17 @@ export const useTeacherSignUpForm = () => {
         return;
       }
 
-      showToast(message, 'error');
+      showToast(errorMessage.title, 'error');
     } finally {
       setIsCreatingClassCode(false);
     }
   };
 
   const handleCopyClassCode = async () => {
+    if (!generatedClassCode) {
+      return;
+    }
+
     try {
       await navigator.clipboard.writeText(generatedClassCode);
       showToast('학급 코드가 복사되었어요.', 'success');
