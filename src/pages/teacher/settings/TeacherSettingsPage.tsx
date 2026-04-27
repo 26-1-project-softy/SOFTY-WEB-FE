@@ -7,6 +7,7 @@ import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
 import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
 import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
 import { useToast } from '@/hooks/useToast';
+import { useTeacherWithdraw } from '@/features/teacher/settings/hooks/useTeacherWithdraw';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
@@ -107,6 +108,15 @@ const extractClassNumber = (raw: string) => {
 
 export const TeacherSettingsPage = () => {
   const { showToast } = useToast();
+  const {
+    isWithdrawModalOpen,
+    isWithdrawing,
+    withdrawErrorMessage,
+    handleOpenWithdrawModal,
+    handleCloseWithdrawModal,
+    handleConfirmWithdraw,
+    handleLogout,
+  } = useTeacherWithdraw();
   const { setHeaderActions } = useOutletContext<AppLayoutOutletContext>();
   const [setting, setSetting] = useState<TeacherSetting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -589,8 +599,12 @@ export const TeacherSettingsPage = () => {
         <CardSection>
           <SectionTitle>계정 관리</SectionTitle>
           <AccountLinkList>
-            <AccountLinkButton type="button">로그아웃</AccountLinkButton>
-            <DangerLinkButton type="button">회원 탈퇴</DangerLinkButton>
+            <AccountLinkButton type="button" onClick={handleLogout}>
+              로그아웃
+            </AccountLinkButton>
+            <DangerLinkButton type="button" onClick={handleOpenWithdrawModal}>
+              회원 탈퇴
+            </DangerLinkButton>
           </AccountLinkList>
         </CardSection>
       </ContentArea>
@@ -754,6 +768,40 @@ export const TeacherSettingsPage = () => {
             <SuccessConfirmButton type="button" onClick={handleCloseClassChangeSuccessModal}>
               확인
             </SuccessConfirmButton>
+          </ModalCard>
+        </ModalOverlay>
+      ) : null}
+
+      {isWithdrawModalOpen ? (
+        <ModalOverlay onClick={handleCloseWithdrawModal}>
+          <ModalCard onClick={event => event.stopPropagation()}>
+            <WithdrawIconWrap>
+              <IcError />
+            </WithdrawIconWrap>
+
+            <ModalTitle>정말 탈퇴하시겠어요?</ModalTitle>
+            <ModalDescription>
+              탈퇴하면 학급 정보와 대화 내역이 모두 삭제되고, 다시 복구할 수 없어요.
+            </ModalDescription>
+
+            {withdrawErrorMessage ? (
+              <WithdrawErrorText role="alert">{withdrawErrorMessage}</WithdrawErrorText>
+            ) : null}
+
+            <ModalButtonRow>
+              <ModalGhostButton type="button" onClick={handleCloseWithdrawModal}>
+                취소
+              </ModalGhostButton>
+              <WithdrawConfirmButton
+                type="button"
+                onClick={() => {
+                  void handleConfirmWithdraw();
+                }}
+                disabled={isWithdrawing}
+              >
+                {isWithdrawing ? '탈퇴 중...' : '탈퇴하기'}
+              </WithdrawConfirmButton>
+            </ModalButtonRow>
           </ModalCard>
         </ModalOverlay>
       ) : null}
@@ -1072,6 +1120,11 @@ const SuccessIconWrap = styled(ModalIconWrap)`
   color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
+const WithdrawIconWrap = styled(ModalIconWrap)`
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
+  color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
 const ModalTitle = styled.h4`
   ${({ theme }) => theme.fonts.labelM};
   margin: 16px 0 0;
@@ -1298,4 +1351,22 @@ const ModalPrimaryButton = styled.button`
     color: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledText};
     cursor: not-allowed;
   }
+`;
+
+const WithdrawConfirmButton = styled(ModalPrimaryButton)`
+  background: ${({ theme }) => theme.colors.semantic.error};
+
+  &:disabled {
+    background: ${({ theme }) => theme.colors.semantic.error};
+    color: ${({ theme }) => theme.colors.text.textW};
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const WithdrawErrorText = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 12px 0 0;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.semantic.error};
 `;
