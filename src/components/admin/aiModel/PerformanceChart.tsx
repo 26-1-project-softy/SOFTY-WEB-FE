@@ -29,8 +29,8 @@ export const PerformanceChart = ({ data }: Props) => {
         <BarChart data={data} margin={{ top: 16, right: 20, left: 20, bottom: 16 }}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-          <YAxis domain={[0, 1]} width={32} tick={{ fontSize: 12 }} />
-          <Tooltip formatter={(value: ValueType | undefined) => `${Number(value).toFixed(2)}`} />
+          <YAxis domain={[0, 100]} width={32} tick={{ fontSize: 12 }} />
+          <Tooltip formatter={(value: ValueType | undefined) => `${Number(value).toFixed(2)}%`} />
           <Bar
             dataKey="value"
             barSize={48}
