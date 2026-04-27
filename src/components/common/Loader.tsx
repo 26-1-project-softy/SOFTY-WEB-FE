@@ -1,7 +1,6 @@
 import styled from '@emotion/styled';
 
 export const Loader = () => {
-  // TODO: 추후 스타일 수정
   return <Wrapper>Loading...</Wrapper>;
 };
 

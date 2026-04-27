@@ -15,33 +15,24 @@ export const useAdminDashboard = () => {
   const recommendationQuery = useQuery({
     queryKey: DASHBOARD_QUERY_KEYS.recommendation,
     queryFn: dashboardApi.getRecommendationStatistics,
-    enabled: activeTab === 'recommendation',
     staleTime: 1000 * 60 * 5,
   });
 
   const riskQuery = useQuery({
     queryKey: DASHBOARD_QUERY_KEYS.risk,
     queryFn: dashboardApi.getRiskStatistics,
-    enabled: activeTab === 'risk',
     staleTime: 1000 * 60 * 5,
   });
 
   const pdfQuery = useQuery({
     queryKey: DASHBOARD_QUERY_KEYS.pdf,
     queryFn: dashboardApi.getPdfStatistics,
-    enabled: activeTab === 'pdf',
     staleTime: 1000 * 60 * 5,
   });
 
   const currentQuery = useMemo(() => {
-    if (activeTab === 'recommendation') {
-      return recommendationQuery;
-    }
-
-    if (activeTab === 'risk') {
-      return riskQuery;
-    }
-
+    if (activeTab === 'recommendation') return recommendationQuery;
+    if (activeTab === 'risk') return riskQuery;
     return pdfQuery;
   }, [activeTab, recommendationQuery, riskQuery, pdfQuery]);
 
