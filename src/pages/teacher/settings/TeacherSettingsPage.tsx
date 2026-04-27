@@ -447,37 +447,13 @@ export const TeacherSettingsPage = () => {
     }
   }, [hasWorkHoursChanges, isLoading, isSavingWorkHours, showToast, workdays]);
 
-  const headerActions = useMemo(
-    () => (
-      <>
-        <InlineButton
-          variant="ghost"
-          size="L"
-          label="취소"
-          disabled={isLoading || isSavingWorkHours || !hasWorkHoursChanges}
-          onClick={handleResetWorkHours}
-        />
-        <InlineButton
-          variant="primary"
-          size="L"
-          label={isSavingWorkHours ? '저장 중...' : '변경사항 저장'}
-          disabled={isLoading || isSavingWorkHours || !hasWorkHoursChanges}
-          onClick={() => {
-            void handleSaveWorkHours();
-          }}
-        />
-      </>
-    ),
-    [handleResetWorkHours, handleSaveWorkHours, hasWorkHoursChanges, isLoading, isSavingWorkHours]
-  );
-
   useEffect(() => {
-    setHeaderActions(headerActions);
+    setHeaderActions(undefined);
 
     return () => {
       setHeaderActions(undefined);
     };
-  }, [headerActions, setHeaderActions]);
+  }, [setHeaderActions]);
 
   return (
     <PageContainer>
@@ -491,7 +467,27 @@ export const TeacherSettingsPage = () => {
         </CardSection>
 
         <CardSection>
-          <SectionTitle>근무시간 설정</SectionTitle>
+          <SectionHeader>
+            <SectionTitle>근무시간 설정</SectionTitle>
+            <SectionActionGroup>
+              <InlineButton
+                variant="ghost"
+                size="L"
+                label="취소"
+                disabled={isLoading || isSavingWorkHours || !hasWorkHoursChanges}
+                onClick={handleResetWorkHours}
+              />
+              <InlineButton
+                variant="primary"
+                size="L"
+                label={isSavingWorkHours ? '저장 중...' : '변경사항 저장'}
+                disabled={isLoading || isSavingWorkHours || !hasWorkHoursChanges}
+                onClick={() => {
+                  void handleSaveWorkHours();
+                }}
+              />
+            </SectionActionGroup>
+          </SectionHeader>
           <SectionDescription>
             학부모님들이 메시지를 보낼 때 참고할 수 있는 시간이에요. 근무 시간 외에는 확인이 늦어질
             수 있다는 안내를 해드려요.
@@ -548,12 +544,16 @@ export const TeacherSettingsPage = () => {
         </CardSection>
 
         <CardSection>
-          <ClassHeader>
+          <SectionHeader>
             <SectionTitle>학급 관리</SectionTitle>
-            <PrimaryActionButton type="button" onClick={handleOpenClassChangeModal}>
-              학급 변경하기
-            </PrimaryActionButton>
-          </ClassHeader>
+            <InlineButton
+              type="button"
+              variant="primary"
+              size="L"
+              label="학급 변경하기"
+              onClick={handleOpenClassChangeModal}
+            />
+          </SectionHeader>
 
           <ClassInfoGrid>
             <InfoLabel>학교명</InfoLabel>
@@ -925,20 +925,17 @@ const RangeSeparator = styled.span`
   color: ${({ theme }) => theme.colors.text.text2};
 `;
 
-const ClassHeader = styled.div`
+const SectionHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
 `;
 
-const PrimaryActionButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: none;
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.brand.primary};
-  color: ${({ theme }) => theme.colors.text.textW};
-  padding: 10px 14px;
+const SectionActionGroup = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
 `;
 
 const ClassInfoGrid = styled.div`
