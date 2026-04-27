@@ -100,14 +100,15 @@ export const Sidebar = () => {
             {userMeta && <ProfileMeta>{userMeta}</ProfileMeta>}
           </ProfileSummary>
         </ProfileSummarySlot>
-        <LogoutButton
-          icon={IcLogout}
-          variant="plain"
-          isOpen={isSidebarOpen}
-          accessibilityLabel="로그아웃"
-          title="로그아웃"
-          onClick={handleClickLogout}
-        />
+        <LogoutButtonSlot isOpen={isSidebarOpen}>
+          <IconButton
+            icon={IcLogout}
+            variant="plain"
+            accessibilityLabel="로그아웃"
+            title="로그아웃"
+            onClick={handleClickLogout}
+          />
+        </LogoutButtonSlot>
       </SidebarProfileSection>
     </SidebarContainer>
   );
@@ -309,25 +310,17 @@ const ProfileMeta = styled.span`
   white-space: nowrap;
 `;
 
-const LogoutButton = styled(IconButton)<{ isOpen: boolean }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
+const LogoutButtonSlot = styled.div<{ isOpen: boolean }>`
+  overflow: hidden;
   flex-shrink: 0;
-  border-radius: 8px;
-  color: ${({ theme }) => theme.colors.text.text4};
+  width: ${({ isOpen }) => (isOpen ? '40px' : '0')};
+  max-width: ${({ isOpen }) => (isOpen ? '40px' : '0')};
+  height: ${({ isOpen }) => (isOpen ? '40px' : '0')};
   opacity: ${({ isOpen }) => (isOpen ? 1 : 0)};
   pointer-events: ${({ isOpen }) => (isOpen ? 'auto' : 'none')};
   transform: ${({ isOpen }) => (isOpen ? 'translateX(0)' : 'translateX(-4px)')};
   transition:
     opacity 0.16s ease,
-    transform 0.16s ease,
-    background-color 0.16s ease,
-    color 0.16s ease;
+    transform 0.16s ease;
   transition-delay: ${({ isOpen }) => (isOpen ? '120ms' : '0ms')};
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.background.bg3};
-    color: ${({ theme }) => theme.colors.text.text1};
-  }
 `;
