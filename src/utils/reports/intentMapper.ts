@@ -15,8 +15,6 @@ export const mapServerIntentType = (intentType?: string | null): IntentType | nu
   return serverIntentTypeMap[intentType] ?? null;
 };
 
-// Temporary fallback for environments where backend enum rollout is incomplete.
-// Remove this after intentType enum is stably provided by server.
 export const inferIntentTypeFromLabel = (label?: string | null): IntentType => {
   if (!label) {
     return 'request';

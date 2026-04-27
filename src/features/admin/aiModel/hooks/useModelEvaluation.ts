@@ -74,7 +74,7 @@ export const useModelEvaluation = () => {
   };
 
   return {
-    evaluation: isCompleted ? evaluation : null, // 👉 핵심
+    evaluation: isCompleted ? evaluation : null,
     status,
     isInProgress,
     isCompleted,

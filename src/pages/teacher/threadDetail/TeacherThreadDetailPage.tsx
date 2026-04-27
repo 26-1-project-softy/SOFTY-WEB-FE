@@ -1,9 +1,6 @@
 import styled from '@emotion/styled';
-// import { useParams } from 'react-router-dom';
 
 export const TeacherThreadDetailPage = () => {
-  // const { threadId } = useParams();
-
   return <ThreadDetailPageContainer title="채팅방 페이지" />;
 };
 
