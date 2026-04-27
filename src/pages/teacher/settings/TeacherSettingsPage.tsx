@@ -279,30 +279,33 @@ export const TeacherSettingsPage = () => {
     }
   };
 
-  const handleCopyClassCode = async () => {
-    if (!setting?.classCode) {
+  const copyClassCodeWithToast = async (rawClassCode: string | null | undefined) => {
+    const classCode = rawClassCode?.trim();
+
+    if (!classCode) {
+      showToast('복사할 학급코드가 없어요.', 'error');
+      return;
+    }
+
+    if (!navigator.clipboard) {
+      showToast('현재 브라우저에서는 복사를 지원하지 않아요.', 'error');
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(setting.classCode);
+      await navigator.clipboard.writeText(classCode);
       showToast('학급코드를 복사했어요.', 'success');
     } catch {
       showToast('학급코드 복사에 실패했어요.', 'error');
     }
   };
 
-  const handleCopyNewClassCode = async () => {
-    if (!newClassCode) {
-      return;
-    }
+  const handleCopyClassCode = async () => {
+    await copyClassCodeWithToast(setting?.classCode);
+  };
 
-    try {
-      await navigator.clipboard.writeText(newClassCode);
-      showToast('학급코드를 복사했어요.', 'success');
-    } catch {
-      showToast('학급코드 복사에 실패했어요.', 'error');
-    }
+  const handleCopyNewClassCode = async () => {
+    await copyClassCodeWithToast(newClassCode);
   };
 
   const handleToggleWorkday = (targetKey: WorkdayKey) => {
@@ -584,11 +587,7 @@ export const TeacherSettingsPage = () => {
               <ClassCodeBadge>
                 {setting?.classCode?.trim() ? setting.classCode : '-'}
               </ClassCodeBadge>
-              <CodeCopyButton
-                type="button"
-                onClick={handleCopyClassCode}
-                disabled={!setting?.classCode?.trim()}
-              >
+              <CodeCopyButton type="button" onClick={handleCopyClassCode}>
                 <IcCopy />
                 학급코드 복사하기
               </CodeCopyButton>
@@ -800,11 +799,7 @@ export const TeacherSettingsPage = () => {
               <SuccessCodeValue>{newClassCode || '-'}</SuccessCodeValue>
             </SuccessCodeCard>
 
-            <SuccessCopyButton
-              type="button"
-              onClick={handleCopyNewClassCode}
-              disabled={!newClassCode}
-            >
+            <SuccessCopyButton type="button" onClick={handleCopyNewClassCode}>
               <IcCopy />
               학급코드 복사하기
             </SuccessCopyButton>
