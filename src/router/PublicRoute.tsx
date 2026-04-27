@@ -15,8 +15,20 @@ export const PublicRoute = () => {
     return <Navigate to={ROUTES.teacherSignUp} replace />;
   }
 
+  if (authStatus === 'ONBOARDING_REQUIRED') {
+    if (location.pathname === ROUTES.teacherSignUp) {
+      return <Outlet />;
+    }
+
+    return <Navigate to={ROUTES.teacherSignUp} replace />;
+  }
+
   if (authStatus === 'SIGNED_IN' && role) {
     return <Navigate to={getDefaultRouteByRole(role)} replace />;
+  }
+
+  if (location.pathname === ROUTES.teacherSignUp) {
+    return <Navigate to={ROUTES.root} replace />;
   }
 
   return <Outlet />;

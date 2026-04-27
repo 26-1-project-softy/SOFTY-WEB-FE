@@ -1,8 +1,8 @@
 import styled from '@emotion/styled';
 import { LandingActionButtons } from '@/components/auth/landing/LandingActionButtons';
 import { LandingTextLines } from '@/components/auth/landing/LandingTextLines';
-import type { LandingContent } from '@/constants/landing';
 import { HEADER_HEIGHT } from '@/constants/layout';
+import type { LandingContent } from '@/constants/landing';
 
 type LandingHeroSectionProps = {
   content: LandingContent['hero'];

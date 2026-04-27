@@ -6,8 +6,8 @@ import { InlineButton } from '@/components/common/InlineButton';
 import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
 import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
 import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
-import { useLogout } from '@/hooks/useLogout';
 import { useToast } from '@/hooks/useToast';
+import { useTeacherWithdraw } from '@/features/teacher/settings/hooks/useTeacherWithdraw';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
@@ -108,7 +108,15 @@ const extractClassNumber = (raw: string) => {
 
 export const TeacherSettingsPage = () => {
   const { showToast } = useToast();
-  const { logout } = useLogout();
+  const {
+    isWithdrawModalOpen,
+    isWithdrawing,
+    withdrawErrorMessage,
+    handleOpenWithdrawModal,
+    handleCloseWithdrawModal,
+    handleConfirmWithdraw,
+    handleLogout,
+  } = useTeacherWithdraw();
   const { setHeaderActions } = useOutletContext<AppLayoutOutletContext>();
   const [setting, setSetting] = useState<TeacherSetting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -127,7 +135,6 @@ export const TeacherSettingsPage = () => {
   const [initialWorkdays, setInitialWorkdays] = useState<Workday[]>([]);
   const [workdays, setWorkdays] = useState<Workday[]>([]);
   const [isSavingWorkHours, setIsSavingWorkHours] = useState(false);
-  const handleLogout = () => logout();
 
   useEffect(() => {
     let isMounted = true;
@@ -272,30 +279,33 @@ export const TeacherSettingsPage = () => {
     }
   };
 
-  const handleCopyClassCode = async () => {
-    if (!setting?.classCode) {
+  const copyClassCodeWithToast = async (rawClassCode: string | null | undefined) => {
+    const classCode = rawClassCode?.trim();
+
+    if (!classCode) {
+      showToast('복사할 학급코드가 없어요.', 'error');
+      return;
+    }
+
+    if (!navigator.clipboard) {
+      showToast('현재 브라우저에서는 복사를 지원하지 않아요.', 'error');
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(setting.classCode);
+      await navigator.clipboard.writeText(classCode);
       showToast('학급코드를 복사했어요.', 'success');
     } catch {
       showToast('학급코드 복사에 실패했어요.', 'error');
     }
   };
 
-  const handleCopyNewClassCode = async () => {
-    if (!newClassCode) {
-      return;
-    }
+  const handleCopyClassCode = async () => {
+    await copyClassCodeWithToast(setting?.classCode);
+  };
 
-    try {
-      await navigator.clipboard.writeText(newClassCode);
-      showToast('학급코드를 복사했어요.', 'success');
-    } catch {
-      showToast('학급코드 복사에 실패했어요.', 'error');
-    }
+  const handleCopyNewClassCode = async () => {
+    await copyClassCodeWithToast(newClassCode);
   };
 
   const handleToggleWorkday = (targetKey: WorkdayKey) => {
@@ -577,11 +587,7 @@ export const TeacherSettingsPage = () => {
               <ClassCodeBadge>
                 {setting?.classCode?.trim() ? setting.classCode : '-'}
               </ClassCodeBadge>
-              <CodeCopyButton
-                type="button"
-                onClick={handleCopyClassCode}
-                disabled={!setting?.classCode?.trim()}
-              >
+              <CodeCopyButton type="button" onClick={handleCopyClassCode}>
                 <IcCopy />
                 학급코드 복사하기
               </CodeCopyButton>
@@ -595,10 +601,56 @@ export const TeacherSettingsPage = () => {
             <AccountLinkButton type="button" onClick={handleLogout}>
               로그아웃
             </AccountLinkButton>
-            <DangerLinkButton type="button">회원 탈퇴</DangerLinkButton>
+            <DangerLinkButton type="button" onClick={handleOpenWithdrawModal}>
+              회원 탈퇴
+            </DangerLinkButton>
           </AccountLinkList>
         </CardSection>
       </ContentArea>
+
+      {isWithdrawModalOpen ? (
+        <ModalOverlay onClick={handleCloseWithdrawModal}>
+          <ModalCard onClick={event => event.stopPropagation()}>
+            <ConfirmIconWrap>
+              <IcInfo />
+            </ConfirmIconWrap>
+
+            <ModalTitle>회원 탈퇴하시겠어요?</ModalTitle>
+            <ModalDescription>
+              탈퇴하면 계정 정보가 삭제되며 복구할 수 없어요.
+              <br />
+              정말 탈퇴하시려면 아래 버튼을 눌러 주세요.
+            </ModalDescription>
+
+            {withdrawErrorMessage ? (
+              <ConfirmErrorBox role="alert">
+                <ConfirmErrorIcon>
+                  <IcError />
+                </ConfirmErrorIcon>
+                <ConfirmErrorTextWrap>
+                  <ConfirmErrorTitle>{withdrawErrorMessage}</ConfirmErrorTitle>
+                  <ConfirmErrorDescription>잠시 후 다시 시도해 주세요.</ConfirmErrorDescription>
+                </ConfirmErrorTextWrap>
+              </ConfirmErrorBox>
+            ) : null}
+
+            <ModalButtonRow>
+              <ModalGhostButton type="button" onClick={handleCloseWithdrawModal}>
+                취소
+              </ModalGhostButton>
+              <ModalPrimaryButton
+                type="button"
+                onClick={() => {
+                  void handleConfirmWithdraw();
+                }}
+                disabled={isWithdrawing}
+              >
+                {isWithdrawing ? '탈퇴 중...' : '회원 탈퇴'}
+              </ModalPrimaryButton>
+            </ModalButtonRow>
+          </ModalCard>
+        </ModalOverlay>
+      ) : null}
 
       {isClassChangeModalOpen ? (
         <ModalOverlay onClick={handleCloseClassChangeModal}>
@@ -747,11 +799,7 @@ export const TeacherSettingsPage = () => {
               <SuccessCodeValue>{newClassCode || '-'}</SuccessCodeValue>
             </SuccessCodeCard>
 
-            <SuccessCopyButton
-              type="button"
-              onClick={handleCopyNewClassCode}
-              disabled={!newClassCode}
-            >
+            <SuccessCopyButton type="button" onClick={handleCopyNewClassCode}>
               <IcCopy />
               학급코드 복사하기
             </SuccessCopyButton>
@@ -759,6 +807,40 @@ export const TeacherSettingsPage = () => {
             <SuccessConfirmButton type="button" onClick={handleCloseClassChangeSuccessModal}>
               확인
             </SuccessConfirmButton>
+          </ModalCard>
+        </ModalOverlay>
+      ) : null}
+
+      {isWithdrawModalOpen ? (
+        <ModalOverlay onClick={handleCloseWithdrawModal}>
+          <ModalCard onClick={event => event.stopPropagation()}>
+            <WithdrawIconWrap>
+              <IcError />
+            </WithdrawIconWrap>
+
+            <ModalTitle>정말 탈퇴하시겠어요?</ModalTitle>
+            <ModalDescription>
+              탈퇴하면 학급 정보와 대화 내역이 모두 삭제되고, 다시 복구할 수 없어요.
+            </ModalDescription>
+
+            {withdrawErrorMessage ? (
+              <WithdrawErrorText role="alert">{withdrawErrorMessage}</WithdrawErrorText>
+            ) : null}
+
+            <ModalButtonRow>
+              <ModalGhostButton type="button" onClick={handleCloseWithdrawModal}>
+                취소
+              </ModalGhostButton>
+              <WithdrawConfirmButton
+                type="button"
+                onClick={() => {
+                  void handleConfirmWithdraw();
+                }}
+                disabled={isWithdrawing}
+              >
+                {isWithdrawing ? '탈퇴 중...' : '탈퇴하기'}
+              </WithdrawConfirmButton>
+            </ModalButtonRow>
           </ModalCard>
         </ModalOverlay>
       ) : null}
@@ -1077,6 +1159,11 @@ const SuccessIconWrap = styled(ModalIconWrap)`
   color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
+const WithdrawIconWrap = styled(ModalIconWrap)`
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
+  color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
 const ModalTitle = styled.h4`
   ${({ theme }) => theme.fonts.labelM};
   margin: 16px 0 0;
@@ -1303,4 +1390,22 @@ const ModalPrimaryButton = styled.button`
     color: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledText};
     cursor: not-allowed;
   }
+`;
+
+const WithdrawConfirmButton = styled(ModalPrimaryButton)`
+  background: ${({ theme }) => theme.colors.semantic.error};
+
+  &:disabled {
+    background: ${({ theme }) => theme.colors.semantic.error};
+    color: ${({ theme }) => theme.colors.text.textW};
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+`;
+
+const WithdrawErrorText = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 12px 0 0;
+  text-align: center;
+  color: ${({ theme }) => theme.colors.semantic.error};
 `;

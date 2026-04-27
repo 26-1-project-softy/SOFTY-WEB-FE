@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export type AuthRole = 'teacher' | 'admin' | null;
-export type AuthStatus = 'SIGNED_OUT' | 'SIGNUP_REQUIRED' | 'SIGNED_IN';
+export type AuthStatus = 'SIGNED_OUT' | 'SIGNUP_REQUIRED' | 'ONBOARDING_REQUIRED' | 'SIGNED_IN';
 
 export type AuthUserSummary = {
   name: string;
@@ -16,6 +16,10 @@ type AuthState = {
   isAuthInitialized: boolean;
   setSignedOut: () => void;
   setSignupRequired: () => void;
+  setOnboardingRequired: (payload: {
+    role: Exclude<AuthRole, null>;
+    user: AuthUserSummary | null;
+  }) => void;
   setSignedIn: (payload: { role: Exclude<AuthRole, null>; user: AuthUserSummary }) => void;
   setAuthInitialized: (isAuthInitialized: boolean) => void;
 };
@@ -38,6 +42,13 @@ export const useAuthStore = create<AuthState>(set => ({
       authStatus: 'SIGNUP_REQUIRED',
       role: null,
       user: null,
+    }),
+
+  setOnboardingRequired: ({ role, user }) =>
+    set({
+      authStatus: 'ONBOARDING_REQUIRED',
+      role,
+      user,
     }),
 
   setSignedIn: ({ role, user }) =>
