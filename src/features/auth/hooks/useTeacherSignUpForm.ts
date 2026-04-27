@@ -8,6 +8,7 @@ import {
 } from '@/features/auth/lib/getAuthErrorMessage';
 import { authApi, authSession, teacherAuthApi } from '@/services/auth';
 import { ROUTES } from '@/constants/routes';
+import { useToast } from '@/hooks/useToast';
 
 type FieldErrors = {
   teacherName?: string;
@@ -32,6 +33,7 @@ type FormSubmitHandler = NonNullable<ComponentProps<'form'>['onSubmit']>;
 export const useTeacherSignUpForm = () => {
   const navigate = useNavigate();
   const { authStatus, setSignedIn, setSignedOut } = useAuth();
+  const { showToast } = useToast();
 
   const [teacherName, setTeacherName] = useState('');
   const [schoolName, setSchoolName] = useState('');
@@ -178,17 +180,23 @@ export const useTeacherSignUpForm = () => {
   };
 
   const handleCopyClassCode = async () => {
-    if (!generatedClassCode) {
+    const classCode = generatedClassCode.trim();
+
+    if (!classCode) {
+      showToast('복사할 학급코드가 없어요.', 'error');
+      return;
+    }
+
+    if (!navigator.clipboard) {
+      showToast('현재 브라우저에서는 복사를 지원하지 않아요.', 'error');
       return;
     }
 
     try {
-      await navigator.clipboard.writeText(generatedClassCode);
+      await navigator.clipboard.writeText(classCode);
+      showToast('학급코드를 복사했어요.', 'success');
     } catch {
-      setGlobalError({
-        title: '학급코드 복사에 실패했어요.',
-        description: '다시 시도해 주세요.',
-      });
+      showToast('학급코드 복사에 실패했어요.', 'error');
     }
   };
 
