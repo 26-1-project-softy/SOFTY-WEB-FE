@@ -26,7 +26,7 @@ export const PerformanceChart = ({ data }: Props) => {
   return (
     <PerformanceChartContainer>
       <ResponsiveContainer width="100%" height={240}>
-        <BarChart data={data} margin={{ top: 16, right: 20, left: 20, bottom: 16 }}>
+        <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" vertical={false} />
           <XAxis dataKey="label" tick={{ fontSize: 12 }} />
           <YAxis domain={[0, 100]} width={32} tick={{ fontSize: 12 }} />
