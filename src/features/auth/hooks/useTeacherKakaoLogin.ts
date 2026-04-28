@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useToastStore } from '@/stores/toastStore';
-import { getKakaoLoginStartUrl } from '@/features/auth/lib/getKakaoLoginStartUrl';
+import { getKakaoLoginStartUrl } from '@/features/auth/lib/getKakaoUrl';
 import { getKakaoLoginErrorMessage } from '@/features/auth/lib/getKakaoLoginErrorMessage';
 
 const KAKAO_LOGIN_START_ERROR = new Error(
