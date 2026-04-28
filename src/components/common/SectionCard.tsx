@@ -24,6 +24,10 @@ export const SectionCard = ({ title, description, headerAction, children }: Sect
   );
 };
 
+export const SectionCardContent = ({ children }: PropsWithChildren) => {
+  return <CardContentContainer>{children}</CardContentContainer>;
+};
+
 const SectionCardContainer = styled.section`
   display: flex;
   min-width: 0;
@@ -64,4 +68,8 @@ const SectionCardActionArea = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;
+`;
+
+const CardContentContainer = styled.div`
+  padding: 16px 20px;
 `;

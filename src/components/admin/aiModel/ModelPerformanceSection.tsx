@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { SectionCard } from '@/components/common/SectionCard';
+import { SectionCard, SectionCardContent } from '@/components/common/SectionCard';
 import { KpiCard } from '@/components/common/KpiCard';
 import { PerformanceChart } from './PerformanceChart';
 import { getPerformanceChartData } from '@/features/admin/aiModel/lib/performanceChartData';
@@ -29,9 +29,9 @@ export const ModelPerformanceSection = () => {
   if (isError && !evaluation) {
     return (
       <SectionCard title="성능 평가" headerAction={headerAction}>
-        <ContentContainer>
+        <SectionCardContent>
           <Alert title="성능 평가를 불러오지 못했어요" description="잠시 후 다시 시도해주세요." />
-        </ContentContainer>
+        </SectionCardContent>
       </SectionCard>
     );
   }
@@ -39,13 +39,13 @@ export const ModelPerformanceSection = () => {
   if (!evaluation && !isInProgress) {
     return (
       <SectionCard title="성능 평가" headerAction={headerAction}>
-        <ContentContainer>
+        <SectionCardContent>
           <SectionEmptyState
             icon={IcDashboard}
             title="성능 평가 데이터가 없어요"
             description="평가를 먼저 진행해주세요."
           />
-        </ContentContainer>
+        </SectionCardContent>
       </SectionCard>
     );
   }
@@ -54,47 +54,42 @@ export const ModelPerformanceSection = () => {
 
   return (
     <SectionCard title="성능 평가" headerAction={headerAction}>
-      {isInProgress && (
-        <ContentContainer>
+      <SectionCardContent>
+        {isInProgress && (
           <Alert
             variant="success"
             title="성능 평가를 진행 중이에요"
             description="평가가 완료되면 최신 성능 지표를 확인할 수 있어요."
           />
-        </ContentContainer>
-      )}
+        )}
 
-      {rerunError && !isInProgress && (
-        <ContentContainer>
+        {rerunError && !isInProgress && (
           <Alert title="성능 평가를 시작하지 못했어요" description="잠시 후 다시 시도해주세요." />
-        </ContentContainer>
-      )}
+        )}
+      </SectionCardContent>
 
       {evaluation && (
         <>
-          <KpiGrid>
-            <KpiCard title="Precision" value={(evaluation.precision * 100).toFixed(2) + '%'} />
-            <KpiCard title="Recall" value={(evaluation.recall * 100).toFixed(2) + '%'} />
-            <KpiCard title="F1-score" value={(evaluation.f1Score * 100).toFixed(2) + '%'} />
-          </KpiGrid>
+          <SectionCardContent>
+            <KpiGrid>
+              <KpiCard title="Precision" value={(evaluation.precision * 100).toFixed(2) + '%'} />
+              <KpiCard title="Recall" value={(evaluation.recall * 100).toFixed(2) + '%'} />
+              <KpiCard title="F1-score" value={(evaluation.f1Score * 100).toFixed(2) + '%'} />
+            </KpiGrid>
+          </SectionCardContent>
 
-          <ChartWrapper>
+          <SectionCardContent>
             <PerformanceChart data={chartData} />
-          </ChartWrapper>
+          </SectionCardContent>
         </>
       )}
     </SectionCard>
   );
 };
 
-const ContentContainer = styled.div`
-  padding: 16px 20px;
-`;
-
 const KpiGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  padding: 20px 16px;
   gap: 16px;
 
   @media (max-width: 768px) {
@@ -104,9 +99,4 @@ const KpiGrid = styled.div`
   @media (max-width: 480px) {
     grid-template-columns: 1fr;
   }
-`;
-
-const ChartWrapper = styled.div`
-  width: 100%;
-  height: 240px;
 `;
