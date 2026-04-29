@@ -59,7 +59,7 @@ export const AppLayout = () => {
     <Shell>
       <Sidebar />
       <Main>
-        {hasHeader ? <Header title={title!} actions={headerActions} /> : null}
+        {title && <Header title={title} actions={headerActions} />}
 
         {tabsConfig?.items.length ? (
           <Tabs
