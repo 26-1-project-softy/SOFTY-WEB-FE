@@ -2,6 +2,7 @@ import { useNavigate } from 'react-router-dom';
 import { ROUTES } from '@/constants/routes';
 import { useAuth } from '@/hooks/useAuth';
 import { authSession } from '@/services/auth/authSession';
+import { getKakaoLogoutUrl } from '@/features/auth/lib/getKakaoUrl';
 
 type LogoutOptions = {
   redirectTo?: string;
@@ -17,6 +18,14 @@ export const useLogout = () => {
 
     authSession.clearSession();
     setSignedOut();
+
+    const kakaoLogoutUrl = getKakaoLogoutUrl();
+
+    if (kakaoLogoutUrl) {
+      window.location.href = kakaoLogoutUrl;
+      return;
+    }
+
     navigate(redirectTo, { replace });
   };
 
