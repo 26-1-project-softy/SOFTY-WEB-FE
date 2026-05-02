@@ -9,7 +9,7 @@ import { ROUTES } from '@/constants/routes';
 import { apiClient } from '@/services/http/apiClient';
 import { IcBack, IcSparkles } from '@/icons';
 
-type ThreadStatus = 'processing' | 'done';
+type ThreadStatus = 'processing' | 'done' | 'hold';
 type DetailLoadState = 'loading' | 'error' | 'success';
 
 type ChatRoomDetailData = {
@@ -177,7 +177,13 @@ export const TeacherThreadDetailPage = () => {
         setCounterpartName(payload.counterpartName || '학부모');
         setStudentName(payload.studentName || '학생');
         setIntentLabel(payload.intentLabel || payload.intentLavel || '미분류');
-        setStatus(payload.status === 'DONE' ? 'done' : 'processing');
+        if (payload.status === 'DONE') {
+          setStatus('done');
+        } else if (payload.status === 'HOLD') {
+          setStatus('hold');
+        } else {
+          setStatus('processing');
+        }
         setLoadState('success');
       } catch {
         setLoadState('error');
@@ -194,6 +200,13 @@ export const TeacherThreadDetailPage = () => {
       return {
         label: '처리중',
         tone: 'processing' as StatusTagTone,
+      };
+    }
+
+    if (status === 'hold') {
+      return {
+        label: '보류',
+        tone: 'hold' as StatusTagTone,
       };
     }
 
@@ -285,6 +298,15 @@ export const TeacherThreadDetailPage = () => {
                   }}
                 >
                   완료
+                </StatusMenuItem>
+                <StatusMenuItem
+                  type="button"
+                  onClick={() => {
+                    setStatus('hold');
+                    setIsStatusMenuOpen(false);
+                  }}
+                >
+                  보류
                 </StatusMenuItem>
               </StatusMenu>
             ) : null}
@@ -396,11 +418,12 @@ export const TeacherThreadDetailPage = () => {
 };
 
 const ThreadDetailPageContainer = styled.section`
-  min-height: calc(100vh - 72px);
+  height: 100%;
   background: ${({ theme }) => theme.colors.background.bg2};
   border-top: 1px solid ${({ theme }) => theme.colors.border.border1};
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 `;
 
 const ThreadHeader = styled.header`
@@ -471,21 +494,26 @@ const ThreadBody = styled.div`
   flex: 1;
   display: flex;
   min-height: 0;
+  overflow: hidden;
 `;
 
 const ConversationPanel = styled.section`
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   border-right: 1px solid ${({ theme }) => theme.colors.border.border1};
+  overflow: hidden;
 `;
 
 const MessageArea = styled.div`
   flex: 1;
+  min-height: 0;
   background: #cdd8d4;
   padding: 16px 14px;
-  overflow: auto;
+  overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -584,9 +612,11 @@ const ComposerWrap = styled.div`
 
 const AssistantPanel = styled.aside`
   width: 320px;
+  min-height: 0;
   background: ${({ theme }) => theme.colors.background.bg1};
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 `;
 
 const AssistantHeader = styled.header`
