@@ -42,8 +42,7 @@ export const colors = {
     errorSoft: '#FAE3E2',
   },
   overlay: {
-    dim1: 'rgba(0, 0, 0, 0.42)',
-    dim2: 'rgba(0, 0, 0, 0.45)',
+    dim: 'rgba(0, 0, 0, 0.5)',
   },
   shadow: {
     modal: '0 12px 22px rgba(0, 0, 0, 0.25)',
@@ -52,15 +51,6 @@ export const colors = {
     dialog: '0 20px 48px rgba(0, 0, 0, 0.18)',
     toast: '0 8px 20px rgba(0, 0, 0, 0.08)',
     toastHover: '0 10px 22px rgba(0, 0, 0, 0.15)',
-  },
-  reports: {
-    toastErrorBorder: '#FF7F89',
-    toastErrorBackground: '#FFF4F5',
-    previewBackground: '#DBE7E3',
-    senderAvatarBackground: '#B8EADD',
-    modalErrorBorder: '#FF6B77',
-    modalErrorBackground: '#FFF5F6',
-    modalErrorText: '#EB4955',
   },
   chart: {
     recommendationUsedAsIs: '#55B5A6',
