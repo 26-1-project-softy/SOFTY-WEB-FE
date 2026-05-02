@@ -34,6 +34,7 @@ export const AppLayout = () => {
 
   const title = currentMatch?.handle?.title;
   const tabsConfig = currentMatch?.handle?.tabs;
+  const hasHeader = Boolean(title);
 
   const firstTab = tabsConfig?.items[0]?.id ?? '';
   const [activeTab, setActiveTab] = useState<string>(firstTab);
@@ -49,7 +50,7 @@ export const AppLayout = () => {
     <Shell>
       <Sidebar />
       <Main>
-        {title && <Header title={title} actions={headerActions} />}
+        {hasHeader ? <Header title={title!} actions={headerActions} /> : null}
 
         {tabsConfig?.items.length ? (
           <Tabs
@@ -61,7 +62,7 @@ export const AppLayout = () => {
           />
         ) : null}
 
-        <Content>
+        <Content $hasHeader={hasHeader}>
           <Outlet
             context={{
               setHeaderActions,
@@ -87,8 +88,8 @@ const Main = styled.div`
   margin-left: ${SIDEBAR_WIDTH.closed}px;
 `;
 
-const Content = styled.main`
-  height: calc(100vh - ${HEADER_HEIGHT}px);
+const Content = styled.main<{ $hasHeader: boolean }>`
+  height: ${({ $hasHeader }) => ($hasHeader ? `calc(100vh - ${HEADER_HEIGHT}px)` : '100vh')};
   min-height: 0;
-  margin-top: ${HEADER_HEIGHT}px;
+  margin-top: ${({ $hasHeader }) => ($hasHeader ? `${HEADER_HEIGHT}px` : 0)};
 `;
