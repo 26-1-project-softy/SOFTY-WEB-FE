@@ -1,7 +1,9 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import styled from '@emotion/styled';
+import { useNavigate } from 'react-router-dom';
 import { InlineButton } from '@/components/common/InlineButton';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
+import { ROUTES } from '@/constants/routes';
 import { apiClient } from '@/services/http/apiClient';
 import { IcChat, IcError, IcRefresh } from '@/icons';
 
@@ -34,6 +36,10 @@ type ChatRoomsApiResponse = {
   code: number;
   message: string;
   content?: ChatRoomResponse[];
+  data?: {
+    content?: ChatRoomResponse[];
+    items?: ChatRoomResponse[];
+  } | null;
   nextCursor?: number | null;
   size?: number;
   hasNext?: boolean;
@@ -100,6 +106,7 @@ const toThreadRoomItem = (room: ChatRoomResponse): ThreadRoomItem => {
 };
 
 export const TeacherThreadListPage = () => {
+  const navigate = useNavigate();
   const [rooms, setRooms] = useState<ThreadRoomItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -113,7 +120,7 @@ export const TeacherThreadListPage = () => {
         params: { page: 0, size: 20 },
       });
 
-      const list = data.content ?? [];
+      const list = data.data?.content ?? [];
       setRooms(list.map(toThreadRoomItem));
     } catch {
       setRooms([]);
@@ -142,7 +149,13 @@ export const TeacherThreadListPage = () => {
         {loadState === 'success' ? (
           <ThreadList>
             {rooms.map(room => (
-              <ThreadCard key={room.id} type="button">
+              <ThreadCard
+                key={room.id}
+                type="button"
+                onClick={() =>
+                  navigate(ROUTES.teacherThreadDetail.replace(':threadId', String(room.id)))
+                }
+              >
                 <Avatar>{room.studentName.charAt(0)}</Avatar>
                 <CardBody>
                   <TopRow>
