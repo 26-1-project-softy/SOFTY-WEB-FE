@@ -119,24 +119,6 @@ export const colors = {
     neutral50: '#F7F7F7',
     neutral0: '#FFFFFF',
   },
-  teacherSettings: {
-    avatarBackground: '#D6F3EE',
-    workdayRowBackground: '#F7F8F8',
-    toggleOffBackground: '#E5E7E9',
-    toggleThumbOffBackground: '#F3F4F5',
-    inputDisabledBackground: '#F4F5F6',
-    classCodeBadgeBorder: '#CCEEE8',
-    classCodeBadgeBackground: '#E7F8F5',
-    modalIconBackground: '#E7F8F5',
-    confirmIconBackground: '#FDF7E8',
-    confirmIconColor: '#E59B2D',
-    confirmSummaryBorder: '#D2EBE6',
-    confirmSummaryBackground: '#EAF6F3',
-    confirmErrorBorder: '#FF8E96',
-    confirmErrorBackground: '#FFF2F3',
-    primaryDisabledBackground: '#DBDEE2',
-    primaryDisabledText: '#8F949D',
-  },
 } as const;
 
 export type ColorsType = typeof colors;

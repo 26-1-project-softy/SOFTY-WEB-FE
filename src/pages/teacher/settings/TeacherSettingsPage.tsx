@@ -1,8 +1,10 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
 import { useOutletContext } from 'react-router-dom';
 import { InlineButton } from '@/components/common/InlineButton';
+import { TextField } from '@/components/common/TextField';
+import { ToggleSwitch } from '@/components/common/ToggleSwitch';
 import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
 import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
 import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
@@ -513,15 +515,11 @@ export const TeacherSettingsPage = () => {
             <WorkdayList>
               {workdays.map(day => (
                 <WorkdayRow key={day.key}>
-                  <ToggleButton
-                    type="button"
-                    isEnabled={day.enabled}
-                    aria-pressed={day.enabled}
-                    aria-label={`${day.label}요일 근무시간 사용`}
-                    onClick={() => handleToggleWorkday(day.key)}
-                  >
-                    <ToggleThumb isEnabled={day.enabled} />
-                  </ToggleButton>
+                  <ToggleSwitch
+                    checked={day.enabled}
+                    ariaLabel={`${day.label} 요일 근무시간 사용`}
+                    onToggle={() => handleToggleWorkday(day.key)}
+                  />
 
                   <DayLabel>{day.label}</DayLabel>
 
@@ -587,10 +585,14 @@ export const TeacherSettingsPage = () => {
               <ClassCodeBadge>
                 {setting?.classCode?.trim() ? setting.classCode : '-'}
               </ClassCodeBadge>
-              <CodeCopyButton type="button" onClick={handleCopyClassCode}>
-                <IcCopy />
-                학급코드 복사하기
-              </CodeCopyButton>
+              <CodeCopyButton
+                type="button"
+                variant="ghost"
+                size="L"
+                icon={IcCopy}
+                label="학급코드 복사하기"
+                onClick={handleCopyClassCode}
+              />
             </ClassCodeActions>
           </ClassCodeWrap>
         </CardSection>
@@ -598,12 +600,20 @@ export const TeacherSettingsPage = () => {
         <CardSection>
           <SectionTitle>계정 관리</SectionTitle>
           <AccountLinkList>
-            <AccountLinkButton type="button" onClick={handleLogout}>
-              로그아웃
-            </AccountLinkButton>
-            <DangerLinkButton type="button" onClick={handleOpenWithdrawModal}>
-              회원 탈퇴
-            </DangerLinkButton>
+            <AccountLinkButton
+              type="button"
+              variant="text"
+              size="L"
+              label="로그아웃"
+              onClick={handleLogout}
+            />
+            <DangerLinkButton
+              type="button"
+              variant="text"
+              size="L"
+              label="회원 탈퇴"
+              onClick={handleOpenWithdrawModal}
+            />
           </AccountLinkList>
         </CardSection>
       </ContentArea>
@@ -635,18 +645,23 @@ export const TeacherSettingsPage = () => {
             ) : null}
 
             <ModalButtonRow>
-              <ModalGhostButton type="button" onClick={handleCloseWithdrawModal}>
-                취소
-              </ModalGhostButton>
+              <ModalGhostButton
+                type="button"
+                variant="ghost"
+                size="L"
+                label="취소"
+                onClick={handleCloseWithdrawModal}
+              />
               <ModalPrimaryButton
                 type="button"
+                variant="primary"
+                size="L"
+                label={isWithdrawing ? '탈퇴 중...' : '회원 탈퇴'}
                 onClick={() => {
                   void handleConfirmWithdraw();
                 }}
                 disabled={isWithdrawing}
-              >
-                {isWithdrawing ? '탈퇴 중...' : '회원 탈퇴'}
-              </ModalPrimaryButton>
+              />
             </ModalButtonRow>
           </ModalCard>
         </ModalOverlay>
@@ -711,16 +726,21 @@ export const TeacherSettingsPage = () => {
             </ModalForm>
 
             <ModalButtonRow>
-              <ModalGhostButton type="button" onClick={handleCloseClassChangeModal}>
-                취소
-              </ModalGhostButton>
+              <ModalGhostButton
+                type="button"
+                variant="ghost"
+                size="L"
+                label="취소"
+                onClick={handleCloseClassChangeModal}
+              />
               <ModalPrimaryButton
                 type="button"
+                variant="primary"
+                size="L"
+                label="변경하기"
                 disabled={!isClassChangeEnabled}
                 onClick={handleOpenClassChangeConfirmModal}
-              >
-                변경하기
-              </ModalPrimaryButton>
+              />
             </ModalButtonRow>
           </ModalCard>
         </ModalOverlay>
@@ -763,16 +783,21 @@ export const TeacherSettingsPage = () => {
             ) : null}
 
             <ModalButtonRow>
-              <ModalGhostButton type="button" onClick={handleCloseClassChangeConfirmModal}>
-                취소
-              </ModalGhostButton>
+              <ModalGhostButton
+                type="button"
+                variant="ghost"
+                size="L"
+                label="취소"
+                onClick={handleCloseClassChangeConfirmModal}
+              />
               <ModalPrimaryButton
                 type="button"
+                variant="primary"
+                size="L"
+                label={isClassChangeSubmitting ? '변경 중...' : '변경하기'}
                 onClick={handleConfirmClassChange}
                 disabled={isClassChangeSubmitting}
-              >
-                {isClassChangeSubmitting ? '변경 중...' : '변경하기'}
-              </ModalPrimaryButton>
+              />
             </ModalButtonRow>
           </ModalCard>
         </ModalOverlay>
@@ -799,14 +824,24 @@ export const TeacherSettingsPage = () => {
               <SuccessCodeValue>{newClassCode || '-'}</SuccessCodeValue>
             </SuccessCodeCard>
 
-            <SuccessCopyButton type="button" onClick={handleCopyNewClassCode}>
-              <IcCopy />
-              학급코드 복사하기
-            </SuccessCopyButton>
+            <SuccessCopyButton
+              type="button"
+              variant="ghost"
+              size="L"
+              width="100%"
+              icon={IcCopy}
+              label="학급코드 복사하기"
+              onClick={handleCopyNewClassCode}
+            />
 
-            <SuccessConfirmButton type="button" onClick={handleCloseClassChangeSuccessModal}>
-              확인
-            </SuccessConfirmButton>
+            <SuccessConfirmButton
+              type="button"
+              variant="primary"
+              size="L"
+              width="100%"
+              label="확인"
+              onClick={handleCloseClassChangeSuccessModal}
+            />
           </ModalCard>
         </ModalOverlay>
       ) : null}
@@ -828,18 +863,23 @@ export const TeacherSettingsPage = () => {
             ) : null}
 
             <ModalButtonRow>
-              <ModalGhostButton type="button" onClick={handleCloseWithdrawModal}>
-                취소
-              </ModalGhostButton>
+              <ModalGhostButton
+                type="button"
+                variant="ghost"
+                size="L"
+                label="취소"
+                onClick={handleCloseWithdrawModal}
+              />
               <WithdrawConfirmButton
                 type="button"
+                variant="primary"
+                size="L"
+                label={isWithdrawing ? '탈퇴 중...' : '탈퇴하기'}
                 onClick={() => {
                   void handleConfirmWithdraw();
                 }}
                 disabled={isWithdrawing}
-              >
-                {isWithdrawing ? '탈퇴 중...' : '탈퇴하기'}
-              </WithdrawConfirmButton>
+              />
             </ModalButtonRow>
           </ModalCard>
         </ModalOverlay>
@@ -905,7 +945,7 @@ const AvatarCircle = styled.span`
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.teacherSettings.avatarBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: inline-flex;
   align-items: center;
@@ -928,7 +968,7 @@ const WorkdayList = styled.div`
 const WorkdayRow = styled.div`
   border-radius: 14px;
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  background: ${({ theme }) => theme.colors.teacherSettings.workdayRowBackground};
+  background: ${({ theme }) => theme.colors.background.bg3};
   padding: 12px 14px;
   display: flex;
   align-items: center;
@@ -938,31 +978,6 @@ const WorkdayRow = styled.div`
     flex-wrap: wrap;
     gap: 10px;
   }
-`;
-
-const ToggleButton = styled.button<{ isEnabled: boolean }>`
-  width: 44px;
-  height: 26px;
-  border: none;
-  border-radius: 999px;
-  padding: 3px;
-  background: ${({ isEnabled, theme }) =>
-    isEnabled ? theme.colors.brand.primary : theme.colors.teacherSettings.toggleOffBackground};
-  display: flex;
-  align-items: center;
-  justify-content: ${({ isEnabled }) => (isEnabled ? 'flex-end' : 'flex-start')};
-  cursor: pointer;
-`;
-
-const ToggleThumb = styled.span<{ isEnabled: boolean }>`
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  background: ${({ isEnabled, theme }) =>
-    isEnabled
-      ? theme.colors.background.bg1
-      : theme.colors.teacherSettings.toggleThumbOffBackground};
-  box-shadow: ${({ theme }) => theme.colors.shadow.toggleThumb};
 `;
 
 const DayLabel = styled.span`
@@ -983,21 +998,16 @@ const TimeRange = styled.div`
   }
 `;
 
-const TimeInput = styled.input`
-  ${({ theme }) => theme.fonts.body2};
+const TimeInput = styled(TextField)`
   width: 160px;
-  border: 1px solid ${({ theme }) => theme.colors.border.border2};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text2};
-  padding: 10px 12px;
+  gap: 0;
 
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.text4};
+  input {
+    color: ${({ theme }) => theme.colors.text.text2};
   }
 
-  &:disabled {
-    background: ${({ theme }) => theme.colors.teacherSettings.inputDisabledBackground};
+  input:disabled {
+    background: ${({ theme }) => theme.colors.background.bg3};
     color: ${({ theme }) => theme.colors.text.text4};
     cursor: not-allowed;
   }
@@ -1066,28 +1076,15 @@ const ClassCodeActions = styled.div`
 const ClassCodeBadge = styled.span`
   ${({ theme }) => theme.fonts.labelS};
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.classCodeBadgeBorder};
-  background: ${({ theme }) => theme.colors.teacherSettings.classCodeBadgeBackground};
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  background: ${({ theme }) => theme.colors.background.bg4};
   color: ${({ theme }) => theme.colors.text.text1};
   padding: 10px 18px;
 `;
 
-const CodeCopyButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
+const CodeCopyButton = styled(InlineButton)`
+  height: 42px;
   padding: 10px 12px;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
   svg {
     width: 16px;
     height: 16px;
@@ -1102,14 +1099,20 @@ const AccountLinkList = styled.div`
   align-items: flex-start;
 `;
 
-const AccountLinkButton = styled.button`
-  ${({ theme }) => theme.fonts.body2};
-  color: ${({ theme }) => theme.colors.text.text1};
+const AccountLinkButton = styled(InlineButton)`
+  padding: 0;
+  height: auto;
+  justify-content: flex-start;
 `;
 
-const DangerLinkButton = styled.button`
-  ${({ theme }) => theme.fonts.body2};
-  color: ${({ theme }) => theme.colors.semantic.error};
+const DangerLinkButton = styled(InlineButton)`
+  padding: 0;
+  height: auto;
+  justify-content: flex-start;
+
+  span {
+    color: ${({ theme }) => theme.colors.semantic.error};
+  }
 `;
 
 const ModalOverlay = styled.div`
@@ -1136,7 +1139,7 @@ const ModalIconWrap = styled.div`
   width: 58px;
   height: 58px;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.teacherSettings.modalIconBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: flex;
   align-items: center;
@@ -1150,12 +1153,12 @@ const ModalIconWrap = styled.div`
 `;
 
 const ConfirmIconWrap = styled(ModalIconWrap)`
-  background: ${({ theme }) => theme.colors.teacherSettings.confirmIconBackground};
-  color: ${({ theme }) => theme.colors.teacherSettings.confirmIconColor};
+  background: ${({ theme }) => theme.colors.semantic.warningSoft};
+  color: ${({ theme }) => theme.colors.semantic.warning};
 `;
 
 const SuccessIconWrap = styled(ModalIconWrap)`
-  background: ${({ theme }) => theme.colors.teacherSettings.modalIconBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
   color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
@@ -1206,23 +1209,9 @@ const RequiredAsterisk = styled.span`
   color: ${({ theme }) => theme.colors.semantic.error};
 `;
 
-const FormInput = styled.input`
-  ${({ theme }) => theme.fonts.body2};
+const FormInput = styled(TextField)`
   width: 100%;
-  min-width: 0;
-  display: block;
-  border: 1px solid ${({ theme }) => theme.colors.border.border2};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  padding: 10px 12px;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.text4};
-  }
+  gap: 0;
 `;
 
 const FormSelect = styled.select`
@@ -1240,8 +1229,8 @@ const FormSelect = styled.select`
 const ConfirmSummaryBox = styled.div`
   margin-top: 18px;
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBorder};
-  background: ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBackground};
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  background: ${({ theme }) => theme.colors.background.bg4};
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -1268,8 +1257,8 @@ const ConfirmSummaryValue = styled.span`
 const ConfirmErrorBox = styled.div`
   margin-top: 14px;
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmErrorBorder};
-  background: ${({ theme }) => theme.colors.teacherSettings.confirmErrorBackground};
+  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
   padding: 10px 12px;
   display: flex;
   align-items: center;
@@ -1307,8 +1296,8 @@ const ConfirmErrorDescription = styled.p`
 const SuccessCodeCard = styled.div`
   margin-top: 16px;
   border-radius: 14px;
-  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBorder};
-  background: ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBackground};
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  background: ${({ theme }) => theme.colors.background.bg4};
   padding: 14px;
   text-align: center;
 `;
@@ -1325,40 +1314,18 @@ const SuccessCodeValue = styled.p`
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
-const SuccessCopyButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
+const SuccessCopyButton = styled(InlineButton)`
   margin-top: 10px;
-  width: 100%;
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  padding: 11px 12px;
-  display: inline-flex;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
-
+  height: 42px;
   svg {
     width: 16px;
     height: 16px;
   }
 `;
 
-const SuccessConfirmButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
+const SuccessConfirmButton = styled(InlineButton)`
   margin-top: 14px;
-  width: 100%;
-  border: none;
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.brand.primary};
-  color: ${({ theme }) => theme.colors.text.textW};
-  padding: 11px 12px;
+  height: 42px;
 `;
 
 const ModalButtonRow = styled.div`
@@ -1368,28 +1335,14 @@ const ModalButtonRow = styled.div`
   gap: 10px;
 `;
 
-const ModalGhostButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  padding: 11px 12px;
+const ModalGhostButton = styled(InlineButton)`
+  width: 100%;
+  height: 42px;
 `;
 
-const ModalPrimaryButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  border: none;
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.brand.primary};
-  color: ${({ theme }) => theme.colors.text.textW};
-  padding: 11px 12px;
-
-  &:disabled {
-    background: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledBackground};
-    color: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledText};
-    cursor: not-allowed;
-  }
+const ModalPrimaryButton = styled(InlineButton)`
+  width: 100%;
+  height: 42px;
 `;
 
 const WithdrawConfirmButton = styled(ModalPrimaryButton)`
