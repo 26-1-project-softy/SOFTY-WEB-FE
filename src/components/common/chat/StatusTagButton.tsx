@@ -1,7 +1,7 @@
 ﻿import styled from '@emotion/styled';
 import { IcDown } from '@/icons';
 
-export type StatusTagTone = 'processing' | 'done' | 'absence';
+export type StatusTagTone = 'processing' | 'done' | 'hold' | 'absence';
 
 type StatusTagButtonProps = {
   label: string;
@@ -35,16 +35,19 @@ const TagButton = styled.button<{ $tone: StatusTagTone }>`
     ${({ $tone }) => {
       if ($tone === 'absence') return '#E8B16E';
       if ($tone === 'processing') return '#8FCBC2';
+      if ($tone === 'hold') return '#CBB8FF';
       return '#BFC7D4';
     }};
   background: ${({ $tone }) => {
     if ($tone === 'absence') return '#FFF2E2';
     if ($tone === 'processing') return '#E6F7F2';
+    if ($tone === 'hold') return '#F2ECFF';
     return '#F3F5F8';
   }};
   color: ${({ $tone }) => {
     if ($tone === 'absence') return '#C56A17';
     if ($tone === 'processing') return '#3E8D80';
+    if ($tone === 'hold') return '#6F53B8';
     return '#586072';
   }};
 
