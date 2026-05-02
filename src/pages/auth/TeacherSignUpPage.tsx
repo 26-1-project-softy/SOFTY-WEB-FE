@@ -1,5 +1,6 @@
 ﻿import styled from '@emotion/styled';
 import { InlineButton } from '@/components/common/InlineButton';
+import { TextField } from '@/components/common/TextField';
 import { IcCheck, IcCopy, IcInfo, IcSparkles } from '@/icons';
 import { useTeacherSignUpForm } from '@/features/auth/hooks/useTeacherSignUpForm';
 
@@ -44,81 +45,56 @@ export const TeacherSignUpPage = () => {
 
             <SignUpForm onSubmit={handleSubmit}>
               <InputGroup>
-                <Label
-                  htmlFor="teacherName"
-                  hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
-                >
-                  이름 <RequiredMark>*</RequiredMark>
-                </Label>
-                <Input
+                <FieldInput
                   id="teacherName"
                   name="teacherName"
+                  label="이름"
+                  isRequired
                   value={teacherName}
                   onChange={event => setTeacherName(event.target.value)}
                   placeholder="홍길동"
-                  hasError={Boolean(showFieldErrors && fieldErrors.teacherName)}
+                  errorMessage={showFieldErrors ? fieldErrors.teacherName : undefined}
                 />
-                {showFieldErrors && fieldErrors.teacherName ? (
-                  <FieldErrorText>{fieldErrors.teacherName}</FieldErrorText>
-                ) : null}
               </InputGroup>
 
               <InputGroup>
-                <Label
-                  htmlFor="schoolName"
-                  hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
-                >
-                  학교명 <RequiredMark>*</RequiredMark>
-                </Label>
-                <Input
+                <FieldInput
                   id="schoolName"
                   name="schoolName"
+                  label="학교명"
+                  isRequired
                   value={schoolName}
                   onChange={event => setSchoolName(event.target.value)}
                   placeholder="한국초등학교"
-                  hasError={Boolean(showFieldErrors && fieldErrors.schoolName)}
+                  errorMessage={showFieldErrors ? fieldErrors.schoolName : undefined}
                 />
-                {showFieldErrors && fieldErrors.schoolName ? (
-                  <FieldErrorText>{fieldErrors.schoolName}</FieldErrorText>
-                ) : null}
               </InputGroup>
 
               <InlineTwoColumn>
                 <InputGroup>
-                  <Label htmlFor="grade" hasError={Boolean(showFieldErrors && fieldErrors.grade)}>
-                    학년 <RequiredMark>*</RequiredMark>
-                  </Label>
-                  <Input
+                  <FieldInput
                     id="grade"
                     name="grade"
+                    label="학년"
+                    isRequired
                     value={grade}
                     onChange={event => setGrade(event.target.value)}
                     placeholder="3"
-                    hasError={Boolean(showFieldErrors && fieldErrors.grade)}
+                    errorMessage={showFieldErrors ? fieldErrors.grade : undefined}
                   />
-                  {showFieldErrors && fieldErrors.grade ? (
-                    <FieldErrorText>{fieldErrors.grade}</FieldErrorText>
-                  ) : null}
                 </InputGroup>
 
                 <InputGroup>
-                  <Label
-                    htmlFor="classNumber"
-                    hasError={Boolean(showFieldErrors && fieldErrors.classNumber)}
-                  >
-                    반 <RequiredMark>*</RequiredMark>
-                  </Label>
-                  <Input
+                  <FieldInput
                     id="classNumber"
                     name="classNumber"
+                    label="반"
+                    isRequired
                     value={classNumber}
                     onChange={event => setClassNumber(event.target.value)}
                     placeholder="2"
-                    hasError={Boolean(showFieldErrors && fieldErrors.classNumber)}
+                    errorMessage={showFieldErrors ? fieldErrors.classNumber : undefined}
                   />
-                  {showFieldErrors && fieldErrors.classNumber ? (
-                    <FieldErrorText>{fieldErrors.classNumber}</FieldErrorText>
-                  ) : null}
                 </InputGroup>
               </InlineTwoColumn>
 
@@ -230,7 +206,7 @@ export const TeacherSignUpPage = () => {
 
 const PageContainer = styled.div`
   min-height: 100vh;
-  background: #e5e5e5;
+  background: ${({ theme }) => theme.colors.background.bg5};
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -242,8 +218,8 @@ const Card = styled.section`
   width: 100%;
   max-width: 560px;
   border-radius: 20px;
-  background: #f4f4f4;
-  box-shadow: 0 12px 22px rgba(0, 0, 0, 0.14);
+  background: ${({ theme }) => theme.colors.background.bg3};
+  box-shadow: ${({ theme }) => theme.colors.shadow.modal};
   padding: 28px 30px;
 
   @media (max-width: 640px) {
@@ -256,7 +232,7 @@ const ProgressTrack = styled.div`
   width: 100%;
   height: 3px;
   border-radius: 999px;
-  background: #bdbdbd;
+  background: ${({ theme }) => theme.colors.neutral.neutral400};
   overflow: hidden;
 `;
 
@@ -290,7 +266,7 @@ const SignUpForm = styled.form`
 const InputGroup = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0;
 `;
 
 const InlineTwoColumn = styled.div`
@@ -299,40 +275,8 @@ const InlineTwoColumn = styled.div`
   gap: 10px;
 `;
 
-const Label = styled.label<{ hasError?: boolean }>`
-  ${({ theme }) => theme.fonts.labelS};
-  color: ${({ hasError, theme }) =>
-    hasError ? theme.colors.semantic.error : theme.colors.text.text1};
-`;
-
-const RequiredMark = styled.span`
-  color: ${({ theme }) => theme.colors.semantic.error};
-`;
-
-const Input = styled.input<{ hasError?: boolean }>`
-  ${({ theme }) => theme.fonts.body2};
-  border: 1px solid ${({ hasError }) => (hasError ? '#ff5b66' : '#c6c6c6')};
-  border-radius: 10px;
-  background: #f4f4f4;
-  padding: 11px 12px;
-  color: ${({ theme }) => theme.colors.text.text1};
-
-  &::placeholder {
-    color: #9a9a9a;
-  }
-
-  &:focus {
-    outline: none;
-    border-color: ${({ hasError, theme }) => (hasError ? '#ff5b66' : theme.colors.brand.primary)};
-    box-shadow: ${({ hasError }) =>
-      hasError ? '0 0 0 2px rgba(255, 44, 61, 0.14)' : '0 0 0 2px rgba(85, 181, 166, 0.16)'};
-  }
-`;
-
-const FieldErrorText = styled.p`
-  ${({ theme }) => theme.fonts.caption};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
+const FieldInput = styled(TextField)`
+  width: 100%;
 `;
 
 const ErrorBox = styled.div`
@@ -340,8 +284,8 @@ const ErrorBox = styled.div`
   gap: 10px;
   align-items: center;
   border-radius: 16px;
-  border: 1px solid #ff5b66;
-  background: #ffe9ec;
+  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
   padding: 12px 14px;
 `;
 
@@ -394,8 +338,8 @@ const SuccessIconContainer = styled.span`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: #e8f3f1;
-  color: #5b8f8a;
+  background: ${({ theme }) => theme.colors.background.bg4};
+  color: ${({ theme }) => theme.colors.brand.dark};
 
   svg {
     width: 30px;
@@ -421,8 +365,8 @@ const ClassCodeCard = styled.div`
   width: 100%;
   margin-top: 18px;
   border-radius: 14px;
-  border: 1px solid #c9e6e1;
-  background: #ddebe8;
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  background: ${({ theme }) => theme.colors.background.bg4};
   padding: 18px 14px;
   display: flex;
   flex-direction: column;
@@ -433,7 +377,7 @@ const ClassCodeCard = styled.div`
 const ClassLabel = styled.p`
   ${({ theme }) => theme.fonts.caption};
   margin: 0;
-  color: #4a7b76;
+  color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
 const ClassCode = styled.p`
@@ -455,6 +399,6 @@ const CopyButton = styled(InlineButton)`
 
 const FooterText = styled.p`
   ${({ theme }) => theme.fonts.body3};
-  color: #919191;
+  color: ${({ theme }) => theme.colors.neutral.neutral500};
   margin: 18px 0 0;
 `;
