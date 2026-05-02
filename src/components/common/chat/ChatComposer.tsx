@@ -27,7 +27,7 @@ export const ChatComposer = ({
 
   return (
     <ComposerContainer>
-      <ComposerInput
+      <ComposerTextarea
         value={value}
         placeholder={placeholder}
         onChange={event => onChange(event.target.value)}
@@ -47,7 +47,7 @@ export const ChatComposer = ({
 
 const ComposerContainer = styled.div`
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   gap: 12px;
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
   border-radius: 12px;
@@ -55,12 +55,16 @@ const ComposerContainer = styled.div`
   padding: 10px 12px;
 `;
 
-const ComposerInput = styled.input`
+const ComposerTextarea = styled.textarea`
   ${({ theme }) => theme.fonts.body2};
   flex: 1;
   border: none;
   background: transparent;
   color: ${({ theme }) => theme.colors.text.text1};
+  resize: none;
+  min-height: 24px;
+  max-height: 132px;
+  line-height: 1.5;
 
   &::placeholder {
     color: ${({ theme }) => theme.colors.text.text4};
