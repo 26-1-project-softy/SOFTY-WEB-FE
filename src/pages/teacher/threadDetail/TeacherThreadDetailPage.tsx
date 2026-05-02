@@ -706,7 +706,7 @@ const ConversationPanel = styled.section`
 const MessageArea = styled.div`
   flex: 1;
   min-height: 0;
-  background: ${({ theme }) => theme.colors.reports.previewBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
   padding: 16px 14px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -722,7 +722,7 @@ const DetailErrorBox = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: ${({ theme }) => theme.colors.reports.previewBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
 `;
 
 const DetailErrorIcon = styled.span`
@@ -945,7 +945,7 @@ const AnalysisErrorBanner = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 10px;
-  border: 1px solid ${({ theme }) => theme.colors.reports.modalErrorBorder};
+  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
   border-radius: 16px;
   background: ${({ theme }) => theme.colors.background.bg1};
   padding: 12px;
@@ -1003,7 +1003,7 @@ const LowRiskCard = styled.div<{ $risk: 'low' | 'high' }>`
   background: ${({ $risk, theme }) =>
     $risk === 'high' ? theme.colors.semantic.errorSoft : theme.colors.semantic.successSoft};
   border-color: ${({ $risk, theme }) =>
-    $risk === 'high' ? theme.colors.reports.modalErrorBorder : theme.colors.border.border1};
+    $risk === 'high' ? theme.colors.semantic.error : theme.colors.border.border1};
   padding: 12px;
 `;
 

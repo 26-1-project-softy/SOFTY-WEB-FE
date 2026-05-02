@@ -78,7 +78,7 @@ const DialogOverlay = styled.div`
   align-items: center;
   justify-content: center;
   padding: 24px;
-  background: ${({ theme }) => theme.colors.overlay.dim1};
+  background: ${({ theme }) => theme.colors.overlay.dim};
 
   @media (max-width: 393px) {
     padding: 16px;

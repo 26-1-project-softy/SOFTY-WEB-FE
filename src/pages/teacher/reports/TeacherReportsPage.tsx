@@ -40,19 +40,19 @@ export const TeacherReportsPage = () => {
   return (
     <ReportsPageContainer>
       <ReportListSection>
-        {isLoading ? <StatusText>목록을 불러오는 중이에요...</StatusText> : null}
+        {isLoading ? <StatusText>목록??불러?�는 중이?�요...</StatusText> : null}
         {hasListError ? (
           <ErrorPane>
             <ErrorIconWrap>
               <IcError />
             </ErrorIconWrap>
-            <ErrorTitle>대화 목록을 불러올 수 없어요.</ErrorTitle>
+            <ErrorTitle>?�??목록??불러?????�어??</ErrorTitle>
             <ErrorDescription>{listErrorDisplayMessage}</ErrorDescription>
             <InlineButton
               variant="primary"
               size="L"
               icon={IcRefresh}
-              label="다시 시도"
+              label="?�시 ?�도"
               onClick={() => void fetchReportRooms()}
             />
           </ErrorPane>
@@ -63,11 +63,11 @@ export const TeacherReportsPage = () => {
             <EmptyIconWrap>
               <IcChat />
             </EmptyIconWrap>
-            <EmptyTitle>아직 데이터가 없어요.</EmptyTitle>
+            <EmptyTitle>?�직 ?�이?��? ?�어??</EmptyTitle>
             <EmptyDescription>
-              학부모와의 대화가 시작되면 이곳에서 대화를 선택해
+              ?��?모�????�?��? ?�작?�면 ?�곳?�서 ?�?��? ?�택??
               <br />
-              리포트를 생성할 수 있어요.
+              리포?��? ?�성?????�어??
             </EmptyDescription>
           </EmptyPane>
         ) : null}
@@ -86,7 +86,7 @@ export const TeacherReportsPage = () => {
                     <StudentName>{item.studentName || '-'}</StudentName>
                   </ReportTitleWrap>
                   <LastMessageDate>
-                    마지막 메시지: {formatDateOnly(item.lastMessageAt)}
+                    마�?�?메시지: {formatDateOnly(item.lastMessageAt)}
                   </LastMessageDate>
                 </ReportItemTopRow>
 
@@ -112,7 +112,7 @@ export const TeacherReportsPage = () => {
               variant="primary"
               size="L"
               icon={IcFile}
-              label={isGeneratingPdf ? '생성 중...' : 'PDF 생성하기'}
+              label={isGeneratingPdf ? '?�성 �?..' : 'PDF ?�성?�기'}
               disabled={
                 !selectedReport ||
                 hasNoData ||
@@ -131,25 +131,25 @@ export const TeacherReportsPage = () => {
               <EmptyIconWrap>
                 <IcFile />
               </EmptyIconWrap>
-              <EmptyTitle>미리볼 대화를 선택해주세요</EmptyTitle>
+              <EmptyTitle>미리�??�?��? ?�택?�주?�요</EmptyTitle>
               <EmptyDescription>
-                왼쪽 목록에서 대화를 선택하면 대화 리포트를 확인할 수 있어요.
+                ?�쪽 목록?�서 ?�?��? ?�택?�면 ?�??리포?��? ?�인?????�어??
               </EmptyDescription>
             </PreviewEmptyPane>
           ) : isPreviewLoading ? (
-            <StatusText>미리보기를 불러오는 중이에요...</StatusText>
+            <StatusText>미리보기�?불러?�는 중이?�요...</StatusText>
           ) : isPreviewLoadError ? (
             <ErrorPane>
               <ErrorIconWrap>
                 <IcError />
               </ErrorIconWrap>
-              <ErrorTitle>미리보기를 불러올 수 없어요.</ErrorTitle>
-              <ErrorDescription>잠시 후 다시 시도해 주세요.</ErrorDescription>
+              <ErrorTitle>미리보기�?불러?????�어??</ErrorTitle>
+              <ErrorDescription>?�시 ???�시 ?�도??주세??</ErrorDescription>
               <InlineButton
                 variant="primary"
                 size="L"
                 icon={IcRefresh}
-                label="다시 시도"
+                label="?�시 ?�도"
                 onClick={retryPreviewMessages}
               />
             </ErrorPane>
@@ -158,8 +158,8 @@ export const TeacherReportsPage = () => {
               <EmptyIconWrap>
                 <IcFile />
               </EmptyIconWrap>
-              <EmptyTitle>미리보기 데이터가 없어요.</EmptyTitle>
-              <EmptyDescription>선택한 채팅방에 표시할 메시지가 없어요.</EmptyDescription>
+              <EmptyTitle>미리보기 ?�이?��? ?�어??</EmptyTitle>
+              <EmptyDescription>?�택??채팅방에 ?�시??메시지가 ?�어??</EmptyDescription>
             </PreviewEmptyPane>
           ) : (
             <>
@@ -197,7 +197,7 @@ export const TeacherReportsPage = () => {
                   <InlineButton
                     variant="ghost"
                     size="M"
-                    label={isPreviewLoadingMore ? '불러오는 중...' : '더 보기'}
+                    label={isPreviewLoadingMore ? '불러?�는 �?..' : '??보기'}
                     disabled={isPreviewLoadingMore}
                     onClick={handleLoadMorePreview}
                   />
@@ -215,8 +215,8 @@ export const TeacherReportsPage = () => {
               <IcFile />
             </ModalIconWrap>
 
-            <ModalTitle>리포트 생성 완료</ModalTitle>
-            <ModalDescription>PDF 파일이 준비되었습니다.</ModalDescription>
+            <ModalTitle>리포???�성 ?�료</ModalTitle>
+            <ModalDescription>PDF ?�일??준비되?�습?�다.</ModalDescription>
 
             <FileInfoCard>
               <FileInfoLabel>파일명</FileInfoLabel>
@@ -229,8 +229,8 @@ export const TeacherReportsPage = () => {
                   <IcError />
                 </ModalErrorIcon>
                 <ModalErrorTextWrap>
-                  <ModalErrorTitle>PDF 다운로드에 실패했어요.</ModalErrorTitle>
-                  <ModalErrorDescription>잠시 후 다시 시도해 주세요.</ModalErrorDescription>
+                  <ModalErrorTitle>PDF ?�운로드???�패?�어??</ModalErrorTitle>
+                  <ModalErrorDescription>?�시 ???�시 ?�도??주세??</ModalErrorDescription>
                 </ModalErrorTextWrap>
               </ModalErrorBox>
             ) : null}
@@ -239,7 +239,7 @@ export const TeacherReportsPage = () => {
               <InlineButton
                 variant="ghost"
                 size="L"
-                label="닫기"
+                label="?�기"
                 width="100%"
                 onClick={handleCloseReportCompleteModal}
               />
@@ -247,7 +247,7 @@ export const TeacherReportsPage = () => {
                 variant="primary"
                 size="L"
                 icon={IcDownload}
-                label={isDownloadingPdf ? '다운로드 중...' : '다운로드'}
+                label={isDownloadingPdf ? '?�운로드 �?..' : '?�운로드'}
                 width="100%"
                 disabled={isDownloadingPdf}
                 onClick={() => void handleDownloadGeneratedPdf()}
@@ -405,7 +405,7 @@ const PreviewTitle = styled.h3`
 const PreviewBody = styled.div`
   min-height: 620px;
   border-radius: 0 0 24px 24px;
-  background: ${({ theme }) => theme.colors.reports.previewBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
   padding: 22px;
   display: flex;
   flex-direction: column;
@@ -429,7 +429,7 @@ const SenderAvatar = styled.div`
   width: 44px;
   height: 44px;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.reports.senderAvatarBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: inline-flex;
   align-items: center;
@@ -557,7 +557,7 @@ const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 50;
-  background: ${({ theme }) => theme.colors.overlay.dim1};
+  background: ${({ theme }) => theme.colors.overlay.dim};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -626,9 +626,9 @@ const ModalActionRow = styled.div`
 
 const ModalErrorBox = styled.div`
   margin-top: 14px;
-  border: 1px solid ${({ theme }) => theme.colors.reports.modalErrorBorder};
+  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
   border-radius: 18px;
-  background: ${({ theme }) => theme.colors.reports.modalErrorBackground};
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
   padding: 14px 16px;
   display: flex;
   align-items: center;
@@ -656,11 +656,11 @@ const ModalErrorTextWrap = styled.div`
 const ModalErrorTitle = styled.p`
   ${({ theme }) => theme.fonts.labelXS};
   margin: 0;
-  color: ${({ theme }) => theme.colors.reports.modalErrorText};
+  color: ${({ theme }) => theme.colors.semantic.error};
 `;
 
 const ModalErrorDescription = styled.p`
   ${({ theme }) => theme.fonts.body3};
   margin: 0;
-  color: ${({ theme }) => theme.colors.reports.modalErrorText};
+  color: ${({ theme }) => theme.colors.semantic.error};
 `;
