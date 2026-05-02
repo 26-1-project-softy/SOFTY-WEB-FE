@@ -50,6 +50,17 @@ type ChatRoomMessagesApiResponse = {
   } | null;
 };
 
+type MarkMessagesReadResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: {
+    chatRoomId: number;
+    unreadCount: number;
+    lastReadAt: string;
+  } | null;
+};
+
 type RiskFeedbackPayload = {
   messageId: number;
   feedback: 'APPROPRIATE' | 'INAPPROPRIATE';
@@ -134,6 +145,18 @@ export const TeacherThreadDetailPage = () => {
 
   const chatRoomId = useMemo(() => Number(threadId), [threadId]);
 
+  const markMessagesAsRead = useCallback(async () => {
+    if (!Number.isFinite(chatRoomId) || chatRoomId <= 0) {
+      return;
+    }
+
+    try {
+      await apiClient.post<MarkMessagesReadResponse>(`/chat-rooms/${chatRoomId}/read`);
+    } catch {
+      // 읽음 처리는 부가 동작이므로, 실패해도 화면 흐름은 유지합니다.
+    }
+  }, [chatRoomId]);
+
   const loadChatRoomDetail = useCallback(async () => {
     if (!Number.isFinite(chatRoomId) || chatRoomId <= 0) {
       setLoadState('error');
@@ -204,6 +227,10 @@ export const TeacherThreadDetailPage = () => {
         setMessagesNextCursor(payload.nextCursor);
         setMessagesHasNext(payload.hasNext);
         setMessagesPartialError('');
+
+        if (!append) {
+          void markMessagesAsRead();
+        }
       } catch {
         if (append) {
           setMessagesPartialError('채팅 내역 일부를 불러오지 못했어요.');
@@ -217,7 +244,7 @@ export const TeacherThreadDetailPage = () => {
         setIsMessagesLoadingMore(false);
       }
     },
-    [chatRoomId]
+    [chatRoomId, markMessagesAsRead]
   );
 
   useEffect(() => {
