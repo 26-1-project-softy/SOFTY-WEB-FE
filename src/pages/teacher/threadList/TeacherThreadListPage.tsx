@@ -1,32 +1,199 @@
-﻿import styled from '@emotion/styled';
+﻿import { useEffect, useMemo, useState } from 'react';
+import styled from '@emotion/styled';
 import { InlineButton } from '@/components/common/InlineButton';
-import { IcError, IcRefresh } from '@/icons';
+import { SectionEmptyState } from '@/components/common/SectionEmptyState';
+import { apiClient } from '@/services/http/apiClient';
+import { IcChat, IcError, IcRefresh } from '@/icons';
 
-type InboxLoadState = 'error' | 'empty' | 'success';
+type InboxLoadState = 'loading' | 'error' | 'empty' | 'success';
+type IntentTone = 'counsel' | 'progress' | 'inquiry' | 'absence' | 'request' | 'done';
+
+type ThreadRoomItem = {
+  id: number;
+  counterpartName: string;
+  studentName: string;
+  preview: string;
+  timeText: string;
+  unreadCount: number;
+  tags: Array<{ label: string; tone: IntentTone }>;
+};
+
+type ChatRoomResponse = {
+  chatRoomId: number;
+  counterpartName: string;
+  studentName: string;
+  lastMessage: string;
+  lastMessageAt: string;
+  unreadCount: number;
+  status: string;
+  intentLabel: string;
+};
+
+type ChatRoomsApiResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  content?: ChatRoomResponse[];
+  nextCursor?: number | null;
+  size?: number;
+  hasNext?: boolean;
+};
+
+const resolveTagTone = (label: string): IntentTone => {
+  const value = label.trim().toLowerCase();
+
+  if (value.includes('상담') || value.includes('counsel')) return 'counsel';
+  if (value.includes('처리') || value.includes('진행') || value.includes('process'))
+    return 'progress';
+  if (value.includes('문의') || value.includes('question') || value.includes('inquiry'))
+    return 'inquiry';
+  if (value.includes('결석') || value.includes('지각') || value.includes('absence'))
+    return 'absence';
+  if (value.includes('요청') || value.includes('request')) return 'request';
+
+  return 'done';
+};
+
+const formatTimeText = (value: string) => {
+  if (!value) return '-';
+
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return value;
+
+  const now = new Date();
+  const isSameDay =
+    parsed.getFullYear() === now.getFullYear() &&
+    parsed.getMonth() === now.getMonth() &&
+    parsed.getDate() === now.getDate();
+
+  if (isSameDay) {
+    const hour24 = parsed.getHours();
+    const minute = `${parsed.getMinutes()}`.padStart(2, '0');
+    const period = hour24 >= 12 ? '오후' : '오전';
+    const hour12 = hour24 % 12 || 12;
+
+    return `${period} ${hour12}:${minute}`;
+  }
+
+  const year = parsed.getFullYear();
+  const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
+  const day = `${parsed.getDate()}`.padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
+const toThreadRoomItem = (room: ChatRoomResponse): ThreadRoomItem => {
+  const intentLabel = room.intentLabel?.trim() || '미분류';
+  const statusLabel = room.status?.trim() || '상태없음';
+
+  return {
+    id: room.chatRoomId,
+    counterpartName: room.counterpartName || '-',
+    studentName: room.studentName || '-',
+    preview: room.lastMessage || '-',
+    timeText: formatTimeText(room.lastMessageAt),
+    unreadCount: room.unreadCount ?? 0,
+    tags: [
+      { label: intentLabel, tone: resolveTagTone(intentLabel) },
+      { label: statusLabel, tone: resolveTagTone(statusLabel) },
+    ],
+  };
+};
 
 export const TeacherThreadListPage = () => {
-  const loadState: InboxLoadState = 'error';
+  const [rooms, setRooms] = useState<ThreadRoomItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [errorMessage, setErrorMessage] = useState('');
 
-  const handleRetry = () => {
-    // TODO: 대화 목록 조회 API 연결 후 재시도 로직 연동
+  const loadRooms = async () => {
+    try {
+      setIsLoading(true);
+      setErrorMessage('');
+
+      const { data } = await apiClient.get<ChatRoomsApiResponse>('/chat-rooms', {
+        params: { page: 0, size: 20 },
+      });
+
+      const list = data.content ?? [];
+      setRooms(list.map(toThreadRoomItem));
+    } catch {
+      setRooms([]);
+      setErrorMessage('대화 목록을 불러올 수 없어요.');
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  useEffect(() => {
+    void loadRooms();
+  }, []);
+
+  const loadState = useMemo<InboxLoadState>(() => {
+    if (isLoading) return 'loading';
+    if (errorMessage) return 'error';
+    if (rooms.length === 0) return 'empty';
+    return 'success';
+  }, [errorMessage, isLoading, rooms.length]);
 
   return (
     <ThreadListPageContainer>
+      <InboxListSection>
+        {loadState === 'loading' ? <StatusText>대화 목록을 불러오는 중입니다.</StatusText> : null}
+
+        {loadState === 'success' ? (
+          <ThreadList>
+            {rooms.map(room => (
+              <ThreadCard key={room.id} type="button">
+                <Avatar>{room.studentName.charAt(0)}</Avatar>
+                <CardBody>
+                  <TopRow>
+                    <NameWrap>
+                      <ParentName>{room.counterpartName}</ParentName>
+                      <StudentName>{room.studentName}</StudentName>
+                    </NameWrap>
+                    <TimeText>{room.timeText}</TimeText>
+                  </TopRow>
+                  <PreviewText>{room.preview}</PreviewText>
+                  <BottomRow>
+                    <TagWrap>
+                      {room.tags.map(tag => (
+                        <Tag key={`${room.id}-${tag.label}`} tone={tag.tone}>
+                          {tag.label}
+                        </Tag>
+                      ))}
+                    </TagWrap>
+                    {room.unreadCount > 0 ? <UnreadBadge>{room.unreadCount}</UnreadBadge> : null}
+                  </BottomRow>
+                </CardBody>
+              </ThreadCard>
+            ))}
+          </ThreadList>
+        ) : null}
+
+        {loadState === 'empty' ? (
+          <EmptySection>
+            <SectionEmptyState
+              icon={IcChat}
+              title="표시할 대화 목록이 없어요"
+              description="새 메시지가 오면 이곳에 채팅방이 표시됩니다."
+            />
+          </EmptySection>
+        ) : null}
+      </InboxListSection>
+
       {loadState === 'error' ? (
         <ErrorStateSection>
           <ErrorIconWrap>
             <IcError />
           </ErrorIconWrap>
           <ErrorTitle>대화 목록을 불러올 수 없어요</ErrorTitle>
-          <ErrorDescription>잠시 후 다시 시도해 주세요.</ErrorDescription>
+          <ErrorDescription>잠시 후 다시 시도해주세요.</ErrorDescription>
           <RetryButton
             type="button"
             variant="primary"
             size="L"
             icon={IcRefresh}
             label="다시 시도"
-            onClick={handleRetry}
+            onClick={() => void loadRooms()}
           />
         </ErrorStateSection>
       ) : null}
@@ -37,16 +204,160 @@ export const TeacherThreadListPage = () => {
 const ThreadListPageContainer = styled.section`
   min-height: calc(100vh - 72px);
   background: ${({ theme }) => theme.colors.background.bg2};
+`;
+
+const InboxListSection = styled.div`
+  width: 100%;
+  padding: 24px 24px 0;
+`;
+
+const StatusText = styled.p`
+  ${({ theme }) => theme.fonts.body2};
+  margin: 12px 0 0;
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const ThreadList = styled.div`
+  margin-top: 20px;
   display: flex;
+  flex-direction: column;
+  gap: 14px;
+`;
+
+const ThreadCard = styled.button`
+  width: 100%;
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border-radius: 12px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  padding: 16px;
+  display: flex;
+  gap: 14px;
+  text-align: left;
+`;
+
+const Avatar = styled.span`
+  ${({ theme }) => theme.fonts.labelS};
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.background.bg4};
+  color: ${({ theme }) => theme.colors.brand.dark};
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 24px;
+  flex-shrink: 0;
+`;
+
+const CardBody = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const TopRow = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+const NameWrap = styled.div`
+  display: flex;
+  gap: 8px;
+  align-items: center;
+`;
+
+const ParentName = styled.strong`
+  ${({ theme }) => theme.fonts.labelM};
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const StudentName = styled.span`
+  ${({ theme }) => theme.fonts.body3};
+  color: ${({ theme }) => theme.colors.text.text4};
+`;
+
+const TimeText = styled.span`
+  ${({ theme }) => theme.fonts.body3};
+  color: ${({ theme }) => theme.colors.text.text4};
+`;
+
+const PreviewText = styled.p`
+  ${({ theme }) => theme.fonts.body2};
+  margin: 10px 0 0;
+  color: ${({ theme }) => theme.colors.text.text3};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+`;
+
+const BottomRow = styled.div`
+  margin-top: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+`;
+
+const TagWrap = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const Tag = styled.span<{ tone: IntentTone }>`
+  ${({ theme }) => theme.fonts.labelXS};
+  border-radius: 999px;
+  padding: 4px 10px;
+  border: 1px solid
+    ${({ tone, theme }) => {
+      if (tone === 'counsel') return '#8CB6FF';
+      if (tone === 'progress') return '#8FCBC2';
+      if (tone === 'inquiry') return '#8AC78A';
+      if (tone === 'absence') return '#F8C088';
+      if (tone === 'request') return '#C49BFF';
+      return theme.colors.border.border2;
+    }};
+  color: ${({ tone, theme }) => {
+    if (tone === 'counsel') return '#4E76CC';
+    if (tone === 'progress') return '#3E8D80';
+    if (tone === 'inquiry') return '#3A8C3F';
+    if (tone === 'absence') return '#C56A17';
+    if (tone === 'request') return '#7D46D6';
+    return theme.colors.text.text3;
+  }};
+  background: ${({ tone }) => {
+    if (tone === 'counsel') return '#EDF4FF';
+    if (tone === 'progress') return '#E9F7F4';
+    if (tone === 'inquiry') return '#EDFAEE';
+    if (tone === 'absence') return '#FFF5E8';
+    if (tone === 'request') return '#F4EDFF';
+    return '#F5F6F8';
+  }};
+`;
+
+const UnreadBadge = styled.span`
+  ${({ theme }) => theme.fonts.labelS};
+  min-width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: ${({ theme }) => theme.colors.brand.primary};
+  color: ${({ theme }) => theme.colors.text.textW};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 8px;
+`;
+
+const EmptySection = styled.div`
+  min-height: calc(100vh - 180px);
 `;
 
 const ErrorStateSection = styled.div`
+  min-height: calc(100vh - 240px);
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
   text-align: center;
 `;
 
@@ -54,8 +365,8 @@ const ErrorIconWrap = styled.span`
   color: ${({ theme }) => theme.colors.semantic.error};
 
   svg {
-    width: 32px;
-    height: 32px;
+    width: 28px;
+    height: 28px;
   }
 `;
 
