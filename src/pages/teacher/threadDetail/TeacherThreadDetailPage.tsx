@@ -7,10 +7,11 @@ import { ChatComposer } from '@/components/common/chat/ChatComposer';
 import { StatusTagButton, type StatusTagTone } from '@/components/common/chat/StatusTagButton';
 import { ROUTES } from '@/constants/routes';
 import { apiClient } from '@/services/http/apiClient';
-import { IcBack, IcSparkles } from '@/icons';
+import { IcBack, IcError, IcInfo, IcRefresh, IcSparkles } from '@/icons';
 
 type ThreadStatus = 'processing' | 'done' | 'hold';
 type DetailLoadState = 'loading' | 'error' | 'success';
+type AnalysisRiskLevel = 'LOW' | 'HIGH';
 
 type ChatRoomDetailData = {
   chatRoomId: number;
@@ -47,6 +48,25 @@ type ChatRoomMessagesApiResponse = {
     nextCursor: number | null;
     hasNext: boolean;
   } | null;
+};
+
+type RiskFeedbackPayload = {
+  messageId: number;
+  feedback: 'APPROPRIATE' | 'INAPPROPRIATE';
+};
+
+type RiskFeedbackResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: null;
+};
+
+type AnalysisResult = {
+  targetMessageId: number;
+  riskLevel: AnalysisRiskLevel;
+  summary: string;
+  recommendedReply?: string | null;
 };
 
 type MessageItem = {
@@ -91,8 +111,11 @@ export const TeacherThreadDetailPage = () => {
   const [status, setStatus] = useState<ThreadStatus>('processing');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [messageInput, setMessageInput] = useState('');
-  const [isAnalyzing, setIsAnalyzing] = useState(false);
-  const [hasAnalysisResult, setHasAnalysisResult] = useState(false);
+  const [analysisResult] = useState<AnalysisResult | null>(null);
+  const [selectedFeedbackScore, setSelectedFeedbackScore] = useState<number | null>(null);
+  const [isFeedbackSaved, setIsFeedbackSaved] = useState(false);
+  const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false);
+  const [feedbackErrorMessage, setFeedbackErrorMessage] = useState('');
   const [loadState, setLoadState] = useState<DetailLoadState>('loading');
   const [detailErrorMessage, setDetailErrorMessage] = useState('');
   const [counterpartName, setCounterpartName] = useState('학부모');
@@ -101,12 +124,48 @@ export const TeacherThreadDetailPage = () => {
 
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [messagesError, setMessagesError] = useState('');
+  const [messagesPartialError, setMessagesPartialError] = useState('');
   const [isMessagesLoading, setIsMessagesLoading] = useState(false);
   const [isMessagesLoadingMore, setIsMessagesLoadingMore] = useState(false);
   const [messagesNextCursor, setMessagesNextCursor] = useState<number | null>(null);
   const [messagesHasNext, setMessagesHasNext] = useState(false);
 
   const chatRoomId = useMemo(() => Number(threadId), [threadId]);
+
+  const loadChatRoomDetail = useCallback(async () => {
+    if (!Number.isFinite(chatRoomId) || chatRoomId <= 0) {
+      setLoadState('error');
+      setDetailErrorMessage('대화 정보를 불러올 수 없어요');
+      return;
+    }
+
+    try {
+      setLoadState('loading');
+      setDetailErrorMessage('');
+
+      const { data } = await apiClient.get<ChatRoomDetailResponse>(`/chat-rooms/${chatRoomId}`);
+      const payload = data.data;
+
+      if (!payload) {
+        throw new Error('채팅방 데이터가 없습니다.');
+      }
+
+      setCounterpartName(payload.counterpartName || '학부모');
+      setStudentName(payload.studentName || '학생');
+      setIntentLabel(payload.intentLabel || payload.intentLavel || '미분류');
+      if (payload.status === 'DONE') {
+        setStatus('done');
+      } else if (payload.status === 'HOLD') {
+        setStatus('hold');
+      } else {
+        setStatus('processing');
+      }
+      setLoadState('success');
+    } catch {
+      setLoadState('error');
+      setDetailErrorMessage('대화 정보를 불러올 수 없어요');
+    }
+  }, [chatRoomId]);
 
   const loadMessages = useCallback(
     async ({ cursor, append }: { cursor?: number; append?: boolean } = {}) => {
@@ -142,10 +201,14 @@ export const TeacherThreadDetailPage = () => {
         setMessages(prev => (append ? [...prev, ...mapped] : mapped));
         setMessagesNextCursor(payload.nextCursor);
         setMessagesHasNext(payload.hasNext);
+        setMessagesPartialError('');
       } catch {
-        if (!append) {
+        if (append) {
+          setMessagesPartialError('채팅 내역 일부를 불러오지 못했어요.');
+        } else {
           setMessages([]);
           setMessagesError('메시지를 불러올 수 없어요.');
+          setMessagesPartialError('');
         }
       } finally {
         setIsMessagesLoading(false);
@@ -156,44 +219,9 @@ export const TeacherThreadDetailPage = () => {
   );
 
   useEffect(() => {
-    if (!Number.isFinite(chatRoomId) || chatRoomId <= 0) {
-      setLoadState('error');
-      setDetailErrorMessage('채팅방 정보를 불러올 수 없어요.');
-      return;
-    }
-
-    const loadChatRoomDetail = async () => {
-      try {
-        setLoadState('loading');
-        setDetailErrorMessage('');
-
-        const { data } = await apiClient.get<ChatRoomDetailResponse>(`/chat-rooms/${chatRoomId}`);
-        const payload = data.data;
-
-        if (!payload) {
-          throw new Error('채팅방 데이터가 없습니다.');
-        }
-
-        setCounterpartName(payload.counterpartName || '학부모');
-        setStudentName(payload.studentName || '학생');
-        setIntentLabel(payload.intentLabel || payload.intentLavel || '미분류');
-        if (payload.status === 'DONE') {
-          setStatus('done');
-        } else if (payload.status === 'HOLD') {
-          setStatus('hold');
-        } else {
-          setStatus('processing');
-        }
-        setLoadState('success');
-      } catch {
-        setLoadState('error');
-        setDetailErrorMessage('채팅방 정보를 불러올 수 없어요.');
-      }
-    };
-
     void loadChatRoomDetail();
     void loadMessages();
-  }, [chatRoomId, loadMessages]);
+  }, [loadChatRoomDetail, loadMessages]);
 
   const statusInfo = useMemo(() => {
     if (status === 'processing') {
@@ -216,34 +244,69 @@ export const TeacherThreadDetailPage = () => {
     };
   }, [status]);
 
+  const feedbackTargetMessageId = useMemo(() => {
+    if (analysisResult?.targetMessageId) {
+      return analysisResult.targetMessageId;
+    }
+
+    const lastMyMessage = [...messages].reverse().find(message => message.isMine);
+    return lastMyMessage?.id ?? messages[0]?.id ?? null;
+  }, [analysisResult, messages]);
+
   const hasMessageInput = messageInput.trim().length > 0;
-  const composerActionMode = hasAnalysisResult ? 'send' : 'assist';
-  const isComposerActionDisabled = !hasMessageInput || isAnalyzing;
+  const composerActionMode = analysisResult ? 'send' : 'assist';
+  const isComposerActionDisabled = !hasMessageInput;
 
   const handleComposerActionClick = () => {
-    if (!hasMessageInput || isAnalyzing) {
+    if (!hasMessageInput) {
       return;
     }
 
-    if (hasAnalysisResult) {
+    if (analysisResult) {
       return;
     }
-
-    setIsAnalyzing(true);
-
-    window.setTimeout(() => {
-      setIsAnalyzing(false);
-      setHasAnalysisResult(true);
-    }, 1200);
   };
 
   const handleMessageInputChange = (nextValue: string) => {
     setMessageInput(nextValue);
+  };
 
-    if (!nextValue.trim()) {
-      setIsAnalyzing(false);
-      setHasAnalysisResult(false);
+  const handleSelectFeedbackScore = async (score: number) => {
+    if (!feedbackTargetMessageId || isFeedbackSubmitting) {
+      return;
     }
+
+    const feedbackValue: RiskFeedbackPayload['feedback'] =
+      score >= 4 ? 'APPROPRIATE' : 'INAPPROPRIATE';
+
+    try {
+      setIsFeedbackSubmitting(true);
+      setFeedbackErrorMessage('');
+
+      await apiClient.post<RiskFeedbackResponse, unknown, RiskFeedbackPayload>(
+        `/risk-feedback/${feedbackTargetMessageId}`,
+        {
+          messageId: feedbackTargetMessageId,
+          feedback: feedbackValue,
+        }
+      );
+
+      setSelectedFeedbackScore(score);
+      setIsFeedbackSaved(true);
+    } catch {
+      setIsFeedbackSaved(false);
+      setFeedbackErrorMessage('피드백 저장에 실패했어요. 다시 시도해주세요.');
+    } finally {
+      setIsFeedbackSubmitting(false);
+    }
+  };
+
+  const handleApplyRecommendedReply = () => {
+    if (!analysisResult?.recommendedReply) {
+      return;
+    }
+
+    setMessageInput(analysisResult.recommendedReply);
   };
 
   const handleLoadMoreMessages = () => {
@@ -252,6 +315,19 @@ export const TeacherThreadDetailPage = () => {
     }
 
     void loadMessages({ cursor: messagesNextCursor, append: true });
+  };
+
+  const handleRetryMissingMessages = () => {
+    if (!messagesHasNext || messagesNextCursor == null || isMessagesLoadingMore) {
+      return;
+    }
+
+    void loadMessages({ cursor: messagesNextCursor, append: true });
+  };
+
+  const handleRetryConversation = async () => {
+    await loadChatRoomDetail();
+    await loadMessages();
   };
 
   return (
@@ -317,7 +393,22 @@ export const TeacherThreadDetailPage = () => {
       <ThreadBody>
         <ConversationPanel>
           {loadState === 'error' ? (
-            <DetailErrorBox>{detailErrorMessage}</DetailErrorBox>
+            <DetailErrorBox>
+              <DetailErrorIcon>
+                <IcError />
+              </DetailErrorIcon>
+              <DetailErrorTitle>
+                {detailErrorMessage || '대화 정보를 불러올 수 없어요'}
+              </DetailErrorTitle>
+              <DetailErrorDescription>잠시 후 다시 시도해주세요.</DetailErrorDescription>
+              <DetailRetryButton
+                variant="primary"
+                size="L"
+                icon={IcRefresh}
+                label="다시 시도"
+                onClick={() => void handleRetryConversation()}
+              />
+            </DetailErrorBox>
           ) : loadState === 'loading' ? (
             <DetailLoadingBox>채팅방 정보를 불러오는 중입니다.</DetailLoadingBox>
           ) : isMessagesLoading ? (
@@ -326,6 +417,29 @@ export const TeacherThreadDetailPage = () => {
             <DetailErrorBox>{messagesError}</DetailErrorBox>
           ) : (
             <MessageArea>
+              {messagesPartialError ? (
+                <PartialErrorBanner role="alert">
+                  <PartialErrorLeft>
+                    <PartialErrorIcon>
+                      <IcInfo />
+                    </PartialErrorIcon>
+                    <PartialErrorTextWrap>
+                      <PartialErrorTitle>채팅 내역을 불러오지 못했어요</PartialErrorTitle>
+                      <PartialErrorDesc>
+                        일부 데이터가 누락되었어요. 채팅 내역을 다시 불러와 주세요.
+                      </PartialErrorDesc>
+                    </PartialErrorTextWrap>
+                  </PartialErrorLeft>
+
+                  <InlineButton
+                    variant="text"
+                    size="M"
+                    label="다시 시도"
+                    onClick={handleRetryMissingMessages}
+                  />
+                </PartialErrorBanner>
+              ) : null}
+
               {messagesHasNext ? (
                 <LoadMoreWrap>
                   <InlineButton
@@ -380,7 +494,7 @@ export const TeacherThreadDetailPage = () => {
             <span>AI 소통 어시스턴트</span>
           </AssistantHeader>
 
-          {!isAnalyzing && !hasAnalysisResult ? (
+          {!analysisResult ? (
             <AssistantEmpty>
               <IcSparkles />
               <AssistantEmptyTitle>아직 분석할 메시지가 없어요</AssistantEmptyTitle>
@@ -390,26 +504,64 @@ export const TeacherThreadDetailPage = () => {
             </AssistantEmpty>
           ) : null}
 
-          {isAnalyzing ? (
-            <AssistantEmpty>
-              <TypingDots>
-                <span />
-                <span />
-                <span />
-              </TypingDots>
-              <AssistantEmptyTitle>메시지를 살펴보고 있어요</AssistantEmptyTitle>
-              <AssistantEmptyText>표현의 톤과 오해 소지를 점검하고 있어요.</AssistantEmptyText>
-            </AssistantEmpty>
-          ) : null}
+          {analysisResult ? (
+            <AnalysisResultSection>
+              <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
 
-          {hasAnalysisResult && !isAnalyzing ? (
-            <AssistantEmpty>
-              <RiskChip>분쟁 가능성 낮음</RiskChip>
-              <AssistantEmptyTitle>메시지를 분석했어요</AssistantEmptyTitle>
-              <AssistantEmptyText>
-                현재 문장은 부드럽고 명확해요. 전송 버튼으로 바로 보낼 수 있어요.
-              </AssistantEmptyText>
-            </AssistantEmpty>
+              {analysisResult.riskLevel === 'HIGH' ? (
+                <LowRiskCard $risk="high">
+                  <LowRiskTitle $risk="high">오해가 발생할 수 있는 메시지예요</LowRiskTitle>
+                  <LowRiskDescription>{analysisResult.summary}</LowRiskDescription>
+                </LowRiskCard>
+              ) : (
+                <LowRiskCard $risk="low">
+                  <LowRiskTitle $risk="low">문제 없는 메시지예요</LowRiskTitle>
+                  <LowRiskDescription>{analysisResult.summary}</LowRiskDescription>
+                </LowRiskCard>
+              )}
+
+              <FeedbackTitle>분쟁 가능성 분석 결과가 얼마나 적절했나요?</FeedbackTitle>
+              <ScoreButtonRow>
+                {[1, 2, 3, 4, 5].map(score => (
+                  <ScoreButton
+                    key={score}
+                    type="button"
+                    $isActive={selectedFeedbackScore === score}
+                    onClick={() => void handleSelectFeedbackScore(score)}
+                    disabled={isFeedbackSubmitting}
+                  >
+                    {score}
+                  </ScoreButton>
+                ))}
+              </ScoreButtonRow>
+              <ScoreLabelRow>
+                <span>매우 부적절</span>
+                <span>매우 적절</span>
+              </ScoreLabelRow>
+
+              {isFeedbackSaved ? (
+                <FeedbackSavedCard>
+                  <FeedbackSavedTitle>의견이 반영되었어요</FeedbackSavedTitle>
+                  <FeedbackSavedText>
+                    보내주신 피드백은 분석 품질 개선에 활용돼요.
+                  </FeedbackSavedText>
+                </FeedbackSavedCard>
+              ) : null}
+
+              {feedbackErrorMessage ? (
+                <FeedbackErrorText>{feedbackErrorMessage}</FeedbackErrorText>
+              ) : null}
+
+              {analysisResult.riskLevel === 'HIGH' && analysisResult.recommendedReply ? (
+                <RecommendSection>
+                  <RecommendTitle>AI 추천 답변</RecommendTitle>
+                  <RecommendCard>{analysisResult.recommendedReply}</RecommendCard>
+                  <RecommendApplyButton type="button" onClick={handleApplyRecommendedReply}>
+                    적용하기
+                  </RecommendApplyButton>
+                </RecommendSection>
+              ) : null}
+            </AnalysisResultSection>
           ) : null}
         </AssistantPanel>
       </ThreadBody>
@@ -520,12 +672,38 @@ const MessageArea = styled.div`
 `;
 
 const DetailErrorBox = styled.div`
-  ${({ theme }) => theme.fonts.labelS};
   flex: 1;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
+  text-align: center;
+  background: #cdd8d4;
+`;
+
+const DetailErrorIcon = styled.span`
   color: ${({ theme }) => theme.colors.semantic.error};
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+`;
+
+const DetailErrorTitle = styled.p`
+  ${({ theme }) => theme.fonts.labelM};
+  margin: 8px 0 0;
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const DetailErrorDescription = styled.p`
+  ${({ theme }) => theme.fonts.body3};
+  margin: 8px 0 0;
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const DetailRetryButton = styled(InlineButton)`
+  margin-top: 14px;
 `;
 
 const DetailLoadingBox = styled(DetailErrorBox)`
@@ -534,6 +712,52 @@ const DetailLoadingBox = styled(DetailErrorBox)`
 
 const LoadMoreWrap = styled.div`
   align-self: center;
+`;
+
+const PartialErrorBanner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  border: 1px solid #e6bf84;
+  background: #fff7eb;
+  border-radius: 14px;
+  padding: 10px 12px;
+`;
+
+const PartialErrorLeft = styled.div`
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  min-width: 0;
+`;
+
+const PartialErrorIcon = styled.span`
+  color: #d48724;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
+`;
+
+const PartialErrorTextWrap = styled.div`
+  min-width: 0;
+`;
+
+const PartialErrorTitle = styled.p`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin: 0;
+  color: #cf7f14;
+`;
+
+const PartialErrorDesc = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 4px 0 0;
+  color: #cb9b62;
 `;
 
 const MessageRow = styled.article<{ $isMine: boolean }>`
@@ -663,25 +887,131 @@ const AssistantEmptyText = styled.p`
   color: ${({ theme }) => theme.colors.text.text4};
 `;
 
-const TypingDots = styled.div`
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
+const AnalysisResultSection = styled.div`
+  padding: 14px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
 
-  span {
-    width: 8px;
-    height: 8px;
-    border-radius: 999px;
-    background: ${({ theme }) => theme.colors.brand.primary};
-    opacity: 0.8;
+const AnalysisTitle = styled.h4`
+  ${({ theme }) => theme.fonts.labelS};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const LowRiskCard = styled.div<{ $risk: 'low' | 'high' }>`
+  border: 1px solid #dce5dd;
+  border-radius: 12px;
+  background: ${({ $risk }) => ($risk === 'high' ? '#fff8f8' : '#f8fbf8')};
+  border-color: ${({ $risk }) => ($risk === 'high' ? '#f1d4d4' : '#dce5dd')};
+  padding: 12px;
+`;
+
+const LowRiskTitle = styled.p<{ $risk: 'low' | 'high' }>`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin: 0;
+  color: ${({ $risk }) => ($risk === 'high' ? '#db4545' : '#36a159')};
+`;
+
+const LowRiskDescription = styled.p`
+  ${({ theme }) => theme.fonts.body3};
+  margin: 8px 0 0;
+  color: ${({ theme }) => theme.colors.text.text2};
+`;
+
+const FeedbackTitle = styled.p`
+  ${({ theme }) => theme.fonts.body3};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const ScoreButtonRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const ScoreButton = styled.button<{ $isActive: boolean }>`
+  ${({ theme }) => theme.fonts.labelXS};
+  width: 40px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid
+    ${({ $isActive, theme }) =>
+      $isActive ? theme.colors.brand.primary : theme.colors.border.border1};
+  background: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.brand.primary : theme.colors.background.bg1};
+  color: ${({ $isActive, theme }) =>
+    $isActive ? theme.colors.text.textW : theme.colors.text.text2};
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
   }
 `;
 
-const RiskChip = styled.span`
+const ScoreLabelRow = styled.div`
+  ${({ theme }) => theme.fonts.caption};
+  display: flex;
+  justify-content: space-between;
+  color: ${({ theme }) => theme.colors.text.text4};
+`;
+
+const FeedbackSavedCard = styled.div`
+  margin-top: 2px;
+  border: 1px solid #6dbeb3;
+  border-radius: 12px;
+  background: #d9f2ee;
+  padding: 10px 12px;
+`;
+
+const FeedbackSavedTitle = styled.p`
   ${({ theme }) => theme.fonts.labelXS};
-  border-radius: 999px;
-  border: 1px solid #8fcbc2;
-  background: #e9f7f4;
-  color: #3e8d80;
-  padding: 4px 10px;
+  margin: 0;
+  color: #2f7e73;
+`;
+
+const FeedbackSavedText = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 4px 0 0;
+  color: #3f8e83;
+`;
+
+const FeedbackErrorText = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
+const RecommendSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const RecommendTitle = styled.h5`
+  ${({ theme }) => theme.fonts.labelS};
+  margin: 2px 0 0;
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const RecommendCard = styled.div`
+  ${({ theme }) => theme.fonts.body3};
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border-radius: 12px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  color: ${({ theme }) => theme.colors.text.text2};
+  padding: 12px;
+  line-height: 1.45;
+`;
+
+const RecommendApplyButton = styled.button`
+  ${({ theme }) => theme.fonts.labelXS};
+  width: 100%;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  background: ${({ theme }) => theme.colors.background.bg1};
+  color: ${({ theme }) => theme.colors.text.text1};
 `;
