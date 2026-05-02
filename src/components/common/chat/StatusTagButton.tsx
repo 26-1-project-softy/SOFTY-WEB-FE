@@ -32,23 +32,23 @@ const TagButton = styled.button<{ $tone: StatusTagTone }>`
   border-radius: 999px;
   padding: 4px 10px;
   border: 1px solid
-    ${({ $tone }) => {
-      if ($tone === 'absence') return '#E8B16E';
-      if ($tone === 'processing') return '#8FCBC2';
-      if ($tone === 'hold') return '#CBB8FF';
-      return '#BFC7D4';
+    ${({ $tone, theme }) => {
+      if ($tone === 'absence') return theme.colors.intent.absenceLate.border;
+      if ($tone === 'processing') return theme.colors.threadStatus.processing.border;
+      if ($tone === 'hold') return theme.colors.intent.request.border;
+      return theme.colors.threadStatus.completed.border;
     }};
-  background: ${({ $tone }) => {
-    if ($tone === 'absence') return '#FFF2E2';
-    if ($tone === 'processing') return '#E6F7F2';
-    if ($tone === 'hold') return '#F2ECFF';
-    return '#F3F5F8';
+  background: ${({ $tone, theme }) => {
+    if ($tone === 'absence') return theme.colors.intent.absenceLate.background;
+    if ($tone === 'processing') return theme.colors.threadStatus.processing.background;
+    if ($tone === 'hold') return theme.colors.intent.request.background;
+    return theme.colors.threadStatus.completed.background;
   }};
-  color: ${({ $tone }) => {
-    if ($tone === 'absence') return '#C56A17';
-    if ($tone === 'processing') return '#3E8D80';
-    if ($tone === 'hold') return '#6F53B8';
-    return '#586072';
+  color: ${({ $tone, theme }) => {
+    if ($tone === 'absence') return theme.colors.intent.absenceLate.text;
+    if ($tone === 'processing') return theme.colors.threadStatus.processing.text;
+    if ($tone === 'hold') return theme.colors.intent.request.text;
+    return theme.colors.threadStatus.completed.text;
   }};
 
   svg {

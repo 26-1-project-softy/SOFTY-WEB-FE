@@ -112,15 +112,17 @@ export const TeacherThreadDetailPage = () => {
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [messageInput, setMessageInput] = useState('');
   const [analysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisErrorMessage, setAnalysisErrorMessage] = useState('');
+  const [isAnalysisRequesting, setIsAnalysisRequesting] = useState(false);
   const [selectedFeedbackScore, setSelectedFeedbackScore] = useState<number | null>(null);
   const [isFeedbackSaved, setIsFeedbackSaved] = useState(false);
   const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false);
   const [feedbackErrorMessage, setFeedbackErrorMessage] = useState('');
   const [loadState, setLoadState] = useState<DetailLoadState>('loading');
   const [detailErrorMessage, setDetailErrorMessage] = useState('');
-  const [counterpartName, setCounterpartName] = useState('학부모');
-  const [studentName, setStudentName] = useState('학생');
-  const [intentLabel, setIntentLabel] = useState('미분류');
+  const [counterpartName, setCounterpartName] = useState('');
+  const [studentName, setStudentName] = useState('');
+  const [intentLabel, setIntentLabel] = useState('');
 
   const [messages, setMessages] = useState<MessageItem[]>([]);
   const [messagesError, setMessagesError] = useState('');
@@ -150,9 +152,9 @@ export const TeacherThreadDetailPage = () => {
         throw new Error('채팅방 데이터가 없습니다.');
       }
 
-      setCounterpartName(payload.counterpartName || '학부모');
-      setStudentName(payload.studentName || '학생');
-      setIntentLabel(payload.intentLabel || payload.intentLavel || '미분류');
+      setCounterpartName(payload.counterpartName ?? '');
+      setStudentName(payload.studentName ?? '');
+      setIntentLabel(payload.intentLabel || payload.intentLavel || '');
       if (payload.status === 'DONE') {
         setStatus('done');
       } else if (payload.status === 'HOLD') {
@@ -255,20 +257,38 @@ export const TeacherThreadDetailPage = () => {
 
   const hasMessageInput = messageInput.trim().length > 0;
   const composerActionMode = analysisResult ? 'send' : 'assist';
-  const isComposerActionDisabled = !hasMessageInput;
+  const isComposerActionDisabled = !hasMessageInput || isAnalysisRequesting;
+
+  const requestMessageAnalysis = useCallback(async () => {
+    if (!hasMessageInput || isAnalysisRequesting || analysisResult) {
+      return;
+    }
+
+    try {
+      setIsAnalysisRequesting(true);
+      setAnalysisErrorMessage('');
+
+      return;
+    } catch {
+      setAnalysisErrorMessage('메시지 분석에 실패했어요');
+    } finally {
+      setIsAnalysisRequesting(false);
+    }
+  }, [analysisResult, hasMessageInput, isAnalysisRequesting]);
 
   const handleComposerActionClick = () => {
-    if (!hasMessageInput) {
-      return;
-    }
-
-    if (analysisResult) {
-      return;
-    }
+    void requestMessageAnalysis();
   };
 
   const handleMessageInputChange = (nextValue: string) => {
     setMessageInput(nextValue);
+    if (analysisErrorMessage) {
+      setAnalysisErrorMessage('');
+    }
+  };
+
+  const handleRetryAnalysis = () => {
+    void requestMessageAnalysis();
   };
 
   const handleSelectFeedbackScore = async (score: number) => {
@@ -343,9 +363,9 @@ export const TeacherThreadDetailPage = () => {
         </BackButtonWrap>
 
         <HeaderInfo>
-          <ParentName>{counterpartName}</ParentName>
-          <StudentName>{studentName}</StudentName>
-          <StatusTagButton label={intentLabel} tone="absence" />
+          <ParentName>{counterpartName || '-'}</ParentName>
+          <StudentName>{studentName || '-'}</StudentName>
+          <StatusTagButton label={intentLabel || '-'} tone="absence" />
 
           <StatusDropdownWrap>
             <StatusTagButton
@@ -358,32 +378,32 @@ export const TeacherThreadDetailPage = () => {
             {isStatusMenuOpen ? (
               <StatusMenu>
                 <StatusMenuItem
-                  type="button"
+                  variant="text"
+                  size="M"
+                  label="처리중"
                   onClick={() => {
                     setStatus('processing');
                     setIsStatusMenuOpen(false);
                   }}
-                >
-                  처리중
-                </StatusMenuItem>
+                />
                 <StatusMenuItem
-                  type="button"
+                  variant="text"
+                  size="M"
+                  label="완료"
                   onClick={() => {
                     setStatus('done');
                     setIsStatusMenuOpen(false);
                   }}
-                >
-                  완료
-                </StatusMenuItem>
+                />
                 <StatusMenuItem
-                  type="button"
+                  variant="text"
+                  size="M"
+                  label="보류"
                   onClick={() => {
                     setStatus('hold');
                     setIsStatusMenuOpen(false);
                   }}
-                >
-                  보류
-                </StatusMenuItem>
+                />
               </StatusMenu>
             ) : null}
           </StatusDropdownWrap>
@@ -494,7 +514,7 @@ export const TeacherThreadDetailPage = () => {
             <span>AI 소통 어시스턴트</span>
           </AssistantHeader>
 
-          {!analysisResult ? (
+          {!analysisResult && !analysisErrorMessage ? (
             <AssistantEmpty>
               <IcSparkles />
               <AssistantEmptyTitle>아직 분석할 메시지가 없어요</AssistantEmptyTitle>
@@ -502,6 +522,30 @@ export const TeacherThreadDetailPage = () => {
                 메시지를 작성하면 분쟁 가능성을 살펴보고, 필요한 경우 더 부드러운 답장을 추천드려요.
               </AssistantEmptyText>
             </AssistantEmpty>
+          ) : null}
+
+          {!analysisResult && analysisErrorMessage ? (
+            <AnalysisResultSection>
+              <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
+              <AnalysisErrorBanner role="alert">
+                <AnalysisErrorLeft>
+                  <AnalysisErrorIcon>
+                    <IcError />
+                  </AnalysisErrorIcon>
+                  <AnalysisErrorTextWrap>
+                    <AnalysisErrorTitle>{analysisErrorMessage}</AnalysisErrorTitle>
+                    <AnalysisErrorDesc>잠시 후 다시 시도해 주세요.</AnalysisErrorDesc>
+                  </AnalysisErrorTextWrap>
+                </AnalysisErrorLeft>
+                <InlineButton
+                  variant="text"
+                  size="M"
+                  label={isAnalysisRequesting ? '요청 중...' : '다시 시도'}
+                  onClick={handleRetryAnalysis}
+                  disabled={isAnalysisRequesting}
+                />
+              </AnalysisErrorBanner>
+            </AnalysisResultSection>
           ) : null}
 
           {analysisResult ? (
@@ -525,13 +569,14 @@ export const TeacherThreadDetailPage = () => {
                 {[1, 2, 3, 4, 5].map(score => (
                   <ScoreButton
                     key={score}
-                    type="button"
                     $isActive={selectedFeedbackScore === score}
+                    variant={selectedFeedbackScore === score ? 'primary' : 'ghost'}
+                    size="M"
+                    width="40px"
+                    label={String(score)}
                     onClick={() => void handleSelectFeedbackScore(score)}
                     disabled={isFeedbackSubmitting}
-                  >
-                    {score}
-                  </ScoreButton>
+                  />
                 ))}
               </ScoreButtonRow>
               <ScoreLabelRow>
@@ -556,9 +601,13 @@ export const TeacherThreadDetailPage = () => {
                 <RecommendSection>
                   <RecommendTitle>AI 추천 답변</RecommendTitle>
                   <RecommendCard>{analysisResult.recommendedReply}</RecommendCard>
-                  <RecommendApplyButton type="button" onClick={handleApplyRecommendedReply}>
-                    적용하기
-                  </RecommendApplyButton>
+                  <RecommendApplyButton
+                    variant="ghost"
+                    size="M"
+                    width="100%"
+                    label="적용하기"
+                    onClick={handleApplyRecommendedReply}
+                  />
                 </RecommendSection>
               ) : null}
             </AnalysisResultSection>
@@ -630,16 +679,11 @@ const StatusMenu = styled.div`
   z-index: 10;
 `;
 
-const StatusMenuItem = styled.button`
-  ${({ theme }) => theme.fonts.body3};
+const StatusMenuItem = styled(InlineButton)`
   width: 100%;
-  text-align: left;
+  justify-content: flex-start;
+  border-radius: 0;
   padding: 8px 10px;
-  color: ${({ theme }) => theme.colors.text.text2};
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.background.bg4};
-  }
 `;
 
 const ThreadBody = styled.div`
@@ -650,7 +694,7 @@ const ThreadBody = styled.div`
 `;
 
 const ConversationPanel = styled.section`
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
   min-height: 0;
   display: flex;
@@ -662,7 +706,7 @@ const ConversationPanel = styled.section`
 const MessageArea = styled.div`
   flex: 1;
   min-height: 0;
-  background: #cdd8d4;
+  background: ${({ theme }) => theme.colors.reports.previewBackground};
   padding: 16px 14px;
   overflow-y: auto;
   overflow-x: hidden;
@@ -678,7 +722,7 @@ const DetailErrorBox = styled.div`
   align-items: center;
   justify-content: center;
   text-align: center;
-  background: #cdd8d4;
+  background: ${({ theme }) => theme.colors.reports.previewBackground};
 `;
 
 const DetailErrorIcon = styled.span`
@@ -719,8 +763,8 @@ const PartialErrorBanner = styled.div`
   align-items: center;
   justify-content: space-between;
   gap: 14px;
-  border: 1px solid #e6bf84;
-  background: #fff7eb;
+  border: 1px solid ${({ theme }) => theme.colors.intent.absenceLate.border};
+  background: ${({ theme }) => theme.colors.intent.absenceLate.background};
   border-radius: 14px;
   padding: 10px 12px;
 `;
@@ -733,7 +777,7 @@ const PartialErrorLeft = styled.div`
 `;
 
 const PartialErrorIcon = styled.span`
-  color: #d48724;
+  color: ${({ theme }) => theme.colors.intent.absenceLate.text};
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -751,13 +795,13 @@ const PartialErrorTextWrap = styled.div`
 const PartialErrorTitle = styled.p`
   ${({ theme }) => theme.fonts.labelXS};
   margin: 0;
-  color: #cf7f14;
+  color: ${({ theme }) => theme.colors.intent.absenceLate.text};
 `;
 
 const PartialErrorDesc = styled.p`
   ${({ theme }) => theme.fonts.caption};
   margin: 4px 0 0;
-  color: #cb9b62;
+  color: ${({ theme }) => theme.colors.intent.absenceLate.text};
 `;
 
 const MessageRow = styled.article<{ $isMine: boolean }>`
@@ -817,7 +861,8 @@ const MessageBubble = styled.div<{ $isMine: boolean }>`
   padding: 16px;
   line-height: 1.45;
   color: ${({ $isMine, theme }) => ($isMine ? theme.colors.text.textW : theme.colors.text.text2)};
-  background: ${({ $isMine }) => ($isMine ? '#56b6a9' : '#f8faf9')};
+  background: ${({ $isMine, theme }) =>
+    $isMine ? theme.colors.brand.primary : theme.colors.background.bg1};
 `;
 
 const UnreadMarker = styled.span`
@@ -835,7 +880,8 @@ const ComposerWrap = styled.div`
 `;
 
 const AssistantPanel = styled.aside`
-  width: 320px;
+  width: clamp(360px, 28vw, 440px);
+  min-width: 360px;
   min-height: 0;
   background: ${({ theme }) => theme.colors.background.bg1};
   display: flex;
@@ -894,6 +940,57 @@ const AnalysisResultSection = styled.div`
   gap: 10px;
 `;
 
+const AnalysisErrorBanner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid ${({ theme }) => theme.colors.reports.modalErrorBorder};
+  border-radius: 16px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  padding: 12px;
+
+  button {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+`;
+
+const AnalysisErrorLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+`;
+
+const AnalysisErrorIcon = styled.span`
+  color: ${({ theme }) => theme.colors.semantic.error};
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+`;
+
+const AnalysisErrorTextWrap = styled.div`
+  min-width: 0;
+`;
+
+const AnalysisErrorTitle = styled.p`
+  ${({ theme }) => theme.fonts.labelS};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
+const AnalysisErrorDesc = styled.p`
+  ${({ theme }) => theme.fonts.body3};
+  margin: 2px 0 0;
+  color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
 const AnalysisTitle = styled.h4`
   ${({ theme }) => theme.fonts.labelS};
   margin: 0;
@@ -901,17 +998,20 @@ const AnalysisTitle = styled.h4`
 `;
 
 const LowRiskCard = styled.div<{ $risk: 'low' | 'high' }>`
-  border: 1px solid #dce5dd;
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
   border-radius: 12px;
-  background: ${({ $risk }) => ($risk === 'high' ? '#fff8f8' : '#f8fbf8')};
-  border-color: ${({ $risk }) => ($risk === 'high' ? '#f1d4d4' : '#dce5dd')};
+  background: ${({ $risk, theme }) =>
+    $risk === 'high' ? theme.colors.semantic.errorSoft : theme.colors.semantic.successSoft};
+  border-color: ${({ $risk, theme }) =>
+    $risk === 'high' ? theme.colors.reports.modalErrorBorder : theme.colors.border.border1};
   padding: 12px;
 `;
 
 const LowRiskTitle = styled.p<{ $risk: 'low' | 'high' }>`
   ${({ theme }) => theme.fonts.labelXS};
   margin: 0;
-  color: ${({ $risk }) => ($risk === 'high' ? '#db4545' : '#36a159')};
+  color: ${({ $risk, theme }) =>
+    $risk === 'high' ? theme.colors.semantic.error : theme.colors.semantic.success};
 `;
 
 const LowRiskDescription = styled.p`
@@ -932,23 +1032,10 @@ const ScoreButtonRow = styled.div`
   gap: 8px;
 `;
 
-const ScoreButton = styled.button<{ $isActive: boolean }>`
-  ${({ theme }) => theme.fonts.labelXS};
-  width: 40px;
-  height: 32px;
+const ScoreButton = styled(InlineButton)<{ $isActive: boolean }>`
   border-radius: 8px;
-  border: 1px solid
-    ${({ $isActive, theme }) =>
-      $isActive ? theme.colors.brand.primary : theme.colors.border.border1};
-  background: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.brand.primary : theme.colors.background.bg1};
-  color: ${({ $isActive, theme }) =>
-    $isActive ? theme.colors.text.textW : theme.colors.text.text2};
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-  }
+  padding: 0;
+  min-width: 40px;
 `;
 
 const ScoreLabelRow = styled.div`
@@ -960,22 +1047,22 @@ const ScoreLabelRow = styled.div`
 
 const FeedbackSavedCard = styled.div`
   margin-top: 2px;
-  border: 1px solid #6dbeb3;
+  border: 1px solid ${({ theme }) => theme.colors.threadStatus.processing.border};
   border-radius: 12px;
-  background: #d9f2ee;
+  background: ${({ theme }) => theme.colors.threadStatus.processing.background};
   padding: 10px 12px;
 `;
 
 const FeedbackSavedTitle = styled.p`
   ${({ theme }) => theme.fonts.labelXS};
   margin: 0;
-  color: #2f7e73;
+  color: ${({ theme }) => theme.colors.threadStatus.processing.text};
 `;
 
 const FeedbackSavedText = styled.p`
   ${({ theme }) => theme.fonts.caption};
   margin: 4px 0 0;
-  color: #3f8e83;
+  color: ${({ theme }) => theme.colors.threadStatus.processing.text};
 `;
 
 const FeedbackErrorText = styled.p`
@@ -1006,12 +1093,4 @@ const RecommendCard = styled.div`
   line-height: 1.45;
 `;
 
-const RecommendApplyButton = styled.button`
-  ${({ theme }) => theme.fonts.labelXS};
-  width: 100%;
-  height: 34px;
-  border-radius: 10px;
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
+const RecommendApplyButton = styled(InlineButton)``;

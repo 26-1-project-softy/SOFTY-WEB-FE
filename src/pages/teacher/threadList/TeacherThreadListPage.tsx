@@ -323,28 +323,28 @@ const Tag = styled.span<{ tone: IntentTone }>`
   padding: 4px 10px;
   border: 1px solid
     ${({ tone, theme }) => {
-      if (tone === 'counsel') return '#8CB6FF';
-      if (tone === 'progress') return '#8FCBC2';
-      if (tone === 'inquiry') return '#8AC78A';
-      if (tone === 'absence') return '#F8C088';
-      if (tone === 'request') return '#C49BFF';
+      if (tone === 'counsel') return theme.colors.intent.counseling.border;
+      if (tone === 'progress') return theme.colors.threadStatus.processing.border;
+      if (tone === 'inquiry') return theme.colors.intent.inquiry.border;
+      if (tone === 'absence') return theme.colors.intent.absenceLate.border;
+      if (tone === 'request') return theme.colors.intent.request.border;
       return theme.colors.border.border2;
     }};
   color: ${({ tone, theme }) => {
-    if (tone === 'counsel') return '#4E76CC';
-    if (tone === 'progress') return '#3E8D80';
-    if (tone === 'inquiry') return '#3A8C3F';
-    if (tone === 'absence') return '#C56A17';
-    if (tone === 'request') return '#7D46D6';
+    if (tone === 'counsel') return theme.colors.intent.counseling.text;
+    if (tone === 'progress') return theme.colors.threadStatus.processing.text;
+    if (tone === 'inquiry') return theme.colors.intent.inquiry.text;
+    if (tone === 'absence') return theme.colors.intent.absenceLate.text;
+    if (tone === 'request') return theme.colors.intent.request.text;
     return theme.colors.text.text3;
   }};
-  background: ${({ tone }) => {
-    if (tone === 'counsel') return '#EDF4FF';
-    if (tone === 'progress') return '#E9F7F4';
-    if (tone === 'inquiry') return '#EDFAEE';
-    if (tone === 'absence') return '#FFF5E8';
-    if (tone === 'request') return '#F4EDFF';
-    return '#F5F6F8';
+  background: ${({ tone, theme }) => {
+    if (tone === 'counsel') return theme.colors.intent.counseling.background;
+    if (tone === 'progress') return theme.colors.threadStatus.processing.background;
+    if (tone === 'inquiry') return theme.colors.intent.inquiry.background;
+    if (tone === 'absence') return theme.colors.intent.absenceLate.background;
+    if (tone === 'request') return theme.colors.intent.request.background;
+    return theme.colors.background.bg3;
   }};
 `;
 
