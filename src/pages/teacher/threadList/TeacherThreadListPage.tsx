@@ -2,9 +2,16 @@
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
 import { InlineButton } from '@/components/common/InlineButton';
+import { StatusTagButton, type StatusTagTone } from '@/components/common/chat/StatusTagButton';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { ROUTES } from '@/constants/routes';
 import { apiClient } from '@/services/http/apiClient';
+import {
+  mapApiStatusToThreadStatus,
+  toThreadStatusLabel,
+  useThreadStatusStore,
+  type ThreadStatus,
+} from '@/stores/threadStatusStore';
 import { IcChat, IcError, IcRefresh } from '@/icons';
 
 type InboxLoadState = 'loading' | 'error' | 'empty' | 'success';
@@ -17,7 +24,8 @@ type ThreadRoomItem = {
   preview: string;
   timeText: string;
   unreadCount: number;
-  tags: Array<{ label: string; tone: IntentTone }>;
+  intentTag: { label: string; tone: IntentTone };
+  status: ThreadStatus;
 };
 
 type ChatRoomResponse = {
@@ -89,7 +97,6 @@ const formatTimeText = (value: string) => {
 
 const toThreadRoomItem = (room: ChatRoomResponse): ThreadRoomItem => {
   const intentLabel = room.intentLabel?.trim() || '미분류';
-  const statusLabel = room.status?.trim() || '상태없음';
 
   return {
     id: room.chatRoomId,
@@ -98,15 +105,14 @@ const toThreadRoomItem = (room: ChatRoomResponse): ThreadRoomItem => {
     preview: room.lastMessage || '-',
     timeText: formatTimeText(room.lastMessageAt),
     unreadCount: room.unreadCount ?? 0,
-    tags: [
-      { label: intentLabel, tone: resolveTagTone(intentLabel) },
-      { label: statusLabel, tone: resolveTagTone(statusLabel) },
-    ],
+    intentTag: { label: intentLabel, tone: resolveTagTone(intentLabel) },
+    status: mapApiStatusToThreadStatus(room.status),
   };
 };
 
 export const TeacherThreadListPage = () => {
   const navigate = useNavigate();
+  const statusByRoomId = useThreadStatusStore(state => state.statusByRoomId);
   const [rooms, setRooms] = useState<ThreadRoomItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -168,11 +174,11 @@ export const TeacherThreadListPage = () => {
                   <PreviewText>{room.preview}</PreviewText>
                   <BottomRow>
                     <TagWrap>
-                      {room.tags.map(tag => (
-                        <Tag key={`${room.id}-${tag.label}`} tone={tag.tone}>
-                          {tag.label}
-                        </Tag>
-                      ))}
+                      <Tag tone={room.intentTag.tone}>{room.intentTag.label}</Tag>
+                      <StatusTagButton
+                        label={toThreadStatusLabel(statusByRoomId[room.id] ?? room.status)}
+                        tone={resolveThreadStatusTone(statusByRoomId[room.id] ?? room.status)}
+                      />
                     </TagWrap>
                     {room.unreadCount > 0 ? <UnreadBadge>{room.unreadCount}</UnreadBadge> : null}
                   </BottomRow>
@@ -212,6 +218,12 @@ export const TeacherThreadListPage = () => {
       ) : null}
     </ThreadListPageContainer>
   );
+};
+
+const resolveThreadStatusTone = (status: ThreadStatus): StatusTagTone => {
+  if (status === 'done') return 'done';
+  if (status === 'hold') return 'hold';
+  return 'processing';
 };
 
 const ThreadListPageContainer = styled.section`
