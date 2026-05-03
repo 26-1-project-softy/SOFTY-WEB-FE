@@ -7,9 +7,13 @@ import { ChatComposer } from '@/components/common/chat/ChatComposer';
 import { StatusTagButton, type StatusTagTone } from '@/components/common/chat/StatusTagButton';
 import { ROUTES } from '@/constants/routes';
 import { apiClient } from '@/services/http/apiClient';
+import {
+  mapApiStatusToThreadStatus,
+  useThreadStatusStore,
+  type ThreadStatus,
+} from '@/stores/threadStatusStore';
 import { IcBack, IcError, IcInfo, IcRefresh, IcSparkles } from '@/icons';
 
-type ThreadStatus = 'processing' | 'done' | 'hold';
 type DetailLoadState = 'loading' | 'error' | 'success';
 type AnalysisRiskLevel = 'LOW' | 'HIGH';
 
@@ -128,6 +132,8 @@ export const TeacherThreadDetailPage = () => {
   const [messagesHasNext, setMessagesHasNext] = useState(false);
 
   const chatRoomId = useMemo(() => Number(threadId), [threadId]);
+  const setRoomStatus = useThreadStatusStore(state => state.setRoomStatus);
+  const statusByRoomId = useThreadStatusStore(state => state.statusByRoomId);
 
   const markMessagesAsRead = useCallback(async () => {
     if (!Number.isFinite(chatRoomId) || chatRoomId <= 0) {
@@ -162,19 +168,19 @@ export const TeacherThreadDetailPage = () => {
       setCounterpartName(payload.counterpartName ?? '');
       setStudentName(payload.studentName ?? '');
       setIntentLabel(payload.intentLabel || payload.intentLavel || '');
-      if (payload.status === 'DONE') {
-        setStatus('done');
-      } else if (payload.status === 'HOLD') {
-        setStatus('hold');
-      } else {
-        setStatus('processing');
+      const mappedStatus = mapApiStatusToThreadStatus(payload.status);
+      const overriddenStatus = statusByRoomId[chatRoomId];
+      const nextStatus = overriddenStatus ?? mappedStatus;
+      setStatus(nextStatus);
+      if (!overriddenStatus) {
+        setRoomStatus(chatRoomId, mappedStatus);
       }
       setLoadState('success');
     } catch {
       setLoadState('error');
       setDetailErrorMessage('대화 정보를 불러올 수 없어요');
     }
-  }, [chatRoomId]);
+  }, [chatRoomId, setRoomStatus, statusByRoomId]);
 
   const loadMessages = useCallback(
     async ({ cursor, append }: { cursor?: number; append?: boolean } = {}) => {
@@ -355,6 +361,7 @@ export const TeacherThreadDetailPage = () => {
                   label="처리중"
                   onClick={() => {
                     setStatus('processing');
+                    setRoomStatus(chatRoomId, 'processing');
                     setIsStatusMenuOpen(false);
                   }}
                 />
@@ -364,6 +371,7 @@ export const TeacherThreadDetailPage = () => {
                   label="완료"
                   onClick={() => {
                     setStatus('done');
+                    setRoomStatus(chatRoomId, 'done');
                     setIsStatusMenuOpen(false);
                   }}
                 />
@@ -373,6 +381,7 @@ export const TeacherThreadDetailPage = () => {
                   label="보류"
                   onClick={() => {
                     setStatus('hold');
+                    setRoomStatus(chatRoomId, 'hold');
                     setIsStatusMenuOpen(false);
                   }}
                 />
