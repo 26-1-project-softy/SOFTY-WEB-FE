@@ -61,18 +61,6 @@ type MarkMessagesReadResponse = {
   } | null;
 };
 
-type RiskFeedbackPayload = {
-  messageId: number;
-  feedback: 'APPROPRIATE' | 'INAPPROPRIATE';
-};
-
-type RiskFeedbackResponse = {
-  success: boolean;
-  code: number;
-  message: string;
-  data?: null;
-};
-
 type AnalysisResult = {
   targetMessageId: number;
   riskLevel: AnalysisRiskLevel;
@@ -125,10 +113,6 @@ export const TeacherThreadDetailPage = () => {
   const [analysisResult] = useState<AnalysisResult | null>(null);
   const [analysisErrorMessage, setAnalysisErrorMessage] = useState('');
   const [isAnalysisRequesting, setIsAnalysisRequesting] = useState(false);
-  const [selectedFeedbackScore, setSelectedFeedbackScore] = useState<number | null>(null);
-  const [isFeedbackSaved, setIsFeedbackSaved] = useState(false);
-  const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false);
-  const [feedbackErrorMessage, setFeedbackErrorMessage] = useState('');
   const [loadState, setLoadState] = useState<DetailLoadState>('loading');
   const [detailErrorMessage, setDetailErrorMessage] = useState('');
   const [counterpartName, setCounterpartName] = useState('');
@@ -273,15 +257,6 @@ export const TeacherThreadDetailPage = () => {
     };
   }, [status]);
 
-  const feedbackTargetMessageId = useMemo(() => {
-    if (analysisResult?.targetMessageId) {
-      return analysisResult.targetMessageId;
-    }
-
-    const lastMyMessage = [...messages].reverse().find(message => message.isMine);
-    return lastMyMessage?.id ?? messages[0]?.id ?? null;
-  }, [analysisResult, messages]);
-
   const hasMessageInput = messageInput.trim().length > 0;
   const composerActionMode = analysisResult ? 'send' : 'assist';
   const isComposerActionDisabled = !hasMessageInput || isAnalysisRequesting;
@@ -316,36 +291,6 @@ export const TeacherThreadDetailPage = () => {
 
   const handleRetryAnalysis = () => {
     void requestMessageAnalysis();
-  };
-
-  const handleSelectFeedbackScore = async (score: number) => {
-    if (!feedbackTargetMessageId || isFeedbackSubmitting) {
-      return;
-    }
-
-    const feedbackValue: RiskFeedbackPayload['feedback'] =
-      score >= 4 ? 'APPROPRIATE' : 'INAPPROPRIATE';
-
-    try {
-      setIsFeedbackSubmitting(true);
-      setFeedbackErrorMessage('');
-
-      await apiClient.post<RiskFeedbackResponse, unknown, RiskFeedbackPayload>(
-        `/risk-feedback/${feedbackTargetMessageId}`,
-        {
-          messageId: feedbackTargetMessageId,
-          feedback: feedbackValue,
-        }
-      );
-
-      setSelectedFeedbackScore(score);
-      setIsFeedbackSaved(true);
-    } catch {
-      setIsFeedbackSaved(false);
-      setFeedbackErrorMessage('피드백 저장에 실패했어요. 다시 시도해주세요.');
-    } finally {
-      setIsFeedbackSubmitting(false);
-    }
   };
 
   const handleApplyRecommendedReply = () => {
@@ -590,39 +535,6 @@ export const TeacherThreadDetailPage = () => {
                   <LowRiskDescription>{analysisResult.summary}</LowRiskDescription>
                 </LowRiskCard>
               )}
-
-              <FeedbackTitle>분쟁 가능성 분석 결과가 얼마나 적절했나요?</FeedbackTitle>
-              <ScoreButtonRow>
-                {[1, 2, 3, 4, 5].map(score => (
-                  <ScoreButton
-                    key={score}
-                    $isActive={selectedFeedbackScore === score}
-                    variant={selectedFeedbackScore === score ? 'primary' : 'ghost'}
-                    size="M"
-                    width="40px"
-                    label={String(score)}
-                    onClick={() => void handleSelectFeedbackScore(score)}
-                    disabled={isFeedbackSubmitting}
-                  />
-                ))}
-              </ScoreButtonRow>
-              <ScoreLabelRow>
-                <span>매우 부적절</span>
-                <span>매우 적절</span>
-              </ScoreLabelRow>
-
-              {isFeedbackSaved ? (
-                <FeedbackSavedCard>
-                  <FeedbackSavedTitle>의견이 반영되었어요</FeedbackSavedTitle>
-                  <FeedbackSavedText>
-                    보내주신 피드백은 분석 품질 개선에 활용돼요.
-                  </FeedbackSavedText>
-                </FeedbackSavedCard>
-              ) : null}
-
-              {feedbackErrorMessage ? (
-                <FeedbackErrorText>{feedbackErrorMessage}</FeedbackErrorText>
-              ) : null}
 
               {analysisResult.riskLevel === 'HIGH' && analysisResult.recommendedReply ? (
                 <RecommendSection>
@@ -1045,57 +957,6 @@ const LowRiskDescription = styled.p`
   ${({ theme }) => theme.fonts.body3};
   margin: 8px 0 0;
   color: ${({ theme }) => theme.colors.text.text2};
-`;
-
-const FeedbackTitle = styled.p`
-  ${({ theme }) => theme.fonts.body3};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const ScoreButtonRow = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const ScoreButton = styled(InlineButton)<{ $isActive: boolean }>`
-  border-radius: 8px;
-  padding: 0;
-  min-width: 40px;
-`;
-
-const ScoreLabelRow = styled.div`
-  ${({ theme }) => theme.fonts.caption};
-  display: flex;
-  justify-content: space-between;
-  color: ${({ theme }) => theme.colors.text.text4};
-`;
-
-const FeedbackSavedCard = styled.div`
-  margin-top: 2px;
-  border: 1px solid ${({ theme }) => theme.colors.threadStatus.processing.border};
-  border-radius: 12px;
-  background: ${({ theme }) => theme.colors.threadStatus.processing.background};
-  padding: 10px 12px;
-`;
-
-const FeedbackSavedTitle = styled.p`
-  ${({ theme }) => theme.fonts.labelXS};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.threadStatus.processing.text};
-`;
-
-const FeedbackSavedText = styled.p`
-  ${({ theme }) => theme.fonts.caption};
-  margin: 4px 0 0;
-  color: ${({ theme }) => theme.colors.threadStatus.processing.text};
-`;
-
-const FeedbackErrorText = styled.p`
-  ${({ theme }) => theme.fonts.caption};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
 `;
 
 const RecommendSection = styled.div`
