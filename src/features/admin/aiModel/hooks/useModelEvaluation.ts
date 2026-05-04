@@ -1,30 +1,47 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/useToast';
-import { aiModelApi } from '@/services/admin/aiModelApi';
-import type { Evaluation, EvaluationResponse } from '@/features/admin/aiModel/types/evaluation';
+import {
+  latestEvaluationQueryOptions,
+  latestModelInfoQueryOptions,
+  rerunModelEvaluation,
+} from '@/features/admin/aiModel/queries/aiModelQueries';
+import type { LatestModelEvaluation } from '@/services/admin/aiModelApi';
+import { aiModelQueryKeys } from '@/features/admin/aiModel/constants/aiModelQueryKeys';
+
+const isInProgressStatus = (status?: LatestModelEvaluation['status'] | null) => {
+  return status === 'queued' || status === 'running';
+};
 
 export const useModelEvaluation = () => {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
 
-  const prevStatusRef = useRef<Evaluation['status'] | null>(null);
+  const prevStatusRef = useRef<LatestModelEvaluation['status'] | null>(null);
   const isRerunTriggeredRef = useRef(false);
 
-  const { data, isLoading, isError } = useQuery<EvaluationResponse>({
-    queryKey: ['modelEvaluation'],
-    queryFn: aiModelApi.getLatestEvaluation,
+  const {
+    data: latestModelInfo,
+    isLoading: isLatestModelInfoLoading,
+    isError: isLatestModelInfoError,
+  } = useQuery(latestModelInfoQueryOptions());
 
+  const {
+    data: evaluation,
+    isLoading: isEvaluationLoading,
+    isError: isEvaluationError,
+  } = useQuery({
+    ...latestEvaluationQueryOptions(),
     refetchInterval: query => {
-      const status = query.state.data?.data?.status;
-      return status === 'queued' || status === 'running' ? 3000 : false;
+      const status = query.state.data?.status;
+
+      return isInProgressStatus(status) ? 3000 : false;
     },
   });
 
-  const evaluation: Evaluation | null = data?.data ?? null;
   const status = evaluation?.status;
 
-  const isInProgress = status === 'queued' || status === 'running';
+  const isInProgress = isInProgressStatus(status);
   const isCompleted = status === 'completed';
   const isFailed = status === 'failed';
 
@@ -42,11 +59,14 @@ export const useModelEvaluation = () => {
   }, [status, showToast]);
 
   const rerunMutation = useMutation({
-    mutationFn: aiModelApi.rerunEvaluation,
-    onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: ['modelEvaluation'],
-        exact: true,
+    mutationFn: rerunModelEvaluation,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: aiModelQueryKeys.latestEvaluation(),
+      });
+
+      await queryClient.invalidateQueries({
+        queryKey: aiModelQueryKeys.latestModelInfo(),
       });
     },
   });
@@ -54,9 +74,11 @@ export const useModelEvaluation = () => {
   const handleRerun = async () => {
     if (rerunMutation.isPending || isInProgress) return;
 
-    const version = evaluation?.version;
-    if (!version) {
-      showToast('평가할 모델 버전 정보가 없어요', 'error');
+    const version = latestModelInfo?.modelVersion;
+    const datasetVersion = latestModelInfo?.datasetVersion;
+
+    if (!version || !datasetVersion) {
+      showToast('평가할 모델 정보가 없어요', 'error');
       return;
     }
 
@@ -66,10 +88,10 @@ export const useModelEvaluation = () => {
     try {
       await rerunMutation.mutateAsync({
         version,
-        datasetVersion: 'v1.0',
+        datasetVersion,
       });
     } catch {
-      showToast('재평가 요청에 실패했어요', 'error');
+      isRerunTriggeredRef.current = false;
     }
   };
 
@@ -79,8 +101,8 @@ export const useModelEvaluation = () => {
     isInProgress,
     isCompleted,
     isFailed,
-    isLoading,
-    isError,
+    isLoading: isLatestModelInfoLoading || isEvaluationLoading,
+    isError: isLatestModelInfoError || isEvaluationError,
 
     onRerun: handleRerun,
 
