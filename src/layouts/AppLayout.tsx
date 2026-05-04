@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useCallback, useState } from 'react';
 import { Outlet, useLocation, useMatches } from 'react-router-dom';
 import { useDashboardTabs } from '@/features/admin/dashboard/hooks/useDashboardTabs';
 import { Sidebar } from '@/components/common/Sidebar';
@@ -27,9 +27,18 @@ export const AppLayout = () => {
 
   const headerActions =
     headerActionState.pathname === pathname ? headerActionState.actions : undefined;
-  const setHeaderActions = (actions?: ReactNode) => {
-    setHeaderActionState({ pathname, actions });
-  };
+  const setHeaderActions = useCallback(
+    (actions?: ReactNode) => {
+      setHeaderActionState(prev => {
+        if (prev.pathname === pathname && prev.actions === actions) {
+          return prev;
+        }
+
+        return { pathname, actions };
+      });
+    },
+    [pathname]
+  );
   const currentMatch = [...matches].reverse().find(match => match.handle);
 
   const title = currentMatch?.handle?.title;
