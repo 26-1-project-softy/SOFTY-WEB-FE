@@ -1,50 +1,83 @@
 import styled from '@emotion/styled';
 import { SectionCard, SectionCardContent } from '@/components/common/SectionCard';
+import { Alert } from '@/components/common/Alert';
+import { useLatestModelInfo } from '@/features/admin/aiModel/hooks/useLatestModelInfo';
+import { Loader } from '@/components/common/Loader';
+import { formatDateTime } from '@/utils/formatDateTime';
+import { SectionEmptyState } from '@/components/common/SectionEmptyState';
+import { IcDashboard } from '@/icons';
 
-const MODEL_INFO_MOCK = {
-  category: 'LLM 모델',
-  modelName: 'ChatGPT-4o',
-  version: 'v1.0.3',
-  lastTrainedAt: '2026-04-25 01:00:00',
-  lastDeployedAt: '2026-04-25 01:00:00',
-  dataset: 'dataset-v5',
-} as const;
+const MODEL_CATEGORY_LABEL = 'LLM 모델';
 
 export const ModelInfoSection = () => {
+  const { modelInfo, isLoading, isError, errorMessage } = useLatestModelInfo();
+
+  const renderContent = () => {
+    if (isLoading) {
+      return <Loader />;
+    }
+
+    if (isError) {
+      return (
+        <Alert
+          title="모델 정보를 불러오지 못했어요"
+          description={errorMessage || '잠시 후 다시 시도해주세요.'}
+        />
+      );
+    }
+
+    if (!modelInfo) {
+      return (
+        <SectionEmptyState
+          icon={IcDashboard}
+          title="모델 정보가 없어요"
+          description="최신 학습 작업 정보가 아직 없어요."
+        />
+      );
+    }
+
+    const modelInfoFields = [
+      {
+        label: '모델명',
+        value: modelInfo.modelName || '-',
+      },
+      {
+        label: '버전',
+        value: modelInfo.modelVersion || '-',
+      },
+      {
+        label: '데이터셋',
+        value: modelInfo.datasetVersion || '-',
+      },
+      {
+        label: '상태',
+        value: modelInfo.status || '-',
+      },
+      {
+        label: '마지막 학습',
+        value: formatDateTime(modelInfo.lastTrainedAt),
+      },
+    ];
+
+    return (
+      <ModelInfoContainer>
+        <ModelCategory>{MODEL_CATEGORY_LABEL}</ModelCategory>
+
+        <ModelInfoGrid>
+          {modelInfoFields.map(field => (
+            <ModelInfoField key={field.label}>
+              <ModelInfoLabel>{field.label}</ModelInfoLabel>
+              <ModelInfoValue title={field.value}>{field.value}</ModelInfoValue>
+            </ModelInfoField>
+          ))}
+        </ModelInfoGrid>
+      </ModelInfoContainer>
+    );
+  };
+
   return (
     <SectionCard title="모델 정보">
-      <SectionCardContent>
-        <ModelInfoContainer>
-          <ModelCategory>{MODEL_INFO_MOCK.category}</ModelCategory>
-
-          <ModelInfoGrid>
-            <ModelInfoField>
-              <ModelInfoLabel>모델명</ModelInfoLabel>
-              <ModelInfoValue>{MODEL_INFO_MOCK.modelName}</ModelInfoValue>
-            </ModelInfoField>
-
-            <ModelInfoField>
-              <ModelInfoLabel>버전</ModelInfoLabel>
-              <ModelInfoValue>{MODEL_INFO_MOCK.version}</ModelInfoValue>
-            </ModelInfoField>
-
-            <ModelInfoField>
-              <ModelInfoLabel>마지막 학습</ModelInfoLabel>
-              <ModelInfoValue>{MODEL_INFO_MOCK.lastTrainedAt}</ModelInfoValue>
-            </ModelInfoField>
-
-            <ModelInfoField>
-              <ModelInfoLabel>마지막 배포</ModelInfoLabel>
-              <ModelInfoValue>{MODEL_INFO_MOCK.lastDeployedAt}</ModelInfoValue>
-            </ModelInfoField>
-
-            <ModelInfoField>
-              <ModelInfoLabel>데이터셋</ModelInfoLabel>
-              <ModelInfoValue>{MODEL_INFO_MOCK.dataset}</ModelInfoValue>
-            </ModelInfoField>
-          </ModelInfoGrid>
-        </ModelInfoContainer>
-      </SectionCardContent>
+      <SectionCardContent>{renderContent()}</SectionCardContent>
     </SectionCard>
   );
 };
