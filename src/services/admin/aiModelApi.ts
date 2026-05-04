@@ -1,13 +1,72 @@
+import type { ApiResponse } from '@/types/apiResponse';
 import { apiClient } from '@/services/http/apiClient';
 
+export type LatestModelInfo = {
+  jobId: string;
+  modelName: string;
+  modelVersion: string;
+  datasetVersion: string;
+  status: string;
+  lastTrainedAt: string;
+};
+
+export type LatestModelEvaluationStatus = 'queued' | 'running' | 'completed' | 'failed';
+
+export type LatestModelEvaluation = {
+  evaluationId: string;
+  precision: number;
+  recall: number;
+  f1Score: number;
+  status: LatestModelEvaluationStatus;
+  passed: boolean;
+  version: string;
+  resultCode: number;
+  resultMessage: string;
+};
+
+export type RerunModelEvaluationRequest = {
+  version: string;
+  datasetVersion: string;
+};
+
+export type RerunModelEvaluationResult = {
+  evaluationId: string;
+  status: string;
+  resultCode: number;
+  resultMessage: string;
+  contentType: string;
+  version: string;
+  datasetVersion: string;
+};
+
+export type LatestModelInfoResponse = ApiResponse<LatestModelInfo | null>;
+export type LatestModelEvaluationResponse = ApiResponse<LatestModelEvaluation | null>;
+export type RerunModelEvaluationResponse = ApiResponse<RerunModelEvaluationResult | null>;
+
 export const aiModelApi = {
-  getLatestEvaluation: async () => {
-    const res = await apiClient.get('/admin/models/latest/evaluation');
-    return res.data;
+  getLatestModelInfo: async () => {
+    const { data } = await apiClient.get<LatestModelInfoResponse>('/admin/models/latest');
+
+    return data;
   },
 
-  rerunEvaluation: async (payload: { version: string; datasetVersion: string }) => {
-    const res = await apiClient.post('/admin/models/latest/evaluation/re-run', payload);
-    return res.data;
+  getLatestEvaluation: async (evaluationId?: string) => {
+    const { data } = await apiClient.get<LatestModelEvaluationResponse>(
+      '/admin/models/latest/evaluation',
+      {
+        params: evaluationId ? { evaluationId } : undefined,
+      }
+    );
+
+    return data;
+  },
+
+  rerunEvaluation: async (payload: RerunModelEvaluationRequest) => {
+    const { data } = await apiClient.post<RerunModelEvaluationResponse>(
+      '/admin/models/latest/evaluation/re-run',
+      payload
+    );
+
+    return data;
   },
 };
