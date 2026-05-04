@@ -51,60 +51,39 @@ export const PdfReportPanel = ({ data, isLoading, isError, onRetry }: PdfReportP
         <KpiCard title="PDF 리포트 생성 수 합계" value={`${data.totalPdfCount}건`} />
       </KpiGrid>
 
-      <PdfContentGrid>
-        <SectionCard title="교사별 PDF 생성 수">
-          <PdfChartScrollArea $height={chartHeight} $isScrollable={isChartScrollable}>
-            <PdfChartInner $height={calculatedChartHeight}>
-              <ResponsiveContainer width="100%" height={calculatedChartHeight}>
-                <BarChart
-                  data={chartData}
-                  layout="vertical"
-                  margin={{ top: 16, right: 20, left: 20, bottom: 16 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                  <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
-                  <YAxis
-                    dataKey="teacherName"
-                    type="category"
-                    width={68}
-                    tickLine={false}
-                    axisLine={false}
-                    tick={{ fontSize: 12 }}
-                  />
-                  <Tooltip
-                    formatter={(value: ValueType | undefined) => [`${value}건`, 'PDF 생성 수']}
-                  />
-                  <Bar
-                    dataKey="pdfCount"
-                    barSize={24}
-                    fill={chartColors.pdfReport.primary}
-                    radius={[0, 8, 8, 0]}
-                  />
-                </BarChart>
-              </ResponsiveContainer>
-            </PdfChartInner>
-          </PdfChartScrollArea>
-        </SectionCard>
-
-        <SectionCard title="교사별 상세 목록">
-          <PdfTable>
-            <thead>
-              <tr>
-                <PdfTableHeader>교사명</PdfTableHeader>
-                <PdfTableHeader $align="right">PDF 생성 수</PdfTableHeader>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedPdfList.map(item => (
-                <tr key={item.teacherId}>
-                  <PdfTableCell>{item.teacherName}</PdfTableCell>
-                  <PdfTableCell $align="right">{item.pdfCount}</PdfTableCell>
-                </tr>
-              ))}
-            </tbody>
-          </PdfTable>
-        </SectionCard>
-      </PdfContentGrid>
+      <SectionCard title="교사별 PDF 생성 수">
+        <PdfChartScrollArea $height={chartHeight} $isScrollable={isChartScrollable}>
+          <PdfChartInner $height={calculatedChartHeight}>
+            <ResponsiveContainer width="100%" height={calculatedChartHeight}>
+              <BarChart
+                data={chartData}
+                layout="vertical"
+                margin={{ top: 16, right: 20, left: 20, bottom: 16 }}
+              >
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} />
+                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
+                <YAxis
+                  dataKey="teacherName"
+                  type="category"
+                  width={68}
+                  tickLine={false}
+                  axisLine={false}
+                  tick={{ fontSize: 12 }}
+                />
+                <Tooltip
+                  formatter={(value: ValueType | undefined) => [`${value}건`, 'PDF 생성 수']}
+                />
+                <Bar
+                  dataKey="pdfCount"
+                  barSize={24}
+                  fill={chartColors.pdfReport.primary}
+                  radius={[0, 8, 8, 0]}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </PdfChartInner>
+        </PdfChartScrollArea>
+      </SectionCard>
     </PdfReportPanelContainer>
   );
 };
@@ -133,16 +112,6 @@ const KpiGrid = styled.div`
   }
 `;
 
-const PdfContentGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 20px;
-
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
-  }
-`;
-
 const PdfChartScrollArea = styled.div<{ $height: number; $isScrollable: boolean }>`
   width: 100%;
   height: ${({ $height }) => `${$height}px`};
@@ -157,25 +126,4 @@ const PdfChartInner = styled.div<{ $height: number }>`
   .recharts-wrapper *:focus {
     outline: none;
   }
-`;
-
-const PdfTable = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-`;
-
-const PdfTableHeader = styled.th<{ $align?: 'left' | 'right' }>`
-  ${({ theme }) => theme.fonts.labelS};
-  padding: 12px 20px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
-  text-align: ${({ $align = 'left' }) => $align};
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const PdfTableCell = styled.td<{ $align?: 'left' | 'right' }>`
-  ${({ theme }) => theme.fonts.body3};
-  padding: 16px 20px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
-  text-align: ${({ $align = 'left' }) => $align};
-  color: ${({ theme }) => theme.colors.text.text1};
 `;
