@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
 import { IconButton } from '@/components/common/IconButton';
 import { InlineButton } from '@/components/common/InlineButton';
 import { StatusTagButton, type StatusTagTone } from '@/components/common/chat/StatusTagButton';
@@ -34,7 +34,7 @@ export const ChatHeader = ({
         <IconButton
           icon={IcBack}
           variant="plain"
-          accessibilityLabel="���������� �̵�"
+          accessibilityLabel="수신함으로 이동"
           onClick={onBack}
         />
       </BackButtonWrap>
@@ -57,19 +57,19 @@ export const ChatHeader = ({
               <StatusMenuItem
                 variant="text"
                 size="M"
-                label="ó����"
+                label="처리중"
                 onClick={() => onSelectStatus('processing')}
               />
               <StatusMenuItem
                 variant="text"
                 size="M"
-                label="�Ϸ�"
+                label="완료"
                 onClick={() => onSelectStatus('done')}
               />
               <StatusMenuItem
                 variant="text"
                 size="M"
-                label="����"
+                label="보류"
                 onClick={() => onSelectStatus('hold')}
               />
             </StatusMenu>

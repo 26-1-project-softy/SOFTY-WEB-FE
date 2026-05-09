@@ -1,4 +1,4 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
 import { ChatComposer } from '@/components/common/chat/ChatComposer';
 import { IcError } from '@/icons';
 
@@ -46,7 +46,7 @@ export const ChatInput = ({
 
 const ComposerWrap = styled.div`
   padding: 12px;
-  background: ${({ theme }) => theme.colors.background.bg2};
+  background: ${({ theme }) => theme.colors.background.bg1};
   border-top: 1px solid ${({ theme }) => theme.colors.border.border1};
 `;
 

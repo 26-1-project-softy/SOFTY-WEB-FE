@@ -10,7 +10,7 @@ import {
   useThreadStatusStore,
   type ThreadStatus,
 } from '@/stores/threadStatusStore';
-import { IcError, IcSparkles } from '@/icons';
+import { IcError, IcInfo, IcSparkles } from '@/icons';
 import { ChatHeader } from '@/pages/teacher/threadDetail/components/ChatHeader';
 import { ChatInput } from '@/pages/teacher/threadDetail/components/ChatInput';
 import { ChatMessageList } from '@/pages/teacher/threadDetail/components/ChatMessageList';
@@ -77,6 +77,12 @@ type SendTeacherMessageResponse = {
   } | null;
 };
 
+type AnalysisFeedbackResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+};
+
 type AnalysisResult = {
   analysisId: number;
   riskLevel: AnalysisRiskLevel;
@@ -138,6 +144,9 @@ export const TeacherThreadDetailPage = () => {
   const [messageInput, setMessageInput] = useState('');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [analysisFeedbackScore, setAnalysisFeedbackScore] = useState<number | null>(null);
+  const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false);
+  const [feedbackSaved, setFeedbackSaved] = useState(false);
+  const [feedbackErrorMessage, setFeedbackErrorMessage] = useState('');
   const [analysisErrorMessage, setAnalysisErrorMessage] = useState('');
   const [sendErrorMessage, setSendErrorMessage] = useState('');
   const [isAnalysisRequesting, setIsAnalysisRequesting] = useState(false);
@@ -327,6 +336,8 @@ export const TeacherThreadDetailPage = () => {
       };
       setAnalysisResult(nextAnalysisResult);
       setAnalysisFeedbackScore(null);
+      setFeedbackSaved(false);
+      setFeedbackErrorMessage('');
 
       return nextAnalysisResult;
     } catch {
@@ -411,6 +422,44 @@ export const TeacherThreadDetailPage = () => {
     }
 
     setMessageInput(analysisResult.recommendedReply);
+  };
+
+  const handleAnalysisFeedbackClick = async (score: number) => {
+    if (!analysisResult || isFeedbackSubmitting) {
+      return;
+    }
+
+    try {
+      setIsFeedbackSubmitting(true);
+      setAnalysisFeedbackScore(score);
+      setFeedbackErrorMessage('');
+
+      const { data } = await apiClient.put<AnalysisFeedbackResponse>(
+        `/teacher-message-analyses/${analysisResult.analysisId}/feedback`,
+        {
+          score,
+        }
+      );
+
+      if (!data.success) {
+        throw new Error(data.message || '피드백 저장에 실패했어요');
+      }
+
+      setFeedbackSaved(true);
+    } catch {
+      setFeedbackSaved(false);
+      setFeedbackErrorMessage('피드백을 저장하지 못했어요');
+    } finally {
+      setIsFeedbackSubmitting(false);
+    }
+  };
+
+  const handleRetryFeedback = () => {
+    if (analysisFeedbackScore == null) {
+      return;
+    }
+
+    void handleAnalysisFeedbackClick(analysisFeedbackScore);
   };
 
   const handleLoadMoreMessages = () => {
@@ -554,8 +603,9 @@ export const TeacherThreadDetailPage = () => {
                           key={score}
                           type="button"
                           $selected={analysisFeedbackScore === score}
-                          onClick={() => setAnalysisFeedbackScore(score)}
+                          onClick={() => void handleAnalysisFeedbackClick(score)}
                           aria-pressed={analysisFeedbackScore === score}
+                          disabled={isFeedbackSubmitting}
                         >
                           {score}
                         </FeedbackScoreButton>
@@ -565,6 +615,41 @@ export const TeacherThreadDetailPage = () => {
                       <span>매우 부적절</span>
                       <span>매우 적절</span>
                     </FeedbackLabels>
+                    {analysisFeedbackScore != null && feedbackSaved ? (
+                      <FeedbackAppliedBox role="status" aria-live="polite">
+                        <FeedbackAppliedIcon>
+                          <IcInfo />
+                        </FeedbackAppliedIcon>
+                        <FeedbackAppliedTextWrap>
+                          <FeedbackAppliedTitle>의견이 반영되었어요</FeedbackAppliedTitle>
+                          <FeedbackAppliedDescription>
+                            보내주신 피드백은 분석 품질 개선에 활용돼요.
+                          </FeedbackAppliedDescription>
+                        </FeedbackAppliedTextWrap>
+                      </FeedbackAppliedBox>
+                    ) : null}
+                    {analysisFeedbackScore != null && !feedbackSaved && feedbackErrorMessage ? (
+                      <FeedbackErrorBanner role="alert">
+                        <FeedbackErrorLeft>
+                          <FeedbackErrorIcon>
+                            <IcError />
+                          </FeedbackErrorIcon>
+                          <FeedbackErrorTextWrap>
+                            <FeedbackErrorTitle>{feedbackErrorMessage}</FeedbackErrorTitle>
+                            <FeedbackErrorDescription>
+                              잠시 후 다시 시도해 주세요.
+                            </FeedbackErrorDescription>
+                          </FeedbackErrorTextWrap>
+                        </FeedbackErrorLeft>
+                        <InlineButton
+                          variant="text"
+                          size="M"
+                          label={isFeedbackSubmitting ? '저장 중...' : '다시 시도'}
+                          onClick={handleRetryFeedback}
+                          disabled={isFeedbackSubmitting}
+                        />
+                      </FeedbackErrorBanner>
+                    ) : null}
                   </FeedbackSection>
                 </>
               ) : (
@@ -582,8 +667,9 @@ export const TeacherThreadDetailPage = () => {
                           key={score}
                           type="button"
                           $selected={analysisFeedbackScore === score}
-                          onClick={() => setAnalysisFeedbackScore(score)}
+                          onClick={() => void handleAnalysisFeedbackClick(score)}
                           aria-pressed={analysisFeedbackScore === score}
+                          disabled={isFeedbackSubmitting}
                         >
                           {score}
                         </FeedbackScoreButton>
@@ -593,6 +679,41 @@ export const TeacherThreadDetailPage = () => {
                       <span>매우 부적절</span>
                       <span>매우 적절</span>
                     </FeedbackLabels>
+                    {analysisFeedbackScore != null && feedbackSaved ? (
+                      <FeedbackAppliedBox role="status" aria-live="polite">
+                        <FeedbackAppliedIcon>
+                          <IcInfo />
+                        </FeedbackAppliedIcon>
+                        <FeedbackAppliedTextWrap>
+                          <FeedbackAppliedTitle>의견이 반영되었어요</FeedbackAppliedTitle>
+                          <FeedbackAppliedDescription>
+                            보내주신 피드백은 분석 품질 개선에 활용돼요.
+                          </FeedbackAppliedDescription>
+                        </FeedbackAppliedTextWrap>
+                      </FeedbackAppliedBox>
+                    ) : null}
+                    {analysisFeedbackScore != null && !feedbackSaved && feedbackErrorMessage ? (
+                      <FeedbackErrorBanner role="alert">
+                        <FeedbackErrorLeft>
+                          <FeedbackErrorIcon>
+                            <IcError />
+                          </FeedbackErrorIcon>
+                          <FeedbackErrorTextWrap>
+                            <FeedbackErrorTitle>{feedbackErrorMessage}</FeedbackErrorTitle>
+                            <FeedbackErrorDescription>
+                              잠시 후 다시 시도해 주세요.
+                            </FeedbackErrorDescription>
+                          </FeedbackErrorTextWrap>
+                        </FeedbackErrorLeft>
+                        <InlineButton
+                          variant="text"
+                          size="M"
+                          label={isFeedbackSubmitting ? '저장 중...' : '다시 시도'}
+                          onClick={handleRetryFeedback}
+                          disabled={isFeedbackSubmitting}
+                        />
+                      </FeedbackErrorBanner>
+                    ) : null}
                   </FeedbackSection>
                 </>
               )}
@@ -907,4 +1028,84 @@ const FeedbackLabels = styled.div`
   display: flex;
   justify-content: space-between;
   color: ${({ theme }) => theme.colors.text.text4};
+`;
+
+const FeedbackAppliedBox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid ${({ theme }) => theme.colors.brand.primary};
+  border-radius: 12px;
+  background: ${({ theme }) => theme.colors.background.bg4};
+  padding: 10px 12px;
+`;
+
+const FeedbackAppliedIcon = styled.span`
+  display: inline-flex;
+  color: ${({ theme }) => theme.colors.brand.primary};
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const FeedbackAppliedTextWrap = styled.div`
+  min-width: 0;
+`;
+
+const FeedbackAppliedTitle = styled.p`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.brand.primary};
+`;
+
+const FeedbackAppliedDescription = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 2px 0 0;
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const FeedbackErrorBanner = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
+  border-radius: 12px;
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
+  padding: 10px 12px;
+`;
+
+const FeedbackErrorLeft = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+`;
+
+const FeedbackErrorIcon = styled.span`
+  display: inline-flex;
+  color: ${({ theme }) => theme.colors.semantic.error};
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
+`;
+
+const FeedbackErrorTextWrap = styled.div`
+  min-width: 0;
+`;
+
+const FeedbackErrorTitle = styled.p`
+  ${({ theme }) => theme.fonts.labelXS};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.semantic.error};
+`;
+
+const FeedbackErrorDescription = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 2px 0 0;
+  color: ${({ theme }) => theme.colors.semantic.error};
 `;
