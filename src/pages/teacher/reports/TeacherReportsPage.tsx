@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { Dialog } from '@/components/common/Dialog';
 import { InlineButton } from '@/components/common/InlineButton';
 import { IcChat, IcDownload, IcError, IcFile, IcRefresh } from '@/icons';
 import { useTeacherReports } from '@/features/teacher/reports/useTeacherReports';
@@ -208,54 +209,52 @@ export const TeacherReportsPage = () => {
         </PreviewBody>
       </PreviewSection>
 
-      {isReportCompleteModalOpen ? (
-        <ModalOverlay onClick={handleCloseReportCompleteModal}>
-          <ModalCard onClick={event => event.stopPropagation()}>
-            <ModalIconWrap>
-              <IcFile />
-            </ModalIconWrap>
+      <Dialog isOpen={isReportCompleteModalOpen} onClose={handleCloseReportCompleteModal}>
+        <ModalCard>
+          <ModalIconWrap>
+            <IcFile />
+          </ModalIconWrap>
 
-            <ModalTitle>리포트 생성 완료</ModalTitle>
-            <ModalDescription>PDF 파일이 준비되었어요.</ModalDescription>
+          <ModalTitle>리포트 생성 완료</ModalTitle>
+          <ModalDescription>PDF 파일이 준비되었어요.</ModalDescription>
 
-            <FileInfoCard>
-              <FileInfoLabel>파일명</FileInfoLabel>
-              <FileInfoValue>{reportFileName}</FileInfoValue>
-            </FileInfoCard>
+          <FileInfoCard>
+            <FileInfoLabel>파일명</FileInfoLabel>
+            <FileInfoValue>{reportFileName}</FileInfoValue>
+          </FileInfoCard>
 
-            {isPdfDownloadErrorVisible ? (
-              <ModalErrorBox role="alert">
-                <ModalErrorIcon>
-                  <IcError />
-                </ModalErrorIcon>
-                <ModalErrorTextWrap>
-                  <ModalErrorTitle>PDF 다운로드에 실패했어요</ModalErrorTitle>
-                  <ModalErrorDescription>잠시 후 다시 시도해 주세요</ModalErrorDescription>
-                </ModalErrorTextWrap>
-              </ModalErrorBox>
-            ) : null}
+          {isPdfDownloadErrorVisible ? (
+            <ModalErrorBox role="alert">
+              <ModalErrorIcon>
+                <IcError />
+              </ModalErrorIcon>
+              <ModalErrorTextWrap>
+                <ModalErrorTitle>PDF 다운로드에 실패했어요</ModalErrorTitle>
+                <ModalErrorDescription>잠시 후 다시 시도해 주세요</ModalErrorDescription>
+              </ModalErrorTextWrap>
+            </ModalErrorBox>
+          ) : null}
 
-            <ModalActionRow>
-              <InlineButton
-                variant="ghost"
-                size="L"
-                label="닫기"
-                width="100%"
-                onClick={handleCloseReportCompleteModal}
-              />
-              <InlineButton
-                variant="primary"
-                size="L"
-                icon={IcDownload}
-                label={isDownloadingPdf ? '다운로드 중...' : '다운로드'}
-                width="100%"
-                disabled={isDownloadingPdf}
-                onClick={() => void handleDownloadGeneratedPdf()}
-              />
-            </ModalActionRow>
-          </ModalCard>
-        </ModalOverlay>
-      ) : null}
+          <ModalActionRow>
+            <InlineButton
+              variant="ghost"
+              size="L"
+              label="닫기"
+              width="100%"
+              onClick={handleCloseReportCompleteModal}
+            />
+            <InlineButton
+              variant="primary"
+              size="L"
+              icon={IcDownload}
+              label={isDownloadingPdf ? '다운로드 중...' : '다운로드'}
+              width="100%"
+              disabled={isDownloadingPdf}
+              onClick={() => void handleDownloadGeneratedPdf()}
+            />
+          </ModalActionRow>
+        </ModalCard>
+      </Dialog>
     </ReportsPageContainer>
   );
 };
@@ -555,17 +554,6 @@ const EmptyDescription = styled.p`
   ${({ theme }) => theme.fonts.body3};
   margin: 10px 0 0;
   color: ${({ theme }) => theme.colors.text.text4};
-`;
-
-const ModalOverlay = styled.div`
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: ${({ theme }) => theme.colors.overlay.dim};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 18px;
 `;
 
 const ModalCard = styled.div`

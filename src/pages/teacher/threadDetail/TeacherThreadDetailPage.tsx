@@ -1,7 +1,9 @@
-﻿import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import styled from '@emotion/styled';
+import { isAxiosError } from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 import { InlineButton } from '@/components/common/InlineButton';
+import { Alert } from '@/components/common/Alert';
 import { ROUTES } from '@/constants/routes';
 import { apiClient } from '@/services/http/apiClient';
 import { useChatRead } from '@/features/chat/hooks/useChatRead';
@@ -10,7 +12,7 @@ import {
   useThreadStatusStore,
   type ThreadStatus,
 } from '@/stores/threadStatusStore';
-import { IcError, IcInfo, IcSparkles } from '@/icons';
+import { IcInfo, IcSparkles } from '@/icons';
 import { ChatHeader } from '@/pages/teacher/threadDetail/components/ChatHeader';
 import { ChatInput } from '@/pages/teacher/threadDetail/components/ChatInput';
 import { ChatMessageList } from '@/pages/teacher/threadDetail/components/ChatMessageList';
@@ -84,13 +86,13 @@ type SendTeacherMessageResponse = {
   message: string;
   data?: {
     messageId: number;
-    createdAt: string;
+    roomId: number;
   } | null;
 };
 
 type SendTeacherMessageRequest = {
-  content: string;
   analysisId: number;
+  content: string;
 };
 
 type AnalysisFeedbackResponse = {
@@ -166,6 +168,50 @@ const mapThreadStatusToApiStatus = (status: ThreadStatus) => {
   return 'PROCESSING';
 };
 
+const getApiErrorMessage = (error: unknown, fallback: string) => {
+  if (isAxiosError(error)) {
+    const status = error.response?.status;
+    const data = error.response?.data as
+      | { message?: string; error?: string; detail?: string }
+      | string
+      | undefined;
+
+    if (typeof data === 'string' && data.trim()) {
+      return data;
+    }
+
+    const messageFromBody =
+      (typeof data === 'object' && data?.message) ||
+      (typeof data === 'object' && data?.error) ||
+      (typeof data === 'object' && data?.detail);
+
+    if (messageFromBody && messageFromBody.trim()) {
+      return messageFromBody;
+    }
+
+    if (status === 400) {
+      return '요청 형식이 올바르지 않아요. analysisId와 content 값을 확인해 주세요.';
+    }
+    if (status === 401) {
+      return '로그인이 만료되었어요. 다시 로그인해 주세요.';
+    }
+    if (status === 403) {
+      return '이 채팅방에 메시지를 전송할 권한이 없어요.';
+    }
+    if (status === 404) {
+      return '채팅방 또는 분석 결과를 찾을 수 없어요.';
+    }
+
+    return `${fallback} (HTTP ${status ?? '알 수 없음'})`;
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
+};
+
 export const TeacherThreadDetailPage = () => {
   const navigate = useNavigate();
   const { threadId } = useParams();
@@ -195,6 +241,8 @@ export const TeacherThreadDetailPage = () => {
   const [isMessagesLoadingMore, setIsMessagesLoadingMore] = useState(false);
   const [messagesNextCursor, setMessagesNextCursor] = useState<number | null>(null);
   const [messagesHasNext, setMessagesHasNext] = useState(false);
+  const isAnalyzingRef = useRef(false);
+  const isSendingRef = useRef(false);
 
   const chatRoomId = useMemo(() => Number(threadId), [threadId]);
   const { markAsRead } = useChatRead(chatRoomId);
@@ -306,6 +354,18 @@ export const TeacherThreadDetailPage = () => {
     void markMessagesAsRead();
   }, [loadChatRoomDetail, loadMessages, markMessagesAsRead]);
 
+  useEffect(() => {
+    // 채팅방이 바뀌면 이전 방의 분석 컨텍스트를 제거합니다.
+    setAnalysisResult(null);
+    setLastAnalysisId(null);
+    setAnalysisFeedbackScore(null);
+    setFeedbackSaved(false);
+    setFeedbackErrorMessage('');
+    setAnalysisErrorMessage('');
+    setSendErrorMessage('');
+    setMessageInput('');
+  }, [chatRoomId]);
+
   const statusInfo = useMemo(() => {
     if (status === 'processing') {
       return {
@@ -334,11 +394,12 @@ export const TeacherThreadDetailPage = () => {
     analysisResult?.riskLevel === 'UNSAFE' || analysisResult?.riskLevel === 'HIGH';
 
   const requestMessageAnalysis = useCallback(async () => {
-    if (!hasMessageInput || isAnalysisRequesting) {
+    if (!hasMessageInput || isAnalysisRequesting || isAnalyzingRef.current) {
       return null;
     }
 
     try {
+      isAnalyzingRef.current = true;
       setIsAnalysisRequesting(true);
       setAnalysisErrorMessage('');
       setSendErrorMessage('');
@@ -353,7 +414,6 @@ export const TeacherThreadDetailPage = () => {
         ? await apiClient.post<RecheckTeacherMessageResponse>(
             `/teacher-message-analyses/${lastAnalysisId}/recheck`,
             {
-              analysisId: lastAnalysisId,
               content,
             }
           )
@@ -381,20 +441,22 @@ export const TeacherThreadDetailPage = () => {
       setFeedbackErrorMessage('');
 
       return nextAnalysisResult;
-    } catch {
-      setAnalysisErrorMessage('메시지 분석에 실패했어요');
+    } catch (error) {
+      setAnalysisErrorMessage(getApiErrorMessage(error, '메시지 분석에 실패했어요'));
       return null;
     } finally {
+      isAnalyzingRef.current = false;
       setIsAnalysisRequesting(false);
     }
   }, [chatRoomId, hasMessageInput, isAnalysisRequesting, lastAnalysisId, messageInput]);
 
   const sendTeacherMessage = useCallback(async () => {
-    if (!hasMessageInput || isAnalysisRequesting) {
+    if (!hasMessageInput || isAnalysisRequesting || isSendingRef.current) {
       return;
     }
 
     try {
+      isSendingRef.current = true;
       setIsAnalysisRequesting(true);
       setAnalysisErrorMessage('');
 
@@ -404,16 +466,21 @@ export const TeacherThreadDetailPage = () => {
       }
 
       const payload: SendTeacherMessageRequest = {
-        content,
         analysisId: analysisResult.analysisId,
+        content,
       };
+      console.log('[TeacherThreadDetailPage] sendTeacherMessage payload', {
+        chatRoomId,
+        analysisId: payload.analysisId,
+        content: payload.content,
+      });
       const { data } = await apiClient.post<SendTeacherMessageResponse>(
         `/chat-rooms/${chatRoomId}/teacher-messages`,
         payload
       );
       if (!data.success) throw new Error(data.message || '메시지 전송에 실패했어요');
 
-      const createdAt = data.data?.createdAt ?? new Date().toISOString();
+      const createdAt = new Date().toISOString();
       const messageId = data.data?.messageId ?? Date.now();
 
       setMessages(prev => [
@@ -430,9 +497,10 @@ export const TeacherThreadDetailPage = () => {
 
       setSendErrorMessage('');
       void markMessagesAsRead();
-    } catch {
-      setSendErrorMessage('메시지를 전송하지 못했어요');
+    } catch (error) {
+      setSendErrorMessage(getApiErrorMessage(error, '메시지를 전송하지 못했어요'));
     } finally {
+      isSendingRef.current = false;
       setIsAnalysisRequesting(false);
     }
   }, [
@@ -667,24 +735,12 @@ export const TeacherThreadDetailPage = () => {
           {!isAnalysisRequesting && !analysisResult && analysisErrorMessage ? (
             <AnalysisResultSection>
               <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
-              <AnalysisErrorBanner role="alert">
-                <AnalysisErrorLeft>
-                  <AnalysisErrorIcon>
-                    <IcError />
-                  </AnalysisErrorIcon>
-                  <AnalysisErrorTextWrap>
-                    <AnalysisErrorTitle>{analysisErrorMessage}</AnalysisErrorTitle>
-                    <AnalysisErrorDesc>잠시 후 다시 시도해 주세요.</AnalysisErrorDesc>
-                  </AnalysisErrorTextWrap>
-                </AnalysisErrorLeft>
-                <InlineButton
-                  variant="text"
-                  size="M"
-                  label={isAnalysisRequesting ? '요청 중...' : '다시 시도'}
-                  onClick={handleRetryAnalysis}
-                  disabled={isAnalysisRequesting}
-                />
-              </AnalysisErrorBanner>
+              <Alert
+                title={analysisErrorMessage}
+                description="잠시 후 다시 시도해 주세요."
+                variant="error"
+                onRetry={isAnalysisRequesting ? undefined : handleRetryAnalysis}
+              />
             </AnalysisResultSection>
           ) : null}
 
@@ -733,26 +789,12 @@ export const TeacherThreadDetailPage = () => {
                       </FeedbackAppliedBox>
                     ) : null}
                     {analysisFeedbackScore != null && !feedbackSaved && feedbackErrorMessage ? (
-                      <FeedbackErrorBanner role="alert">
-                        <FeedbackErrorLeft>
-                          <FeedbackErrorIcon>
-                            <IcError />
-                          </FeedbackErrorIcon>
-                          <FeedbackErrorTextWrap>
-                            <FeedbackErrorTitle>{feedbackErrorMessage}</FeedbackErrorTitle>
-                            <FeedbackErrorDescription>
-                              잠시 후 다시 시도해 주세요.
-                            </FeedbackErrorDescription>
-                          </FeedbackErrorTextWrap>
-                        </FeedbackErrorLeft>
-                        <InlineButton
-                          variant="text"
-                          size="M"
-                          label={isFeedbackSubmitting ? '저장 중...' : '다시 시도'}
-                          onClick={handleRetryFeedback}
-                          disabled={isFeedbackSubmitting}
-                        />
-                      </FeedbackErrorBanner>
+                      <Alert
+                        title={feedbackErrorMessage}
+                        description="잠시 후 다시 시도해 주세요."
+                        variant="error"
+                        onRetry={isFeedbackSubmitting ? undefined : handleRetryFeedback}
+                      />
                     ) : null}
                   </FeedbackSection>
                 </>
@@ -797,26 +839,12 @@ export const TeacherThreadDetailPage = () => {
                       </FeedbackAppliedBox>
                     ) : null}
                     {analysisFeedbackScore != null && !feedbackSaved && feedbackErrorMessage ? (
-                      <FeedbackErrorBanner role="alert">
-                        <FeedbackErrorLeft>
-                          <FeedbackErrorIcon>
-                            <IcError />
-                          </FeedbackErrorIcon>
-                          <FeedbackErrorTextWrap>
-                            <FeedbackErrorTitle>{feedbackErrorMessage}</FeedbackErrorTitle>
-                            <FeedbackErrorDescription>
-                              잠시 후 다시 시도해 주세요.
-                            </FeedbackErrorDescription>
-                          </FeedbackErrorTextWrap>
-                        </FeedbackErrorLeft>
-                        <InlineButton
-                          variant="text"
-                          size="M"
-                          label={isFeedbackSubmitting ? '저장 중...' : '다시 시도'}
-                          onClick={handleRetryFeedback}
-                          disabled={isFeedbackSubmitting}
-                        />
-                      </FeedbackErrorBanner>
+                      <Alert
+                        title={feedbackErrorMessage}
+                        description="잠시 후 다시 시도해 주세요."
+                        variant="error"
+                        onRetry={isFeedbackSubmitting ? undefined : handleRetryFeedback}
+                      />
                     ) : null}
                   </FeedbackSection>
                 </>
@@ -991,57 +1019,6 @@ const AnalysisResultSection = styled.div`
   gap: 10px;
 `;
 
-const AnalysisErrorBanner = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
-  border-radius: 16px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  padding: 12px;
-
-  button {
-    flex-shrink: 0;
-    white-space: nowrap;
-  }
-`;
-
-const AnalysisErrorLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-`;
-
-const AnalysisErrorIcon = styled.span`
-  color: ${({ theme }) => theme.colors.semantic.error};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    width: 20px;
-    height: 20px;
-  }
-`;
-
-const AnalysisErrorTextWrap = styled.div`
-  min-width: 0;
-`;
-
-const AnalysisErrorTitle = styled.p`
-  ${({ theme }) => theme.fonts.labelS};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
-`;
-
-const AnalysisErrorDesc = styled.p`
-  ${({ theme }) => theme.fonts.body3};
-  margin: 2px 0 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
-`;
-
 const AnalysisTitle = styled.h4`
   ${({ theme }) => theme.fonts.labelS};
   margin: 0;
@@ -1168,48 +1145,4 @@ const FeedbackAppliedDescription = styled.p`
   ${({ theme }) => theme.fonts.caption};
   margin: 2px 0 0;
   color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const FeedbackErrorBanner = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
-  border-radius: 12px;
-  background: ${({ theme }) => theme.colors.semantic.errorSoft};
-  padding: 10px 12px;
-`;
-
-const FeedbackErrorLeft = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-`;
-
-const FeedbackErrorIcon = styled.span`
-  display: inline-flex;
-  color: ${({ theme }) => theme.colors.semantic.error};
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
-`;
-
-const FeedbackErrorTextWrap = styled.div`
-  min-width: 0;
-`;
-
-const FeedbackErrorTitle = styled.p`
-  ${({ theme }) => theme.fonts.labelXS};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
-`;
-
-const FeedbackErrorDescription = styled.p`
-  ${({ theme }) => theme.fonts.caption};
-  margin: 2px 0 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
 `;
