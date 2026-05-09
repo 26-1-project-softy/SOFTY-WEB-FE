@@ -50,9 +50,9 @@ const ComposerContainer = styled.div`
   align-items: flex-end;
   gap: 12px;
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 12px;
+  border-radius: 16px;
   background: ${({ theme }) => theme.colors.background.bg1};
-  padding: 10px 12px;
+  padding: 12px 14px;
 `;
 
 const ComposerTextarea = styled.textarea`
