@@ -1,6 +1,8 @@
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
+import { Alert } from '@/components/common/Alert';
 import { InlineButton } from '@/components/common/InlineButton';
-import { IcError, IcInfo, IcRefresh } from '@/icons';
+import { Loader } from '@/components/common/Loader';
+import { IcError, IcRefresh } from '@/icons';
 
 type DetailLoadState = 'loading' | 'error' | 'success';
 
@@ -46,13 +48,13 @@ export const ChatMessageList = ({
         <DetailErrorIcon>
           <IcError />
         </DetailErrorIcon>
-        <DetailErrorTitle>{detailErrorMessage || '��ȭ ������ �ҷ��� �� �����'}</DetailErrorTitle>
-        <DetailErrorDescription>��� �� �ٽ� �õ����ּ���.</DetailErrorDescription>
+        <DetailErrorTitle>{detailErrorMessage || '대화 목록을 불러올 수 없어요'}</DetailErrorTitle>
+        <DetailErrorDescription>잠시 후 다시 시도해주세요.</DetailErrorDescription>
         <DetailRetryButton
           variant="primary"
           size="L"
           icon={IcRefresh}
-          label="�ٽ� �õ�"
+          label="다시 시도"
           onClick={onRetryConversation}
         />
       </DetailErrorBox>
@@ -60,11 +62,19 @@ export const ChatMessageList = ({
   }
 
   if (loadState === 'loading') {
-    return <DetailLoadingBox>ä�ù� ������ �ҷ����� ���Դϴ�.</DetailLoadingBox>;
+    return (
+      <DetailLoadingBox>
+        <Loader />
+      </DetailLoadingBox>
+    );
   }
 
   if (isMessagesLoading) {
-    return <DetailLoadingBox>�޽����� �ҷ����� ���Դϴ�.</DetailLoadingBox>;
+    return (
+      <DetailLoadingBox>
+        <Loader />
+      </DetailLoadingBox>
+    );
   }
 
   if (messagesError) {
@@ -74,20 +84,12 @@ export const ChatMessageList = ({
   return (
     <MessageArea>
       {messagesPartialError ? (
-        <PartialErrorBanner role="alert">
-          <PartialErrorLeft>
-            <PartialErrorIcon>
-              <IcInfo />
-            </PartialErrorIcon>
-            <PartialErrorTextWrap>
-              <PartialErrorTitle>ä�� ������ �ҷ����� ���߾��</PartialErrorTitle>
-              <PartialErrorDesc>
-                �Ϻ� �����Ͱ� �����Ǿ����. ä�� ������ �ٽ� �ҷ��� �ּ���.
-              </PartialErrorDesc>
-            </PartialErrorTextWrap>
-          </PartialErrorLeft>
-          <InlineButton variant="text" size="M" label="�ٽ� �õ�" onClick={onRetryMissingMessages} />
-        </PartialErrorBanner>
+        <Alert
+          title="채팅 내역을 불러오지 못했어요"
+          description="일부 데이터가 누락되었어요. 채팅 내역을 다시 불러와 주세요."
+          variant="warning"
+          onRetry={onRetryMissingMessages}
+        />
       ) : null}
 
       {messagesHasNext ? (
@@ -95,7 +97,7 @@ export const ChatMessageList = ({
           <InlineButton
             variant="ghost"
             size="M"
-            label={isMessagesLoadingMore ? '�ҷ����� ��...' : '���� �޽��� ������'}
+            label={isMessagesLoadingMore ? '불러오는 중...' : '이전 메시지 더보기'}
             onClick={onLoadMoreMessages}
             disabled={isMessagesLoadingMore}
           />
@@ -181,52 +183,6 @@ const DetailLoadingBox = styled(DetailErrorBox)`
 
 const LoadMoreWrap = styled.div`
   align-self: center;
-`;
-
-const PartialErrorBanner = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  border: 1px solid ${({ theme }) => theme.colors.intent.absenceLate.border};
-  background: ${({ theme }) => theme.colors.intent.absenceLate.background};
-  border-radius: 14px;
-  padding: 10px 12px;
-`;
-
-const PartialErrorLeft = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-`;
-
-const PartialErrorIcon = styled.span`
-  color: ${({ theme }) => theme.colors.intent.absenceLate.text};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-const PartialErrorTextWrap = styled.div`
-  min-width: 0;
-`;
-
-const PartialErrorTitle = styled.p`
-  ${({ theme }) => theme.fonts.labelXS};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.intent.absenceLate.text};
-`;
-
-const PartialErrorDesc = styled.p`
-  ${({ theme }) => theme.fonts.caption};
-  margin: 4px 0 0;
-  color: ${({ theme }) => theme.colors.intent.absenceLate.text};
 `;
 
 const MessageRow = styled.article<{ $isMine: boolean }>`
