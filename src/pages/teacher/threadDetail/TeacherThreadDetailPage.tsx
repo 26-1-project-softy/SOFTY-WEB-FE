@@ -56,8 +56,29 @@ type ChatRoomMessagesApiResponse = {
   } | null;
 };
 
+type AnalyzeTeacherMessageResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: {
+    analysisId: number;
+    riskLevel: AnalysisRiskLevel;
+    recommendedMessage: string;
+  } | null;
+};
+
+type SendTeacherMessageResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: {
+    messageId: number;
+    createdAt: string;
+  } | null;
+};
+
 type AnalysisResult = {
-  targetMessageId: number;
+  analysisId: number;
   riskLevel: AnalysisRiskLevel;
   summary: string;
   recommendedReply?: string | null;
@@ -100,14 +121,25 @@ const toMessageItem = (message: ChatRoomMessageResponse): MessageItem => {
   };
 };
 
+const buildFallbackRecommendedReply = (content: string) => {
+  const trimmed = content.trim();
+  if (!trimmed) {
+    return '학부모님, 안내 감사합니다. 확인 후 필요한 사항을 정리해 다시 안내드리겠습니다.';
+  }
+
+  return `학부모님, 말씀 주신 내용 감사합니다. ${trimmed} 관련해서는 확인 후 정확한 내용으로 다시 안내드리겠습니다.`;
+};
+
 export const TeacherThreadDetailPage = () => {
   const navigate = useNavigate();
   const { threadId } = useParams();
   const [status, setStatus] = useState<ThreadStatus>('processing');
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
   const [messageInput, setMessageInput] = useState('');
-  const [analysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [analysisFeedbackScore, setAnalysisFeedbackScore] = useState<number | null>(null);
   const [analysisErrorMessage, setAnalysisErrorMessage] = useState('');
+  const [sendErrorMessage, setSendErrorMessage] = useState('');
   const [isAnalysisRequesting, setIsAnalysisRequesting] = useState(false);
   const [loadState, setLoadState] = useState<DetailLoadState>('loading');
   const [detailErrorMessage, setDetailErrorMessage] = useState('');
@@ -259,7 +291,54 @@ export const TeacherThreadDetailPage = () => {
   const isComposerActionDisabled = !hasMessageInput || isAnalysisRequesting;
 
   const requestMessageAnalysis = useCallback(async () => {
-    if (!hasMessageInput || isAnalysisRequesting || analysisResult) {
+    if (!hasMessageInput || isAnalysisRequesting) {
+      return null;
+    }
+
+    try {
+      setIsAnalysisRequesting(true);
+      setAnalysisErrorMessage('');
+      setSendErrorMessage('');
+      setAnalysisResult(null);
+
+      if (!Number.isFinite(chatRoomId) || chatRoomId <= 0) {
+        throw new Error('유효하지 않은 채팅방입니다.');
+      }
+
+      const content = messageInput.trim();
+      const { data } = await apiClient.post<AnalyzeTeacherMessageResponse>(
+        `/chat-rooms/${chatRoomId}/teacher-messages/analyze`,
+        {
+          content,
+        }
+      );
+
+      if (!data.success || !data.data) {
+        throw new Error(data.message || '메시지 분석에 실패했어요');
+      }
+
+      const nextAnalysisResult: AnalysisResult = {
+        analysisId: data.data.analysisId,
+        riskLevel: data.data.riskLevel,
+        summary: data.message || '메시지 분석이 완료되었습니다.',
+        recommendedReply:
+          data.data.recommendedMessage?.trim() ||
+          (data.data.riskLevel === 'HIGH' ? buildFallbackRecommendedReply(content) : null),
+      };
+      setAnalysisResult(nextAnalysisResult);
+      setAnalysisFeedbackScore(null);
+
+      return nextAnalysisResult;
+    } catch {
+      setAnalysisErrorMessage('메시지 분석에 실패했어요');
+      return null;
+    } finally {
+      setIsAnalysisRequesting(false);
+    }
+  }, [chatRoomId, hasMessageInput, isAnalysisRequesting, messageInput]);
+
+  const sendTeacherMessage = useCallback(async () => {
+    if (!hasMessageInput || isAnalysisRequesting) {
       return;
     }
 
@@ -267,20 +346,56 @@ export const TeacherThreadDetailPage = () => {
       setIsAnalysisRequesting(true);
       setAnalysisErrorMessage('');
 
-      return;
+      const content = messageInput.trim();
+      const { data } = await apiClient.post<SendTeacherMessageResponse>(
+        `/chat-rooms/${chatRoomId}/teacher-messages`,
+        { content }
+      );
+      if (!data.success) throw new Error(data.message || '메시지 전송에 실패했어요');
+
+      const createdAt = data.data?.createdAt ?? new Date().toISOString();
+      const messageId = data.data?.messageId ?? Date.now();
+
+      setMessages(prev => [
+        ...prev,
+        {
+          id: messageId,
+          senderName: '나',
+          sentAt: formatMessageTime(createdAt),
+          content,
+          isMine: true,
+          unreadCount: 1,
+        },
+      ]);
+
+      setMessageInput('');
+      setAnalysisResult(null);
+      setSendErrorMessage('');
+      void markMessagesAsRead();
     } catch {
-      setAnalysisErrorMessage('메시지 분석에 실패했어요');
+      setSendErrorMessage('메시지를 전송하지 못했어요');
     } finally {
       setIsAnalysisRequesting(false);
     }
-  }, [analysisResult, hasMessageInput, isAnalysisRequesting]);
+  }, [chatRoomId, hasMessageInput, isAnalysisRequesting, markMessagesAsRead, messageInput]);
 
   const handleComposerActionClick = () => {
-    void requestMessageAnalysis();
+    if (composerActionMode === 'assist') {
+      void requestMessageAnalysis();
+      return;
+    }
+
+    void sendTeacherMessage();
   };
 
   const handleMessageInputChange = (nextValue: string) => {
     setMessageInput(nextValue);
+    if (analysisResult) {
+      setAnalysisResult(null);
+    }
+    if (sendErrorMessage) {
+      setSendErrorMessage('');
+    }
     if (analysisErrorMessage) {
       setAnalysisErrorMessage('');
     }
@@ -362,6 +477,7 @@ export const TeacherThreadDetailPage = () => {
             actionMode={composerActionMode}
             isActionDisabled={isComposerActionDisabled}
             onActionClick={handleComposerActionClick}
+            errorMessage={sendErrorMessage}
           />
         </ConversationPanel>
 
@@ -371,7 +487,21 @@ export const TeacherThreadDetailPage = () => {
             <span>AI 소통 어시스턴트</span>
           </AssistantHeader>
 
-          {!analysisResult && !analysisErrorMessage ? (
+          {isAnalysisRequesting ? (
+            <AssistantAnalyzing>
+              <AnalyzingDots aria-hidden>
+                <span />
+                <span />
+                <span />
+              </AnalyzingDots>
+              <AssistantAnalyzingTitle>메시지를 살펴보고 있어요</AssistantAnalyzingTitle>
+              <AssistantAnalyzingText>
+                표현의 톤과 오해 소지를 점검하고 있어요.
+              </AssistantAnalyzingText>
+            </AssistantAnalyzing>
+          ) : null}
+
+          {!isAnalysisRequesting && !analysisResult && !analysisErrorMessage ? (
             <AssistantEmpty>
               <IcSparkles />
               <AssistantEmptyTitle>아직 분석할 메시지가 없어요</AssistantEmptyTitle>
@@ -381,7 +511,7 @@ export const TeacherThreadDetailPage = () => {
             </AssistantEmpty>
           ) : null}
 
-          {!analysisResult && analysisErrorMessage ? (
+          {!isAnalysisRequesting && !analysisResult && analysisErrorMessage ? (
             <AnalysisResultSection>
               <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
               <AnalysisErrorBanner role="alert">
@@ -405,26 +535,75 @@ export const TeacherThreadDetailPage = () => {
             </AnalysisResultSection>
           ) : null}
 
-          {analysisResult ? (
+          {!isAnalysisRequesting && analysisResult ? (
             <AnalysisResultSection>
               <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
 
               {analysisResult.riskLevel === 'HIGH' ? (
-                <LowRiskCard $risk="high">
-                  <LowRiskTitle $risk="high">오해가 발생할 수 있는 메시지예요</LowRiskTitle>
-                  <LowRiskDescription>{analysisResult.summary}</LowRiskDescription>
-                </LowRiskCard>
+                <>
+                  <LowRiskCard $risk="high">
+                    <LowRiskTitle $risk="high">오해가 발생할 수 있는 메시지예요</LowRiskTitle>
+                    <LowRiskDescription>{analysisResult.summary}</LowRiskDescription>
+                  </LowRiskCard>
+
+                  <FeedbackSection>
+                    <FeedbackQuestion>분쟁 가능성 분석 결과가 얼마나 적절했나요?</FeedbackQuestion>
+                    <FeedbackScale>
+                      {[1, 2, 3, 4, 5].map(score => (
+                        <FeedbackScoreButton
+                          key={score}
+                          type="button"
+                          $selected={analysisFeedbackScore === score}
+                          onClick={() => setAnalysisFeedbackScore(score)}
+                          aria-pressed={analysisFeedbackScore === score}
+                        >
+                          {score}
+                        </FeedbackScoreButton>
+                      ))}
+                    </FeedbackScale>
+                    <FeedbackLabels>
+                      <span>매우 부적절</span>
+                      <span>매우 적절</span>
+                    </FeedbackLabels>
+                  </FeedbackSection>
+                </>
               ) : (
-                <LowRiskCard $risk="low">
-                  <LowRiskTitle $risk="low">문제 없는 메시지예요</LowRiskTitle>
-                  <LowRiskDescription>{analysisResult.summary}</LowRiskDescription>
-                </LowRiskCard>
+                <>
+                  <LowRiskCard $risk="low">
+                    <LowRiskTitle $risk="low">문제 없는 메시지예요</LowRiskTitle>
+                    <LowRiskDescription>{analysisResult.summary}</LowRiskDescription>
+                  </LowRiskCard>
+
+                  <FeedbackSection>
+                    <FeedbackQuestion>분쟁 가능성 분석 결과가 얼마나 적절했나요?</FeedbackQuestion>
+                    <FeedbackScale>
+                      {[1, 2, 3, 4, 5].map(score => (
+                        <FeedbackScoreButton
+                          key={score}
+                          type="button"
+                          $selected={analysisFeedbackScore === score}
+                          onClick={() => setAnalysisFeedbackScore(score)}
+                          aria-pressed={analysisFeedbackScore === score}
+                        >
+                          {score}
+                        </FeedbackScoreButton>
+                      ))}
+                    </FeedbackScale>
+                    <FeedbackLabels>
+                      <span>매우 부적절</span>
+                      <span>매우 적절</span>
+                    </FeedbackLabels>
+                  </FeedbackSection>
+                </>
               )}
 
-              {analysisResult.riskLevel === 'HIGH' && analysisResult.recommendedReply ? (
+              {analysisResult.riskLevel === 'HIGH' ? (
                 <RecommendSection>
                   <RecommendTitle>AI 추천 답변</RecommendTitle>
-                  <RecommendCard>{analysisResult.recommendedReply}</RecommendCard>
+                  <RecommendCard>
+                    {analysisResult.recommendedReply ||
+                      '학부모님, 안내해주신 내용을 바탕으로 확인 후 정확하게 다시 안내드리겠습니다.'}
+                  </RecommendCard>
                   <RecommendApplyButton
                     variant="ghost"
                     size="M"
@@ -520,6 +699,64 @@ const AssistantEmptyText = styled.p`
   ${({ theme }) => theme.fonts.body3};
   margin: 0;
   color: ${({ theme }) => theme.colors.text.text4};
+`;
+
+const AssistantAnalyzing = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  text-align: center;
+  padding: 20px;
+`;
+
+const AnalyzingDots = styled.div`
+  display: inline-flex;
+  gap: 8px;
+
+  span {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: ${({ theme }) => theme.colors.brand.primary};
+    opacity: 0.35;
+    animation: dotBlink 1.1s infinite ease-in-out;
+  }
+
+  span:nth-of-type(2) {
+    animation-delay: 0.15s;
+  }
+
+  span:nth-of-type(3) {
+    animation-delay: 0.3s;
+  }
+
+  @keyframes dotBlink {
+    0%,
+    80%,
+    100% {
+      transform: translateY(0);
+      opacity: 0.35;
+    }
+    40% {
+      transform: translateY(-3px);
+      opacity: 1;
+    }
+  }
+`;
+
+const AssistantAnalyzingTitle = styled.p`
+  ${({ theme }) => theme.fonts.titleS};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.text.text1};
+`;
+
+const AssistantAnalyzingText = styled.p`
+  ${({ theme }) => theme.fonts.body2};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.text.text3};
 `;
 
 const AnalysisResultSection = styled.div`
@@ -632,3 +869,42 @@ const RecommendCard = styled.div`
 `;
 
 const RecommendApplyButton = styled(InlineButton)``;
+
+const FeedbackSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const FeedbackQuestion = styled.p`
+  ${({ theme }) => theme.fonts.caption};
+  margin: 0;
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const FeedbackScale = styled.div`
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+`;
+
+const FeedbackScoreButton = styled.button<{ $selected: boolean }>`
+  ${({ theme }) => theme.fonts.labelXS};
+  height: 30px;
+  border-radius: 8px;
+  border: 1px solid
+    ${({ theme, $selected }) =>
+      $selected ? theme.colors.brand.primary : theme.colors.border.border1};
+  background: ${({ theme, $selected }) =>
+    $selected ? theme.colors.brand.primary : theme.colors.background.bg1};
+  color: ${({ theme, $selected }) =>
+    $selected ? theme.colors.text.textW : theme.colors.text.text2};
+  cursor: pointer;
+`;
+
+const FeedbackLabels = styled.div`
+  ${({ theme }) => theme.fonts.caption};
+  display: flex;
+  justify-content: space-between;
+  color: ${({ theme }) => theme.colors.text.text4};
+`;
