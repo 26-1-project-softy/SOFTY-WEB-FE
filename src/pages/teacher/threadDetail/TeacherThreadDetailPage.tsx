@@ -67,6 +67,17 @@ type AnalyzeTeacherMessageResponse = {
   } | null;
 };
 
+type RecheckTeacherMessageResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: {
+    analysisId: number;
+    riskLevel: AnalysisRiskLevel;
+    recommendedMessage: string | null;
+  } | null;
+};
+
 type SendTeacherMessageResponse = {
   success: boolean;
   code: number;
@@ -168,6 +179,7 @@ export const TeacherThreadDetailPage = () => {
   const [feedbackErrorMessage, setFeedbackErrorMessage] = useState('');
   const [analysisErrorMessage, setAnalysisErrorMessage] = useState('');
   const [sendErrorMessage, setSendErrorMessage] = useState('');
+  const [lastAnalysisId, setLastAnalysisId] = useState<number | null>(null);
   const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const [isAnalysisRequesting, setIsAnalysisRequesting] = useState(false);
   const [loadState, setLoadState] = useState<DetailLoadState>('loading');
@@ -337,12 +349,20 @@ export const TeacherThreadDetailPage = () => {
       }
 
       const content = messageInput.trim();
-      const { data } = await apiClient.post<AnalyzeTeacherMessageResponse>(
-        `/chat-rooms/${chatRoomId}/teacher-messages/analyze`,
-        {
-          content,
-        }
-      );
+      const { data } = lastAnalysisId
+        ? await apiClient.post<RecheckTeacherMessageResponse>(
+            `/teacher-message-analyses/${lastAnalysisId}/recheck`,
+            {
+              analysisId: lastAnalysisId,
+              content,
+            }
+          )
+        : await apiClient.post<AnalyzeTeacherMessageResponse>(
+            `/chat-rooms/${chatRoomId}/teacher-messages/analyze`,
+            {
+              content,
+            }
+          );
 
       if (!data.success || !data.data) {
         throw new Error(data.message || '메시지 분석에 실패했어요');
@@ -355,6 +375,7 @@ export const TeacherThreadDetailPage = () => {
         recommendedReply: data.data.recommendedMessage?.trim() || null,
       };
       setAnalysisResult(nextAnalysisResult);
+      setLastAnalysisId(nextAnalysisResult.analysisId);
       setAnalysisFeedbackScore(null);
       setFeedbackSaved(false);
       setFeedbackErrorMessage('');
@@ -366,7 +387,7 @@ export const TeacherThreadDetailPage = () => {
     } finally {
       setIsAnalysisRequesting(false);
     }
-  }, [chatRoomId, hasMessageInput, isAnalysisRequesting, messageInput]);
+  }, [chatRoomId, hasMessageInput, isAnalysisRequesting, lastAnalysisId, messageInput]);
 
   const sendTeacherMessage = useCallback(async () => {
     if (!hasMessageInput || isAnalysisRequesting) {
@@ -470,6 +491,12 @@ export const TeacherThreadDetailPage = () => {
     }
 
     setMessageInput(analysisResult.recommendedReply);
+    setAnalysisResult(null);
+    setAnalysisFeedbackScore(null);
+    setFeedbackSaved(false);
+    setFeedbackErrorMessage('');
+    setAnalysisErrorMessage('');
+    setSendErrorMessage('');
   };
 
   const handleAnalysisFeedbackClick = async (score: number) => {
