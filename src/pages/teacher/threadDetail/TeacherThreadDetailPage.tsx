@@ -16,7 +16,7 @@ import { ChatInput } from '@/pages/teacher/threadDetail/components/ChatInput';
 import { ChatMessageList } from '@/pages/teacher/threadDetail/components/ChatMessageList';
 
 type DetailLoadState = 'loading' | 'error' | 'success';
-type AnalysisRiskLevel = 'LOW' | 'HIGH';
+type AnalysisRiskLevel = 'SAFE' | 'UNSAFE' | 'LOW' | 'HIGH';
 
 type ChatRoomDetailData = {
   chatRoomId: number;
@@ -77,10 +77,32 @@ type SendTeacherMessageResponse = {
   } | null;
 };
 
+type SendTeacherMessageRequest = {
+  content: string;
+  analysisId: number;
+};
+
 type AnalysisFeedbackResponse = {
   success: boolean;
   code: number;
   message: string;
+};
+
+type RecommendationAdoptionResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: null;
+};
+
+type UpdateChatRoomStatusResponse = {
+  success: boolean;
+  code: number;
+  message: string;
+  data?: {
+    chatRoomId: number;
+    status: string;
+  } | null;
 };
 
 type AnalysisResult = {
@@ -127,13 +149,10 @@ const toMessageItem = (message: ChatRoomMessageResponse): MessageItem => {
   };
 };
 
-const buildFallbackRecommendedReply = (content: string) => {
-  const trimmed = content.trim();
-  if (!trimmed) {
-    return '학부모님, 안내 감사합니다. 확인 후 필요한 사항을 정리해 다시 안내드리겠습니다.';
-  }
-
-  return `학부모님, 말씀 주신 내용 감사합니다. ${trimmed} 관련해서는 확인 후 정확한 내용으로 다시 안내드리겠습니다.`;
+const mapThreadStatusToApiStatus = (status: ThreadStatus) => {
+  if (status === 'done') return 'COMPLETED';
+  if (status === 'hold') return 'HOLD';
+  return 'PROCESSING';
 };
 
 export const TeacherThreadDetailPage = () => {
@@ -149,6 +168,7 @@ export const TeacherThreadDetailPage = () => {
   const [feedbackErrorMessage, setFeedbackErrorMessage] = useState('');
   const [analysisErrorMessage, setAnalysisErrorMessage] = useState('');
   const [sendErrorMessage, setSendErrorMessage] = useState('');
+  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
   const [isAnalysisRequesting, setIsAnalysisRequesting] = useState(false);
   const [loadState, setLoadState] = useState<DetailLoadState>('loading');
   const [detailErrorMessage, setDetailErrorMessage] = useState('');
@@ -298,6 +318,8 @@ export const TeacherThreadDetailPage = () => {
   const hasMessageInput = messageInput.trim().length > 0;
   const composerActionMode = analysisResult ? 'send' : 'assist';
   const isComposerActionDisabled = !hasMessageInput || isAnalysisRequesting;
+  const isUnsafeRisk =
+    analysisResult?.riskLevel === 'UNSAFE' || analysisResult?.riskLevel === 'HIGH';
 
   const requestMessageAnalysis = useCallback(async () => {
     if (!hasMessageInput || isAnalysisRequesting) {
@@ -330,9 +352,7 @@ export const TeacherThreadDetailPage = () => {
         analysisId: data.data.analysisId,
         riskLevel: data.data.riskLevel,
         summary: data.message || '메시지 분석이 완료되었습니다.',
-        recommendedReply:
-          data.data.recommendedMessage?.trim() ||
-          (data.data.riskLevel === 'HIGH' ? buildFallbackRecommendedReply(content) : null),
+        recommendedReply: data.data.recommendedMessage?.trim() || null,
       };
       setAnalysisResult(nextAnalysisResult);
       setAnalysisFeedbackScore(null);
@@ -358,9 +378,17 @@ export const TeacherThreadDetailPage = () => {
       setAnalysisErrorMessage('');
 
       const content = messageInput.trim();
+      if (!analysisResult?.analysisId) {
+        throw new Error('분석 결과가 없어 메시지를 전송할 수 없어요');
+      }
+
+      const payload: SendTeacherMessageRequest = {
+        content,
+        analysisId: analysisResult.analysisId,
+      };
       const { data } = await apiClient.post<SendTeacherMessageResponse>(
         `/chat-rooms/${chatRoomId}/teacher-messages`,
-        { content }
+        payload
       );
       if (!data.success) throw new Error(data.message || '메시지 전송에 실패했어요');
 
@@ -379,8 +407,6 @@ export const TeacherThreadDetailPage = () => {
         },
       ]);
 
-      setMessageInput('');
-      setAnalysisResult(null);
       setSendErrorMessage('');
       void markMessagesAsRead();
     } catch {
@@ -388,7 +414,14 @@ export const TeacherThreadDetailPage = () => {
     } finally {
       setIsAnalysisRequesting(false);
     }
-  }, [chatRoomId, hasMessageInput, isAnalysisRequesting, markMessagesAsRead, messageInput]);
+  }, [
+    analysisResult?.analysisId,
+    chatRoomId,
+    hasMessageInput,
+    isAnalysisRequesting,
+    markMessagesAsRead,
+    messageInput,
+  ]);
 
   const handleComposerActionClick = () => {
     if (composerActionMode === 'assist') {
@@ -416,9 +449,24 @@ export const TeacherThreadDetailPage = () => {
     void requestMessageAnalysis();
   };
 
-  const handleApplyRecommendedReply = () => {
+  const handleApplyRecommendedReply = async () => {
     if (!analysisResult?.recommendedReply) {
       return;
+    }
+
+    try {
+      const { data } = await apiClient.post<RecommendationAdoptionResponse>(
+        `/teacher-message-analyses/${analysisResult.analysisId}/recommendation-adoption`,
+        {
+          analysisId: analysisResult.analysisId,
+        }
+      );
+
+      if (!data.success) {
+        throw new Error(data.message || '추천문장 채택 저장에 실패했어요');
+      }
+    } catch {
+      // 채택 저장 실패하더라도 추천문장 적용 UX는 유지합니다.
     }
 
     setMessageInput(analysisResult.recommendedReply);
@@ -484,10 +532,39 @@ export const TeacherThreadDetailPage = () => {
     await markMessagesAsRead();
   };
 
-  const handleSelectStatus = (nextStatus: ThreadStatus) => {
+  const handleSelectStatus = async (nextStatus: ThreadStatus) => {
+    if (isStatusUpdating) {
+      return;
+    }
+
+    const previousStatus = status;
     setStatus(nextStatus);
     setRoomStatus(chatRoomId, nextStatus);
     setIsStatusMenuOpen(false);
+
+    if (!Number.isFinite(chatRoomId) || chatRoomId <= 0) {
+      return;
+    }
+
+    try {
+      setIsStatusUpdating(true);
+      const { data } = await apiClient.patch<UpdateChatRoomStatusResponse>(
+        `/chat-rooms/${chatRoomId}/status`,
+        {
+          chatRoomId,
+          status: mapThreadStatusToApiStatus(nextStatus),
+        }
+      );
+
+      if (!data.success) {
+        throw new Error(data.message || '처리 상태 변경에 실패했어요');
+      }
+    } catch {
+      setStatus(previousStatus);
+      setRoomStatus(chatRoomId, previousStatus);
+    } finally {
+      setIsStatusUpdating(false);
+    }
   };
 
   return (
@@ -588,7 +665,7 @@ export const TeacherThreadDetailPage = () => {
             <AnalysisResultSection>
               <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
 
-              {analysisResult.riskLevel === 'HIGH' ? (
+              {isUnsafeRisk ? (
                 <>
                   <LowRiskCard $risk="high">
                     <LowRiskTitle $risk="high">오해가 발생할 수 있는 메시지예요</LowRiskTitle>
@@ -718,7 +795,7 @@ export const TeacherThreadDetailPage = () => {
                 </>
               )}
 
-              {analysisResult.riskLevel === 'HIGH' ? (
+              {isUnsafeRisk ? (
                 <RecommendSection>
                   <RecommendTitle>AI 추천 답변</RecommendTitle>
                   <RecommendCard>
