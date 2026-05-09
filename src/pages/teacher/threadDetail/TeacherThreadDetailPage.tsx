@@ -1,18 +1,19 @@
 ﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import styled from '@emotion/styled';
 import { useNavigate, useParams } from 'react-router-dom';
-import { IconButton } from '@/components/common/IconButton';
 import { InlineButton } from '@/components/common/InlineButton';
-import { ChatComposer } from '@/components/common/chat/ChatComposer';
-import { StatusTagButton, type StatusTagTone } from '@/components/common/chat/StatusTagButton';
 import { ROUTES } from '@/constants/routes';
 import { apiClient } from '@/services/http/apiClient';
+import { useChatRead } from '@/features/chat/hooks/useChatRead';
 import {
   mapApiStatusToThreadStatus,
   useThreadStatusStore,
   type ThreadStatus,
 } from '@/stores/threadStatusStore';
-import { IcBack, IcError, IcInfo, IcRefresh, IcSparkles } from '@/icons';
+import { IcError, IcSparkles } from '@/icons';
+import { ChatHeader } from '@/pages/teacher/threadDetail/components/ChatHeader';
+import { ChatInput } from '@/pages/teacher/threadDetail/components/ChatInput';
+import { ChatMessageList } from '@/pages/teacher/threadDetail/components/ChatMessageList';
 
 type DetailLoadState = 'loading' | 'error' | 'success';
 type AnalysisRiskLevel = 'LOW' | 'HIGH';
@@ -40,6 +41,7 @@ type ChatRoomMessageResponse = {
   senderRole: string;
   content: string;
   createdAt: string;
+  unreadCount?: number;
 };
 
 type ChatRoomMessagesApiResponse = {
@@ -51,17 +53,6 @@ type ChatRoomMessagesApiResponse = {
     messages: ChatRoomMessageResponse[];
     nextCursor: number | null;
     hasNext: boolean;
-  } | null;
-};
-
-type MarkMessagesReadResponse = {
-  success: boolean;
-  code: number;
-  message: string;
-  data?: {
-    chatRoomId: number;
-    unreadCount: number;
-    lastReadAt: string;
   } | null;
 };
 
@@ -105,6 +96,7 @@ const toMessageItem = (message: ChatRoomMessageResponse): MessageItem => {
     sentAt: formatMessageTime(message.createdAt),
     content: message.content || '-',
     isMine: message.isMine,
+    unreadCount: message.unreadCount ?? 0,
   };
 };
 
@@ -132,20 +124,22 @@ export const TeacherThreadDetailPage = () => {
   const [messagesHasNext, setMessagesHasNext] = useState(false);
 
   const chatRoomId = useMemo(() => Number(threadId), [threadId]);
+  const { markAsRead } = useChatRead(chatRoomId);
   const setRoomStatus = useThreadStatusStore(state => state.setRoomStatus);
   const statusByRoomId = useThreadStatusStore(state => state.statusByRoomId);
 
   const markMessagesAsRead = useCallback(async () => {
-    if (!Number.isFinite(chatRoomId) || chatRoomId <= 0) {
-      return;
-    }
-
     try {
-      await apiClient.post<MarkMessagesReadResponse>(`/chat-rooms/${chatRoomId}/read`);
+      const isSuccess = await markAsRead();
+      if (isSuccess) {
+        setMessages(prev =>
+          prev.map(message => (message.isMine ? { ...message, unreadCount: 0 } : message))
+        );
+      }
     } catch {
       // 읽음 처리는 부가 동작이므로, 실패해도 화면 흐름은 유지합니다.
     }
-  }, [chatRoomId]);
+  }, [markAsRead]);
 
   const loadChatRoomDetail = useCallback(async () => {
     if (!Number.isFinite(chatRoomId) || chatRoomId <= 0) {
@@ -217,10 +211,6 @@ export const TeacherThreadDetailPage = () => {
         setMessagesNextCursor(payload.nextCursor);
         setMessagesHasNext(payload.hasNext);
         setMessagesPartialError('');
-
-        if (!append) {
-          void markMessagesAsRead();
-        }
       } catch {
         if (append) {
           setMessagesPartialError('채팅 내역 일부를 불러오지 못했어요.');
@@ -234,32 +224,33 @@ export const TeacherThreadDetailPage = () => {
         setIsMessagesLoadingMore(false);
       }
     },
-    [chatRoomId, markMessagesAsRead]
+    [chatRoomId]
   );
 
   useEffect(() => {
     void loadChatRoomDetail();
     void loadMessages();
-  }, [loadChatRoomDetail, loadMessages]);
+    void markMessagesAsRead();
+  }, [loadChatRoomDetail, loadMessages, markMessagesAsRead]);
 
   const statusInfo = useMemo(() => {
     if (status === 'processing') {
       return {
         label: '처리중',
-        tone: 'processing' as StatusTagTone,
+        tone: 'processing' as const,
       };
     }
 
     if (status === 'hold') {
       return {
         label: '보류',
-        tone: 'hold' as StatusTagTone,
+        tone: 'hold' as const,
       };
     }
 
     return {
       label: '완료',
-      tone: 'done' as StatusTagTone,
+      tone: 'done' as const,
     };
   }, [status]);
 
@@ -326,167 +317,52 @@ export const TeacherThreadDetailPage = () => {
   const handleRetryConversation = async () => {
     await loadChatRoomDetail();
     await loadMessages();
+    await markMessagesAsRead();
+  };
+
+  const handleSelectStatus = (nextStatus: ThreadStatus) => {
+    setStatus(nextStatus);
+    setRoomStatus(chatRoomId, nextStatus);
+    setIsStatusMenuOpen(false);
   };
 
   return (
     <ThreadDetailPageContainer>
-      <ThreadHeader>
-        <BackButtonWrap>
-          <IconButton
-            icon={IcBack}
-            variant="plain"
-            accessibilityLabel="수신함으로 이동"
-            onClick={() => navigate(ROUTES.teacherThreadList)}
-          />
-        </BackButtonWrap>
-
-        <HeaderInfo>
-          <ParentName>{counterpartName || '-'}</ParentName>
-          <StudentName>{studentName || '-'}</StudentName>
-          <StatusTagButton label={intentLabel || '-'} tone="absence" />
-
-          <StatusDropdownWrap>
-            <StatusTagButton
-              label={statusInfo.label}
-              tone={statusInfo.tone}
-              isDropdown
-              onClick={() => setIsStatusMenuOpen(prev => !prev)}
-            />
-
-            {isStatusMenuOpen ? (
-              <StatusMenu>
-                <StatusMenuItem
-                  variant="text"
-                  size="M"
-                  label="처리중"
-                  onClick={() => {
-                    setStatus('processing');
-                    setRoomStatus(chatRoomId, 'processing');
-                    setIsStatusMenuOpen(false);
-                  }}
-                />
-                <StatusMenuItem
-                  variant="text"
-                  size="M"
-                  label="완료"
-                  onClick={() => {
-                    setStatus('done');
-                    setRoomStatus(chatRoomId, 'done');
-                    setIsStatusMenuOpen(false);
-                  }}
-                />
-                <StatusMenuItem
-                  variant="text"
-                  size="M"
-                  label="보류"
-                  onClick={() => {
-                    setStatus('hold');
-                    setRoomStatus(chatRoomId, 'hold');
-                    setIsStatusMenuOpen(false);
-                  }}
-                />
-              </StatusMenu>
-            ) : null}
-          </StatusDropdownWrap>
-        </HeaderInfo>
-      </ThreadHeader>
+      <ChatHeader
+        counterpartName={counterpartName}
+        studentName={studentName}
+        intentLabel={intentLabel}
+        statusLabel={statusInfo.label}
+        statusTone={statusInfo.tone}
+        isStatusMenuOpen={isStatusMenuOpen}
+        onBack={() => navigate(ROUTES.teacherThreadList)}
+        onToggleStatusMenu={() => setIsStatusMenuOpen(prev => !prev)}
+        onSelectStatus={handleSelectStatus}
+      />
 
       <ThreadBody>
         <ConversationPanel>
-          {loadState === 'error' ? (
-            <DetailErrorBox>
-              <DetailErrorIcon>
-                <IcError />
-              </DetailErrorIcon>
-              <DetailErrorTitle>
-                {detailErrorMessage || '대화 정보를 불러올 수 없어요'}
-              </DetailErrorTitle>
-              <DetailErrorDescription>잠시 후 다시 시도해주세요.</DetailErrorDescription>
-              <DetailRetryButton
-                variant="primary"
-                size="L"
-                icon={IcRefresh}
-                label="다시 시도"
-                onClick={() => void handleRetryConversation()}
-              />
-            </DetailErrorBox>
-          ) : loadState === 'loading' ? (
-            <DetailLoadingBox>채팅방 정보를 불러오는 중입니다.</DetailLoadingBox>
-          ) : isMessagesLoading ? (
-            <DetailLoadingBox>메시지를 불러오는 중입니다.</DetailLoadingBox>
-          ) : messagesError ? (
-            <DetailErrorBox>{messagesError}</DetailErrorBox>
-          ) : (
-            <MessageArea>
-              {messagesPartialError ? (
-                <PartialErrorBanner role="alert">
-                  <PartialErrorLeft>
-                    <PartialErrorIcon>
-                      <IcInfo />
-                    </PartialErrorIcon>
-                    <PartialErrorTextWrap>
-                      <PartialErrorTitle>채팅 내역을 불러오지 못했어요</PartialErrorTitle>
-                      <PartialErrorDesc>
-                        일부 데이터가 누락되었어요. 채팅 내역을 다시 불러와 주세요.
-                      </PartialErrorDesc>
-                    </PartialErrorTextWrap>
-                  </PartialErrorLeft>
+          <ChatMessageList
+            loadState={loadState}
+            detailErrorMessage={detailErrorMessage}
+            isMessagesLoading={isMessagesLoading}
+            messagesError={messagesError}
+            messagesPartialError={messagesPartialError}
+            messagesHasNext={messagesHasNext}
+            isMessagesLoadingMore={isMessagesLoadingMore}
+            messages={messages}
+            onRetryConversation={() => void handleRetryConversation()}
+            onRetryMissingMessages={handleRetryMissingMessages}
+            onLoadMoreMessages={handleLoadMoreMessages}
+          />
 
-                  <InlineButton
-                    variant="text"
-                    size="M"
-                    label="다시 시도"
-                    onClick={handleRetryMissingMessages}
-                  />
-                </PartialErrorBanner>
-              ) : null}
-
-              {messagesHasNext ? (
-                <LoadMoreWrap>
-                  <InlineButton
-                    variant="ghost"
-                    size="M"
-                    label={isMessagesLoadingMore ? '불러오는 중...' : '이전 메시지 더보기'}
-                    onClick={handleLoadMoreMessages}
-                    disabled={isMessagesLoadingMore}
-                  />
-                </LoadMoreWrap>
-              ) : null}
-
-              {messages.map(message => (
-                <MessageRow key={message.id} $isMine={message.isMine}>
-                  {!message.isMine ? (
-                    <IncomingMeta>
-                      <Avatar>{message.senderName.charAt(0)}</Avatar>
-                      <IncomingInfo>
-                        <SenderName>{message.senderName}</SenderName>
-                        <MessageTime>{message.sentAt}</MessageTime>
-                      </IncomingInfo>
-                    </IncomingMeta>
-                  ) : (
-                    <OutgoingTime>{message.sentAt}</OutgoingTime>
-                  )}
-
-                  <BubbleWrap $isMine={message.isMine}>
-                    <MessageBubble $isMine={message.isMine}>{message.content}</MessageBubble>
-                    {message.isMine && message.unreadCount ? (
-                      <UnreadMarker>{message.unreadCount}</UnreadMarker>
-                    ) : null}
-                  </BubbleWrap>
-                </MessageRow>
-              ))}
-            </MessageArea>
-          )}
-
-          <ComposerWrap>
-            <ChatComposer
-              value={messageInput}
-              onChange={handleMessageInputChange}
-              actionMode={composerActionMode}
-              isActionDisabled={isComposerActionDisabled}
-              onActionClick={handleComposerActionClick}
-            />
-          </ComposerWrap>
+          <ChatInput
+            value={messageInput}
+            onChange={handleMessageInputChange}
+            actionMode={composerActionMode}
+            isActionDisabled={isComposerActionDisabled}
+            onActionClick={handleComposerActionClick}
+          />
         </ConversationPanel>
 
         <AssistantPanel>
@@ -575,65 +451,6 @@ const ThreadDetailPageContainer = styled.section`
   overflow: hidden;
 `;
 
-const ThreadHeader = styled.header`
-  height: 84px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 0 20px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
-  background: ${({ theme }) => theme.colors.background.bg1};
-`;
-
-const BackButtonWrap = styled.div`
-  button {
-    width: 32px;
-    height: 32px;
-  }
-`;
-
-const HeaderInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  position: relative;
-`;
-
-const ParentName = styled.h2`
-  ${({ theme }) => theme.fonts.titleM};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const StudentName = styled.span`
-  ${({ theme }) => theme.fonts.labelM};
-  color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const StatusDropdownWrap = styled.div`
-  position: relative;
-`;
-
-const StatusMenu = styled.div`
-  position: absolute;
-  top: calc(100% + 8px);
-  right: 0;
-  min-width: 92px;
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  box-shadow: ${({ theme }) => theme.colors.shadow.card};
-  overflow: hidden;
-  z-index: 10;
-`;
-
-const StatusMenuItem = styled(InlineButton)`
-  width: 100%;
-  justify-content: flex-start;
-  border-radius: 0;
-  padding: 8px 10px;
-`;
-
 const ThreadBody = styled.div`
   flex: 1;
   display: flex;
@@ -649,182 +466,6 @@ const ConversationPanel = styled.section`
   flex-direction: column;
   border-right: 1px solid ${({ theme }) => theme.colors.border.border1};
   overflow: hidden;
-`;
-
-const MessageArea = styled.div`
-  flex: 1;
-  min-height: 0;
-  background: ${({ theme }) => theme.colors.background.bg4};
-  padding: 16px 14px;
-  overflow-y: auto;
-  overflow-x: hidden;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-`;
-
-const DetailErrorBox = styled.div`
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  background: ${({ theme }) => theme.colors.background.bg4};
-`;
-
-const DetailErrorIcon = styled.span`
-  color: ${({ theme }) => theme.colors.semantic.error};
-
-  svg {
-    width: 28px;
-    height: 28px;
-  }
-`;
-
-const DetailErrorTitle = styled.p`
-  ${({ theme }) => theme.fonts.labelM};
-  margin: 8px 0 0;
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const DetailErrorDescription = styled.p`
-  ${({ theme }) => theme.fonts.body3};
-  margin: 8px 0 0;
-  color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const DetailRetryButton = styled(InlineButton)`
-  margin-top: 14px;
-`;
-
-const DetailLoadingBox = styled(DetailErrorBox)`
-  color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const LoadMoreWrap = styled.div`
-  align-self: center;
-`;
-
-const PartialErrorBanner = styled.div`
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 14px;
-  border: 1px solid ${({ theme }) => theme.colors.intent.absenceLate.border};
-  background: ${({ theme }) => theme.colors.intent.absenceLate.background};
-  border-radius: 14px;
-  padding: 10px 12px;
-`;
-
-const PartialErrorLeft = styled.div`
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  min-width: 0;
-`;
-
-const PartialErrorIcon = styled.span`
-  color: ${({ theme }) => theme.colors.intent.absenceLate.text};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-const PartialErrorTextWrap = styled.div`
-  min-width: 0;
-`;
-
-const PartialErrorTitle = styled.p`
-  ${({ theme }) => theme.fonts.labelXS};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.intent.absenceLate.text};
-`;
-
-const PartialErrorDesc = styled.p`
-  ${({ theme }) => theme.fonts.caption};
-  margin: 4px 0 0;
-  color: ${({ theme }) => theme.colors.intent.absenceLate.text};
-`;
-
-const MessageRow = styled.article<{ $isMine: boolean }>`
-  display: flex;
-  flex-direction: column;
-  align-items: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
-  gap: 8px;
-`;
-
-const IncomingMeta = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const Avatar = styled.span`
-  ${({ theme }) => theme.fonts.labelXS};
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.background.bg4};
-  color: ${({ theme }) => theme.colors.brand.dark};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const IncomingInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
-`;
-
-const SenderName = styled.span`
-  ${({ theme }) => theme.fonts.labelXS};
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const MessageTime = styled.span`
-  ${({ theme }) => theme.fonts.caption};
-  color: ${({ theme }) => theme.colors.text.text4};
-`;
-
-const OutgoingTime = styled(MessageTime)`
-  margin-right: 4px;
-`;
-
-const BubbleWrap = styled.div<{ $isMine: boolean }>`
-  position: relative;
-  max-width: min(62%, 650px);
-  ${({ $isMine }) => ($isMine ? 'margin-right: 0;' : '')}
-`;
-
-const MessageBubble = styled.div<{ $isMine: boolean }>`
-  ${({ theme }) => theme.fonts.body2};
-  border-radius: 16px;
-  padding: 16px;
-  line-height: 1.45;
-  color: ${({ $isMine, theme }) => ($isMine ? theme.colors.text.textW : theme.colors.text.text2)};
-  background: ${({ $isMine, theme }) =>
-    $isMine ? theme.colors.brand.primary : theme.colors.background.bg1};
-`;
-
-const UnreadMarker = styled.span`
-  ${({ theme }) => theme.fonts.labelXS};
-  position: absolute;
-  left: -14px;
-  bottom: 4px;
-  color: ${({ theme }) => theme.colors.brand.dark};
-`;
-
-const ComposerWrap = styled.div`
-  padding: 12px;
-  background: ${({ theme }) => theme.colors.background.bg2};
-  border-top: 1px solid ${({ theme }) => theme.colors.border.border1};
 `;
 
 const AssistantPanel = styled.aside`
