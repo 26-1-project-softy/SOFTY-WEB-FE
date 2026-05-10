@@ -164,8 +164,7 @@ const toMessageItem = (message: ChatRoomMessageResponse): MessageItem => {
 
 const mapThreadStatusToApiStatus = (status: ThreadStatus) => {
   if (status === 'done') return 'COMPLETED';
-  if (status === 'hold') return 'HOLD';
-  return 'PROCESSING';
+  return 'IN_PROGRESS';
 };
 
 const getApiErrorMessage = (error: unknown, fallback: string) => {
@@ -374,13 +373,6 @@ export const TeacherThreadDetailPage = () => {
       };
     }
 
-    if (status === 'hold') {
-      return {
-        label: '보류',
-        tone: 'hold' as const,
-      };
-    }
-
     return {
       label: '완료',
       tone: 'done' as const,
@@ -495,9 +487,45 @@ export const TeacherThreadDetailPage = () => {
         },
       ]);
 
+      setMessageInput('');
+      setAnalysisResult(null);
+      setLastAnalysisId(null);
+      setAnalysisFeedbackScore(null);
+      setFeedbackSaved(false);
+      setFeedbackErrorMessage('');
       setSendErrorMessage('');
       void markMessagesAsRead();
     } catch (error) {
+      // 백엔드가 저장은 성공했지만 4xx를 반환하는 경우를 보정합니다.
+      if (isAxiosError(error) && error.response?.status === 400) {
+        try {
+          const content = messageInput.trim();
+          const { data } = await apiClient.get<ChatRoomMessagesApiResponse>(
+            `/chat-rooms/${chatRoomId}/messages`,
+            {
+              params: { size: 5 },
+            }
+          );
+          const latestMine = data.data?.messages?.find(message => message.isMine);
+          const isActuallySent = latestMine?.content?.trim() === content;
+
+          if (isActuallySent) {
+            setSendErrorMessage('');
+            setMessageInput('');
+            setAnalysisResult(null);
+            setLastAnalysisId(null);
+            setAnalysisFeedbackScore(null);
+            setFeedbackSaved(false);
+            setFeedbackErrorMessage('');
+            await loadMessages();
+            void markMessagesAsRead();
+            return;
+          }
+        } catch {
+          // 재확인 실패 시 일반 오류 처리로 진행합니다.
+        }
+      }
+
       setSendErrorMessage(getApiErrorMessage(error, '메시지를 전송하지 못했어요'));
     } finally {
       isSendingRef.current = false;
@@ -508,6 +536,7 @@ export const TeacherThreadDetailPage = () => {
     chatRoomId,
     hasMessageInput,
     isAnalysisRequesting,
+    loadMessages,
     markMessagesAsRead,
     messageInput,
   ]);
@@ -646,7 +675,6 @@ export const TeacherThreadDetailPage = () => {
       const { data } = await apiClient.patch<UpdateChatRoomStatusResponse>(
         `/chat-rooms/${chatRoomId}/status`,
         {
-          chatRoomId,
           status: mapThreadStatusToApiStatus(nextStatus),
         }
       );

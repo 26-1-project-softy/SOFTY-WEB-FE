@@ -1,7 +1,7 @@
-import { create } from 'zustand';
+﻿import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
-export type ThreadStatus = 'processing' | 'done' | 'hold';
+export type ThreadStatus = 'processing' | 'done';
 
 type ThreadStatusState = {
   statusByRoomId: Record<number, ThreadStatus>;
@@ -9,14 +9,15 @@ type ThreadStatusState = {
 };
 
 export const mapApiStatusToThreadStatus = (status?: string | null): ThreadStatus => {
-  if (status === 'DONE') return 'done';
-  if (status === 'HOLD') return 'hold';
+  const normalizedStatus = status?.toUpperCase().trim();
+
+  if (normalizedStatus === 'COMPLETED' || normalizedStatus === 'DONE') return 'done';
+  if (normalizedStatus === 'IN_PROGRESS' || normalizedStatus === 'PROCESSING') return 'processing';
   return 'processing';
 };
 
-export const toThreadStatusLabel = (status: ThreadStatus): '처리중' | '완료' | '보류' => {
+export const toThreadStatusLabel = (status: ThreadStatus): '처리중' | '완료' => {
   if (status === 'done') return '완료';
-  if (status === 'hold') return '보류';
   return '처리중';
 };
 
