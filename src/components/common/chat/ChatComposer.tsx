@@ -50,9 +50,9 @@ const ComposerContainer = styled.div`
   align-items: flex-end;
   gap: 12px;
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 16px;
+  border-radius: 18px;
   background: ${({ theme }) => theme.colors.background.bg1};
-  padding: 12px 14px;
+  padding: 14px 16px;
 `;
 
 const ComposerTextarea = styled.textarea`
@@ -62,7 +62,7 @@ const ComposerTextarea = styled.textarea`
   background: transparent;
   color: ${({ theme }) => theme.colors.text.text1};
   resize: none;
-  min-height: 24px;
+  min-height: 84px;
   max-height: 132px;
   line-height: 1.5;
 
@@ -77,7 +77,7 @@ const ComposerTextarea = styled.textarea`
 
 const ActionButtonWrap = styled.div`
   button {
-    width: 36px;
-    height: 36px;
+    width: 44px;
+    height: 44px;
   }
 `;
