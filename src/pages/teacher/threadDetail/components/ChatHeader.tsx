@@ -66,12 +66,6 @@ export const ChatHeader = ({
                 label="완료"
                 onClick={() => onSelectStatus('done')}
               />
-              <StatusMenuItem
-                variant="text"
-                size="M"
-                label="보류"
-                onClick={() => onSelectStatus('hold')}
-              />
             </StatusMenu>
           ) : null}
         </StatusDropdownWrap>

@@ -222,7 +222,6 @@ export const TeacherThreadListPage = () => {
 
 const resolveThreadStatusTone = (status: ThreadStatus): StatusTagTone => {
   if (status === 'done') return 'done';
-  if (status === 'hold') return 'hold';
   return 'processing';
 };
 
