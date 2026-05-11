@@ -5,13 +5,7 @@ import type {
   RecommendationStatistics,
   RiskStatistics,
 } from '@/features/admin/dashboard/types/dashboard';
-
-type ApiResponse<T> = {
-  success: boolean;
-  code: number;
-  message: string;
-  data: T;
-};
+import type { ApiResponse } from '@/types/apiResponse';
 
 type RecommendationStatisticsResponse = {
   adoptionRate: number;
