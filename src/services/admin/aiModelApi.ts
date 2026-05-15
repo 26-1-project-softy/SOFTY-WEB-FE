@@ -45,10 +45,27 @@ export type RetrainModelResult = {
   status: string;
 };
 
+export type TrainingHistoryItem = {
+  trainedAt: string;
+  version: string;
+  datasetVersion: string;
+  f1Score: number;
+  status: string;
+};
+
+export type TrainingHistory = {
+  items: TrainingHistoryItem[];
+  page: number;
+  size: number;
+  totalCount: number;
+  totalPages: number;
+};
+
 export type LatestModelInfoResponse = ApiResponse<LatestModelInfo | null>;
 export type LatestModelEvaluationResponse = ApiResponse<LatestModelEvaluation | null>;
 export type RerunModelEvaluationResponse = ApiResponse<RerunModelEvaluationResult | null>;
 export type RetrainModelResponse = ApiResponse<RetrainModelResult | null>;
+export type TrainingHistoryResponse = ApiResponse<TrainingHistory>;
 
 export const aiModelApi = {
   getLatestModelInfo: async () => {
@@ -79,6 +96,14 @@ export const aiModelApi = {
 
   retrainModel: async () => {
     const { data } = await apiClient.post<RetrainModelResponse>('/admin/retraining');
+
+    return data;
+  },
+
+  getTrainingHistory: async (params: { page: number; size: number }) => {
+    const { data } = await apiClient.get<TrainingHistoryResponse>('/admin/training-jobs', {
+      params,
+    });
 
     return data;
   },

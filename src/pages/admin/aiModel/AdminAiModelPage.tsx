@@ -2,6 +2,7 @@ import styled from '@emotion/styled';
 import { ModelInfoSection } from '@/components/admin/aiModel/ModelInfoSection';
 import { ModelPerformanceSection } from '@/components/admin/aiModel/ModelPerformanceSection';
 import { ModelRetrainingSection } from '@/components/admin/aiModel/ModelRetrainingSection';
+import { ModelTrainingHistorySection } from '@/components/admin/aiModel/ModelTrainingHistorySection';
 
 export const AdminAiModelPage = () => {
   return (
@@ -9,6 +10,7 @@ export const AdminAiModelPage = () => {
       <ModelInfoSection />
       <ModelPerformanceSection />
       <ModelRetrainingSection />
+      <ModelTrainingHistorySection />
     </AiModelPageContainer>
   );
 };
