@@ -32,6 +32,7 @@ const SectionCardContainer = styled.section`
   display: flex;
   min-width: 0;
   flex-direction: column;
+  border: 1px solid ${({ theme }) => theme.colors.border.border2};
   border-radius: 10px;
   background: ${({ theme }) => theme.colors.background.bg1};
 `;
