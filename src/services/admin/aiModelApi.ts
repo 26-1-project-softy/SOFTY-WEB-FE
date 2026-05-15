@@ -18,6 +18,7 @@ export type LatestModelEvaluation = {
   recall: number;
   f1Score: number;
   status: LatestModelEvaluationStatus;
+  progressPercent: number;
   passed: boolean;
   version: string;
   resultCode: number;
