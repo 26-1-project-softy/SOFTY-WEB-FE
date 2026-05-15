@@ -10,7 +10,7 @@ import { Alert } from '@/components/common/Alert';
 import { Loader } from '@/components/common/Loader';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { ProgressBar } from '@/components/admin/aiModel/ProgressBar';
-import { IcDashboard } from '@/icons';
+import { IcDashboard, IcRefresh } from '@/icons';
 
 const PROGRESS_VISIBLE_DELAY = 700;
 
@@ -54,6 +54,7 @@ export const ModelPerformanceSection = () => {
     <InlineButton
       variant="primary"
       size="M"
+      icon={IcRefresh}
       label="다시 평가"
       onClick={onRerun}
       disabled={isRerunning}
