@@ -9,16 +9,26 @@ import {
 import type { LatestModelEvaluation } from '@/services/admin/aiModelApi';
 import { aiModelQueryKeys } from '@/features/admin/aiModel/constants/aiModelQueryKeys';
 
+const EVALUATION_REFETCH_INTERVAL = 1000;
+
 const isInProgressStatus = (status?: LatestModelEvaluation['status'] | null) => {
   return status === 'queued' || status === 'running';
+};
+
+const getSafeProgressPercent = (progressPercent?: number | null) => {
+  if (typeof progressPercent !== 'number' || !Number.isFinite(progressPercent)) {
+    return 0;
+  }
+
+  return Math.min(100, Math.max(0, progressPercent));
 };
 
 export const useModelEvaluation = () => {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
 
-  const prevStatusRef = useRef<LatestModelEvaluation['status'] | null>(null);
-  const isRerunTriggeredRef = useRef(false);
+  const isWaitingRerunCompletionRef = useRef(false);
+  const rerunBaseEvaluationIdRef = useRef<string | null>(null);
 
   const {
     data: latestModelInfo,
@@ -35,7 +45,7 @@ export const useModelEvaluation = () => {
     refetchInterval: query => {
       const status = query.state.data?.status;
 
-      return isInProgressStatus(status) ? 3000 : false;
+      return isInProgressStatus(status) ? EVALUATION_REFETCH_INTERVAL : false;
     },
   });
 
@@ -44,19 +54,25 @@ export const useModelEvaluation = () => {
   const isInProgress = isInProgressStatus(status);
   const isCompleted = status === 'completed';
   const isFailed = status === 'failed';
+  const progressPercent = getSafeProgressPercent(evaluation?.progressPercent);
 
   useEffect(() => {
+    const evaluationId = evaluation?.evaluationId;
+
     if (
-      isRerunTriggeredRef.current &&
-      prevStatusRef.current !== 'completed' &&
-      status === 'completed'
+      isWaitingRerunCompletionRef.current &&
+      status === 'completed' &&
+      evaluationId &&
+      evaluationId !== rerunBaseEvaluationIdRef.current
     ) {
       showToast('성능 평가가 완료되었어요', 'success');
-      isRerunTriggeredRef.current = false;
+      isWaitingRerunCompletionRef.current = false;
     }
 
-    prevStatusRef.current = status ?? null;
-  }, [status, showToast]);
+    if (isWaitingRerunCompletionRef.current && status === 'failed') {
+      isWaitingRerunCompletionRef.current = false;
+    }
+  }, [evaluation?.evaluationId, status, showToast]);
 
   const rerunMutation = useMutation({
     mutationFn: rerunModelEvaluation,
@@ -68,11 +84,17 @@ export const useModelEvaluation = () => {
       await queryClient.invalidateQueries({
         queryKey: aiModelQueryKeys.latestModelInfo(),
       });
+
+      await queryClient.refetchQueries({
+        queryKey: aiModelQueryKeys.latestEvaluation(),
+      });
     },
   });
 
   const handleRerun = async () => {
-    if (rerunMutation.isPending || isInProgress) return;
+    if (rerunMutation.isPending || isInProgress) {
+      return;
+    }
 
     const version = latestModelInfo?.modelVersion;
     const datasetVersion = latestModelInfo?.datasetVersion;
@@ -82,8 +104,9 @@ export const useModelEvaluation = () => {
       return;
     }
 
+    rerunBaseEvaluationIdRef.current = evaluation?.evaluationId ?? null;
     rerunMutation.reset();
-    isRerunTriggeredRef.current = true;
+    isWaitingRerunCompletionRef.current = true;
 
     try {
       await rerunMutation.mutateAsync({
@@ -91,13 +114,14 @@ export const useModelEvaluation = () => {
         datasetVersion,
       });
     } catch {
-      isRerunTriggeredRef.current = false;
+      isWaitingRerunCompletionRef.current = false;
     }
   };
 
   return {
     evaluation: isCompleted ? evaluation : null,
     status,
+    progressPercent,
     isInProgress,
     isCompleted,
     isFailed,

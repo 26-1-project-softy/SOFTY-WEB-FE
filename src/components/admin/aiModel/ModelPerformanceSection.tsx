@@ -1,4 +1,5 @@
 import styled from '@emotion/styled';
+import { useEffect, useState } from 'react';
 import { SectionCard, SectionCardContent } from '@/components/common/SectionCard';
 import { KpiCard } from '@/components/common/KpiCard';
 import { PerformanceChart } from './PerformanceChart';
@@ -8,11 +9,46 @@ import { InlineButton } from '@/components/common/InlineButton';
 import { Alert } from '@/components/common/Alert';
 import { Loader } from '@/components/common/Loader';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
+import { ProgressBar } from '@/components/admin/aiModel/ProgressBar';
 import { IcDashboard } from '@/icons';
 
+const PROGRESS_VISIBLE_DELAY = 700;
+
 export const ModelPerformanceSection = () => {
-  const { evaluation, isInProgress, isLoading, isError, onRerun, isRerunning, rerunError } =
-    useModelEvaluation();
+  const {
+    evaluation,
+    progressPercent,
+    isInProgress,
+    isCompleted,
+    isFailed,
+    isLoading,
+    isError,
+    onRerun,
+    isRerunning,
+    rerunError,
+  } = useModelEvaluation();
+
+  const [shouldShowProgress, setShouldShowProgress] = useState(false);
+
+  const isProgressPending = isRerunning || isInProgress;
+  const chartData = isCompleted && evaluation ? getPerformanceChartData(evaluation) : [];
+
+  useEffect(() => {
+    if (!isProgressPending) {
+      const timerId = window.setTimeout(() => {
+        setShouldShowProgress(false);
+      }, 0);
+      return () => window.clearTimeout(timerId);
+    }
+
+    const timerId = window.setTimeout(() => {
+      setShouldShowProgress(true);
+    }, PROGRESS_VISIBLE_DELAY);
+
+    return () => {
+      window.clearTimeout(timerId);
+    };
+  }, [isProgressPending]);
 
   const headerAction = (
     <InlineButton
@@ -24,7 +60,9 @@ export const ModelPerformanceSection = () => {
     />
   );
 
-  if (isLoading) return <Loader />;
+  if (isLoading) {
+    return <Loader />;
+  }
 
   if (isError && !evaluation) {
     return (
@@ -36,7 +74,7 @@ export const ModelPerformanceSection = () => {
     );
   }
 
-  if (!evaluation && !isInProgress) {
+  if (!evaluation && !isProgressPending && !isFailed) {
     return (
       <SectionCard title="성능 평가" headerAction={headerAction}>
         <SectionCardContent>
@@ -50,31 +88,46 @@ export const ModelPerformanceSection = () => {
     );
   }
 
-  const chartData = evaluation ? getPerformanceChartData(evaluation) : [];
-
   return (
     <SectionCard title="성능 평가" headerAction={headerAction}>
-      <SectionCardContent>
-        {isInProgress && (
-          <Alert
-            variant="success"
-            title="성능 평가를 진행 중이에요"
-            description="평가가 완료되면 최신 성능 지표를 확인할 수 있어요."
-          />
-        )}
+      {(shouldShowProgress || isFailed || (rerunError && !isProgressPending)) && (
+        <SectionCardContent>
+          <StatusContainer>
+            {shouldShowProgress && (
+              <ProgressContainer>
+                <Alert
+                  variant="success"
+                  title="성능 평가를 진행 중이에요"
+                  description="평가가 완료되면 최신 성능 지표를 확인할 수 있어요."
+                />
+                <ProgressBar label="진행률" value={progressPercent} />
+              </ProgressContainer>
+            )}
 
-        {rerunError && !isInProgress && (
-          <Alert title="성능 평가를 시작하지 못했어요" description="잠시 후 다시 시도해주세요." />
-        )}
-      </SectionCardContent>
+            {isFailed && !isProgressPending && (
+              <Alert
+                title="성능 평가에 실패했어요"
+                description="평가를 다시 실행하거나 잠시 후 다시 시도해주세요."
+              />
+            )}
 
-      {evaluation && (
+            {rerunError && !isProgressPending && (
+              <Alert
+                title="성능 평가를 시작하지 못했어요"
+                description="잠시 후 다시 시도해주세요."
+              />
+            )}
+          </StatusContainer>
+        </SectionCardContent>
+      )}
+
+      {isCompleted && evaluation && (
         <>
           <SectionCardContent>
             <KpiGrid>
-              <KpiCard title="Precision" value={(evaluation.precision * 100).toFixed(2) + '%'} />
-              <KpiCard title="Recall" value={(evaluation.recall * 100).toFixed(2) + '%'} />
-              <KpiCard title="F1-score" value={(evaluation.f1Score * 100).toFixed(2) + '%'} />
+              <KpiCard title="Precision" value={`${(evaluation.precision * 100).toFixed(2)}%`} />
+              <KpiCard title="Recall" value={`${(evaluation.recall * 100).toFixed(2)}%`} />
+              <KpiCard title="F1-score" value={`${(evaluation.f1Score * 100).toFixed(2)}%`} />
             </KpiGrid>
           </SectionCardContent>
 
@@ -86,6 +139,18 @@ export const ModelPerformanceSection = () => {
     </SectionCard>
   );
 };
+
+const StatusContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
+
+const ProgressContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+`;
 
 const KpiGrid = styled.div`
   display: grid;
