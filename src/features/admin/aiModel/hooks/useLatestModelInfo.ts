@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { latestModelInfoQueryOptions } from '@/features/admin/aiModel/queries/aiModelQueries';
+import { latestModelInfoQueryOptions } from '@/features/admin/aiModel/queries/modelInfo';
 
 export const useLatestModelInfo = () => {
   const { data, isLoading, isError, error } = useQuery(latestModelInfoQueryOptions());
