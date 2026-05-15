@@ -2,10 +2,10 @@ import styled from '@emotion/styled';
 import { SectionCard, SectionCardContent } from '@/components/common/SectionCard';
 import { Alert } from '@/components/common/Alert';
 import { Loader } from '@/components/common/Loader';
+import { formatAiModelDateTime } from '@/utils/formatDateTime';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { InfoFieldGrid } from '@/components/admin/aiModel/InfoFieldGrid';
 import { useLatestModelInfo } from '@/features/admin/aiModel/hooks/useLatestModelInfo';
-import { formatDateTime } from '@/utils/formatDateTime';
 import { IcDashboard } from '@/icons';
 
 const MODEL_CATEGORY_LABEL = 'LLM 모델';
@@ -44,28 +44,28 @@ export const ModelInfoSection = () => {
     );
   }
 
-  const modelInfoFields = [
-    {
-      label: '모델명',
-      value: modelInfo.modelName || '-',
-    },
-    {
-      label: '버전',
-      value: modelInfo.modelVersion || '-',
-    },
-    {
-      label: '데이터셋',
-      value: modelInfo.datasetVersion || '-',
-    },
-    {
-      label: '상태',
-      value: modelInfo.status || '-',
-    },
-    {
-      label: '마지막 학습',
-      value: formatDateTime(modelInfo.lastTrainedAt),
-    },
-  ];
+    const modelInfoFields = [
+      {
+        label: '모델명',
+        value: modelInfo.modelName || '-',
+      },
+      {
+        label: '버전',
+        value: modelInfo.modelVersion || '-',
+      },
+      {
+        label: '데이터셋',
+        value: modelInfo.datasetVersion || '-',
+      },
+      {
+        label: '상태',
+        value: modelInfo.status || '-',
+      },
+      {
+        label: '마지막 학습',
+        value: formatAiModelDateTime(modelInfo.lastTrainedAt),
+      },
+    ];
 
   return (
     <SectionCard title="모델 정보">
