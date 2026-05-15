@@ -40,9 +40,15 @@ export type RerunModelEvaluationResult = {
   datasetVersion: string;
 };
 
+export type RetrainModelResult = {
+  jobId: string;
+  status: string;
+};
+
 export type LatestModelInfoResponse = ApiResponse<LatestModelInfo | null>;
 export type LatestModelEvaluationResponse = ApiResponse<LatestModelEvaluation | null>;
 export type RerunModelEvaluationResponse = ApiResponse<RerunModelEvaluationResult | null>;
+export type RetrainModelResponse = ApiResponse<RetrainModelResult | null>;
 
 export const aiModelApi = {
   getLatestModelInfo: async () => {
@@ -67,6 +73,12 @@ export const aiModelApi = {
       '/admin/models/latest/evaluation/re-run',
       payload
     );
+
+    return data;
+  },
+
+  retrainModel: async () => {
+    const { data } = await apiClient.post<RetrainModelResponse>('/admin/retraining');
 
     return data;
   },

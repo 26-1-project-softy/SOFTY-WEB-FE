@@ -1,12 +1,14 @@
 import styled from '@emotion/styled';
-import { ModelPerformanceSection } from '@/components/admin/aiModel/ModelPerformanceSection';
 import { ModelInfoSection } from '@/components/admin/aiModel/ModelInfoSection';
+import { ModelPerformanceSection } from '@/components/admin/aiModel/ModelPerformanceSection';
+import { ModelRetrainingSection } from '@/components/admin/aiModel/ModelRetrainingSection';
 
 export const AdminAiModelPage = () => {
   return (
     <AiModelPageContainer title="AI 모델 관리 페이지">
       <ModelInfoSection />
       <ModelPerformanceSection />
+      <ModelRetrainingSection />
     </AiModelPageContainer>
   );
 };
