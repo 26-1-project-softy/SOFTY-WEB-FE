@@ -5,7 +5,6 @@ import { SectionErrorState } from '@/components/common/SectionErrorState';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { KpiCard } from '@/components/common/KpiCard';
 import { SectionCard } from '@/components/common/SectionCard';
-import { getPdfChartData } from '@/features/admin/dashboard/lib/dashboardChartData';
 import type { PdfStatistics } from '@/features/admin/dashboard/types/dashboard';
 import type { ValueType } from 'recharts/types/component/DefaultTooltipContent';
 import { chartColors } from '@/constants/chartColors';
@@ -36,7 +35,12 @@ export const PdfReportPanel = ({ data, isLoading, isError, onRetry }: PdfReportP
   }
 
   const sortedPdfList = [...data.list].sort((left, right) => right.pdfCount - left.pdfCount);
-  const chartData = getPdfChartData(sortedPdfList);
+
+  const chartData = sortedPdfList.map((teacher, index) => ({
+    chartId: `${teacher.teacherId}-${teacher.teacherName}-${index}`,
+    teacherName: teacher.teacherName,
+    pdfCount: teacher.pdfCount,
+  }));
 
   const calculatedChartHeight = Math.max(
     chartData.length * PDF_CHART_ROW_HEIGHT,
@@ -54,23 +58,30 @@ export const PdfReportPanel = ({ data, isLoading, isError, onRetry }: PdfReportP
       <SectionCard title="교사별 PDF 생성 수">
         <PdfChartScrollArea $height={chartHeight} $isScrollable={isChartScrollable}>
           <PdfChartInner $height={calculatedChartHeight}>
-            <ResponsiveContainer width="100%" height={calculatedChartHeight}>
+            <ResponsiveContainer width="100%" height="100%">
               <BarChart
                 data={chartData}
                 layout="vertical"
                 margin={{ top: 16, right: 20, left: 20, bottom: 16 }}
               >
                 <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
+                <XAxis
+                  type="number"
+                  allowDecimals={false}
+                  domain={[0, 'dataMax']}
+                  tick={{ fontSize: 12 }}
+                />
                 <YAxis
-                  dataKey="teacherName"
+                  dataKey="chartId"
                   type="category"
                   width={68}
                   tickLine={false}
                   axisLine={false}
                   tick={{ fontSize: 12 }}
+                  tickFormatter={(_, index) => chartData[index]?.teacherName ?? ''}
                 />
                 <Tooltip
+                  labelFormatter={(_, payload) => payload?.[0]?.payload?.teacherName ?? ''}
                   formatter={(value: ValueType | undefined) => [`${value}건`, 'PDF 생성 수']}
                 />
                 <Bar
