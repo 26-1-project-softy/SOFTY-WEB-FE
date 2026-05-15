@@ -9,7 +9,7 @@ import {
 import type { LatestModelEvaluation } from '@/services/admin/aiModelApi';
 import { aiModelQueryKeys } from '@/features/admin/aiModel/constants/aiModelQueryKeys';
 
-const EVALUATION_REFETCH_INTERVAL = 1000;
+const EVALUATION_REFETCH_INTERVAL = 2000;
 
 const isInProgressStatus = (status?: LatestModelEvaluation['status'] | null) => {
   return status === 'queued' || status === 'running';
