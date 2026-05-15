@@ -1,5 +1,6 @@
 import styled from '@emotion/styled';
 import { ModelInfoSection } from '@/components/admin/aiModel/ModelInfoSection';
+import { ModelTokenUsageSection } from '@/components/admin/aiModel/ModelTokenUsageSection';
 import { ModelPerformanceSection } from '@/components/admin/aiModel/ModelPerformanceSection';
 import { ModelRetrainingSection } from '@/components/admin/aiModel/ModelRetrainingSection';
 import { ModelTrainingHistorySection } from '@/components/admin/aiModel/ModelTrainingHistorySection';
@@ -8,6 +9,7 @@ export const AdminAiModelPage = () => {
   return (
     <AiModelPageContainer title="AI 모델 관리 페이지">
       <ModelInfoSection />
+      <ModelTokenUsageSection />
       <ModelPerformanceSection />
       <ModelRetrainingSection />
       <ModelTrainingHistorySection />
