@@ -6,11 +6,7 @@ import {
   INQUIRY_INTENT_LABEL,
   type InquiryIntentType,
 } from '@/constants/inquiryIntent';
-import {
-  formatDateOnly,
-  formatDateTime,
-  formatPreviewName,
-} from '@/features/teacher/reports/lib/reportFormatters';
+import { formatDateOnly, formatPreviewName } from '@/features/teacher/reports/lib/reportFormatters';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { Loader } from '@/components/common/Loader';
 import { SectionErrorState } from '@/components/common/SectionErrorState';
@@ -20,6 +16,7 @@ import { DialogFooter } from '@/components/common/DialogFooter';
 import { InlineButton } from '@/components/common/InlineButton';
 import { Alert } from '@/components/common/Alert';
 import { IcChat, IcDownload, IcFile } from '@/icons';
+import { formatDateTime } from '@/utils/formatDateTime';
 
 export const TeacherReportsPage = () => {
   const {

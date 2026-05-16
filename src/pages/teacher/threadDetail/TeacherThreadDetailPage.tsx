@@ -1,21 +1,23 @@
-﻿import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import styled from '@emotion/styled';
+﻿import styled from '@emotion/styled';
 import { isAxiosError } from 'axios';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { InlineButton } from '@/components/common/InlineButton';
-import { Alert } from '@/components/common/Alert';
-import { ROUTES } from '@/constants/routes';
-import { apiClient } from '@/services/http/apiClient';
 import { useChatRead } from '@/features/teacher/threadDetail/hooks/useChatRead';
+import { formatDateTime } from '@/utils/formatDateTime';
 import {
   mapApiStatusToThreadStatus,
   useThreadStatusStore,
   type ThreadStatus,
 } from '@/stores/threadStatusStore';
-import { IcInfo, IcSparkles } from '@/icons';
+import { getInquiryIntentByType, INQUIRY_INTENT_LABEL } from '@/constants/inquiryIntent';
 import { ChatHeader } from '@/pages/teacher/threadDetail/components/ChatHeader';
 import { ChatInput } from '@/pages/teacher/threadDetail/components/ChatInput';
 import { ChatMessageList } from '@/pages/teacher/threadDetail/components/ChatMessageList';
+import { InlineButton } from '@/components/common/InlineButton';
+import { Alert } from '@/components/common/Alert';
+import { ROUTES } from '@/constants/routes';
+import { IcInfo, IcSparkles } from '@/icons';
+import { apiClient } from '@/services/http/apiClient';
 
 type DetailLoadState = 'loading' | 'error' | 'success';
 type AnalysisRiskLevel = 'SAFE' | 'UNSAFE' | 'LOW' | 'HIGH';
@@ -24,8 +26,7 @@ type ChatRoomDetailData = {
   chatRoomId: number;
   counterpartName: string;
   studentName: string;
-  intentLabel?: string;
-  intentLavel?: string;
+  intentType?: string | null;
   status: string;
 };
 
@@ -134,28 +135,11 @@ type MessageItem = {
   unreadCount?: number;
 };
 
-const formatMessageTime = (value: string) => {
-  if (!value) return '-';
-
-  const parsed = new Date(value);
-  if (Number.isNaN(parsed.getTime())) return value;
-
-  const year = parsed.getFullYear();
-  const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
-  const day = `${parsed.getDate()}`.padStart(2, '0');
-  const hour24 = parsed.getHours();
-  const minute = `${parsed.getMinutes()}`.padStart(2, '0');
-  const period = hour24 >= 12 ? '오후' : '오전';
-  const hour12 = hour24 % 12 || 12;
-
-  return `${year}-${month}-${day} ${period} ${hour12}:${minute}`;
-};
-
 const toMessageItem = (message: ChatRoomMessageResponse): MessageItem => {
   return {
     id: message.messageId,
     senderName: message.senderName || '-',
-    sentAt: formatMessageTime(message.createdAt),
+    sentAt: formatDateTime(message.createdAt),
     content: message.content || '-',
     isMine: message.isMine,
     unreadCount: message.unreadCount ?? 0,
@@ -278,10 +262,11 @@ export const TeacherThreadDetailPage = () => {
       if (!payload) {
         throw new Error('채팅방 데이터가 없습니다.');
       }
+      const intentType = getInquiryIntentByType(payload.intentType);
 
       setCounterpartName(payload.counterpartName ?? '');
       setStudentName(payload.studentName ?? '');
-      setIntentLabel(payload.intentLabel || payload.intentLavel || '');
+      setIntentLabel(INQUIRY_INTENT_LABEL[intentType]);
       const mappedStatus = mapApiStatusToThreadStatus(payload.status);
       const overriddenStatus = statusByRoomId[chatRoomId];
       const nextStatus = overriddenStatus ?? mappedStatus;
@@ -480,7 +465,7 @@ export const TeacherThreadDetailPage = () => {
         {
           id: messageId,
           senderName: '나',
-          sentAt: formatMessageTime(createdAt),
+          sentAt: formatDateTime(createdAt),
           content,
           isMine: true,
           unreadCount: 1,
