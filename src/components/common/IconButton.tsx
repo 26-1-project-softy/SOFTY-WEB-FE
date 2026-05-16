@@ -67,6 +67,7 @@ const ButtonContainer = styled.button<{ $variant: IconButtonVariant }>`
   }
 
   &:disabled {
-    background-color: ${({ theme }) => theme.colors.background.bg1};
+    background-color: ${({ theme, $variant }) =>
+      $variant === 'plain' ? theme.colors.background.bg1 : theme.colors.background.bg5};
   }
 `;
