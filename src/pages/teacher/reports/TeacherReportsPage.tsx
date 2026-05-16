@@ -16,7 +16,7 @@ import { DialogFooter } from '@/components/common/DialogFooter';
 import { InlineButton } from '@/components/common/InlineButton';
 import { Alert } from '@/components/common/Alert';
 import { IcChat, IcDownload, IcFile } from '@/icons';
-import { formatDateTime } from '@/utils/formatDateTime';
+import { formatAiModelDateTime } from '@/utils/formatDateTime';
 
 export const TeacherReportsPage = () => {
   const {
@@ -148,7 +148,7 @@ export const TeacherReportsPage = () => {
                   align={message.isMine ? 'right' : 'left'}
                 >
                   {message.isMine ? (
-                    <OutgoingTime>{formatDateTime(message.createdAt)}</OutgoingTime>
+                    <OutgoingTime>{formatAiModelDateTime(message.createdAt)}</OutgoingTime>
                   ) : (
                     <SenderMetaRow>
                       <SenderAvatar>
@@ -158,7 +158,7 @@ export const TeacherReportsPage = () => {
                       </SenderAvatar>
                       <SenderInfo>
                         <SenderName>{formatPreviewName(selectedReport.parentName)}</SenderName>
-                        <SenderTime>{formatDateTime(message.createdAt)}</SenderTime>
+                        <SenderTime>{formatAiModelDateTime(message.createdAt)}</SenderTime>
                       </SenderInfo>
                     </SenderMetaRow>
                   )}
