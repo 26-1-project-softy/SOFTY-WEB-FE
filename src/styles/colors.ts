@@ -61,7 +61,7 @@ export const colors = {
     pdfPrimary: '#55B5A6',
   },
   intent: {
-    absenceLate: {
+    attendance: {
       text: '#BA420D',
       background: '#FCEDD7',
       border: '#E5AE65',
@@ -72,14 +72,19 @@ export const colors = {
       border: '#6398E9',
     },
     request: {
-      text: '#7A35F0',
-      background: '#FAF5FF',
-      border: '#8B5CF6',
+      text: '#219900',
+      background: '#E7FFDE',
+      border: '#74C357',
     },
     inquiry: {
       text: '#7711D2',
       background: '#F1E8FD',
       border: '#AB79EE',
+    },
+    etc: {
+      text: '#4A5567',
+      background: '#F2F5F9',
+      border: '#ADB5C1',
     },
   },
   threadStatus: {
