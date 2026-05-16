@@ -98,7 +98,7 @@ export const useInitializeAuth = () => {
 
         authSession.setAuthStatus('SIGNED_IN');
         setSignedIn({
-          role: me.role,
+          activeRole: me.activeRole,
           user: me.user,
         });
       } catch (error) {

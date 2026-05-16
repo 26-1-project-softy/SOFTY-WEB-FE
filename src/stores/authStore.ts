@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
-export type AuthRole = 'teacher' | 'admin' | null;
-export type AuthStatus = 'SIGNED_OUT' | 'SIGNUP_REQUIRED' | 'ONBOARDING_REQUIRED' | 'SIGNED_IN';
+export type AuthActiveRole = 'teacher' | 'admin' | null;
+export type AuthStatus = 'SIGNED_OUT' | 'SIGNUP_REQUIRED' | 'SIGNED_IN';
 
 export type AuthUserSummary = {
   name: string;
@@ -11,50 +11,42 @@ export type AuthUserSummary = {
 
 type AuthState = {
   authStatus: AuthStatus;
-  role: AuthRole;
+  activeRole: AuthActiveRole;
   user: AuthUserSummary | null;
   isAuthInitialized: boolean;
   setSignedOut: () => void;
   setSignupRequired: () => void;
-  setOnboardingRequired: (payload: {
-    role: Exclude<AuthRole, null>;
-    user: AuthUserSummary | null;
+  setSignedIn: (payload: {
+    activeRole: Exclude<AuthActiveRole, null>;
+    user: AuthUserSummary;
   }) => void;
-  setSignedIn: (payload: { role: Exclude<AuthRole, null>; user: AuthUserSummary }) => void;
   setAuthInitialized: (isAuthInitialized: boolean) => void;
 };
 
 export const useAuthStore = create<AuthState>(set => ({
   authStatus: 'SIGNED_OUT',
-  role: null,
+  activeRole: null,
   user: null,
   isAuthInitialized: false,
 
   setSignedOut: () =>
     set({
       authStatus: 'SIGNED_OUT',
-      role: null,
+      activeRole: null,
       user: null,
     }),
 
   setSignupRequired: () =>
     set({
       authStatus: 'SIGNUP_REQUIRED',
-      role: null,
+      activeRole: null,
       user: null,
     }),
 
-  setOnboardingRequired: ({ role, user }) =>
-    set({
-      authStatus: 'ONBOARDING_REQUIRED',
-      role,
-      user,
-    }),
-
-  setSignedIn: ({ role, user }) =>
+  setSignedIn: ({ activeRole, user }) =>
     set({
       authStatus: 'SIGNED_IN',
-      role,
+      activeRole,
       user,
     }),
 

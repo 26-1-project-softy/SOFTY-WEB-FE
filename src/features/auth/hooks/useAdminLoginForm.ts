@@ -119,7 +119,7 @@ export const useAdminLoginForm = () => {
 
       const me = await getMeWithRetry(accessToken);
 
-      if (me.role !== 'admin') {
+      if (me.activeRole !== 'admin') {
         resetFailedLoginAttempt();
 
         setLoginError({
@@ -136,7 +136,7 @@ export const useAdminLoginForm = () => {
       authSession.setAuthStatus('SIGNED_IN');
 
       setSignedIn({
-        role: me.role,
+        activeRole: me.activeRole,
         user: me.user,
       });
 

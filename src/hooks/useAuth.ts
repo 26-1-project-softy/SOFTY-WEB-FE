@@ -5,7 +5,7 @@ export const useAuth = () => {
   return useAuthStore(
     useShallow(state => ({
       authStatus: state.authStatus,
-      role: state.role,
+      activeRole: state.activeRole,
       user: state.user,
       isAuthInitialized: state.isAuthInitialized,
       setSignedOut: state.setSignedOut,

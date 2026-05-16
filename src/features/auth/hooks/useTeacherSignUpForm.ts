@@ -109,7 +109,7 @@ export const useTeacherSignUpForm = () => {
         classNumber: validationResult.parsedClassNumber,
       });
 
-      if (!response.success || !response.data?.userId || !response.data?.role) {
+      if (!response.success || !response.data?.userId || !response.data?.activeRole) {
         setGlobalError({
           title: response.message || FORM_ERROR_FALLBACK.title,
           description: FORM_ERROR_FALLBACK.description,
@@ -206,7 +206,7 @@ export const useTeacherSignUpForm = () => {
 
       authSession.setAuthStatus('SIGNED_IN');
       setSignedIn({
-        role: me.role,
+        activeRole: me.activeRole,
         user: me.user,
       });
 
@@ -214,7 +214,7 @@ export const useTeacherSignUpForm = () => {
     } catch {
       authSession.setAuthStatus('SIGNED_IN');
       setSignedIn({
-        role: 'teacher',
+        activeRole: 'teacher',
         user: {
           name: teacherName.trim() || '선생님',
           grade: validationResult.parsedGrade,

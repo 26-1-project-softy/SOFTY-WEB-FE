@@ -1,8 +1,8 @@
 import type { AxiosRequestConfig } from 'axios';
 import { apiClient } from '@/services/http/apiClient';
-import type { AuthRole } from '@/stores/authStore';
+import type { AuthActiveRole } from '@/stores/authStore';
 
-type BackendRole = 'TEACHER' | 'ADMIN';
+type BackendActiveRole = 'TEACHER' | 'ADMIN';
 
 type AuthRequestConfig = AxiosRequestConfig & {
   skipUnauthorizedHandling?: boolean;
@@ -19,24 +19,20 @@ export type MeResponse = {
   success: boolean;
   code: number;
   message: string;
-  data?: {
-    role: BackendRole;
+  data: {
+    activeRole: BackendActiveRole;
     name: string;
     grade: number | null;
     class: number | null;
   };
-  role?: BackendRole;
-  name?: string;
-  grade?: number | null;
-  class?: number | null;
 };
 
-const normalizeRole = (role: BackendRole): Exclude<AuthRole, null> => {
-  if (role === 'TEACHER') {
+const normalizeActiveRole = (activeRole: BackendActiveRole): Exclude<AuthActiveRole, null> => {
+  if (activeRole === 'TEACHER') {
     return 'teacher';
   }
 
-  if (role === 'ADMIN') {
+  if (activeRole === 'ADMIN') {
     return 'admin';
   }
 
@@ -51,14 +47,14 @@ export const authApi = {
     };
 
     const { data } = await apiClient.get<MeResponse>('/users/me', requestConfig);
-    const profile = data.data ?? data;
+    const profile = data.data;
 
-    if (!profile.role || !profile.name?.trim()) {
+    if (!profile?.activeRole || !profile.name?.trim()) {
       throw new InvalidAuthenticatedUserResponseError();
     }
 
     return {
-      role: normalizeRole(profile.role),
+      activeRole: normalizeActiveRole(profile.activeRole),
       user: {
         name: profile.name,
         grade: profile.grade ?? undefined,

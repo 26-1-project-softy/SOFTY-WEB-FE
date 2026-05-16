@@ -20,7 +20,7 @@ type ProcessTeacherKakaoCallbackResult =
       status: 'signed_in';
       accessToken: string;
       refreshToken: string;
-      role: 'teacher' | 'admin';
+      activeRole: 'teacher' | 'admin';
       user: {
         name: string;
         grade?: number;
@@ -74,7 +74,7 @@ export const processTeacherKakaoCallback = async ({
     status: 'signed_in',
     accessToken,
     refreshToken,
-    role: me.role,
+    activeRole: me.activeRole,
     user: me.user,
   };
 };

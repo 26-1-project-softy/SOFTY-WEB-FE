@@ -1,4 +1,4 @@
-import type { AuthRole } from '@/stores/authStore';
+import type { AuthActiveRole } from '@/stores/authStore';
 import type { IconComponent } from '@/types/icon';
 import { ROUTES } from '@/constants/routes';
 import { IcInbox, IcReport, IcSettings, IcDashboard, IcErrorReview, IcModel } from '@/icons';
@@ -9,7 +9,7 @@ export type NavigationItem = {
   path: string;
 };
 
-export const NAVIGATION_BY_ROLE: Record<Exclude<AuthRole, null>, NavigationItem[]> = {
+export const NAVIGATION_BY_ROLE: Record<Exclude<AuthActiveRole, null>, NavigationItem[]> = {
   teacher: [
     { label: '수신함', icon: IcInbox, path: ROUTES.teacherThreadList },
     { label: '증빙 리포트', icon: IcReport, path: ROUTES.teacherReports },
