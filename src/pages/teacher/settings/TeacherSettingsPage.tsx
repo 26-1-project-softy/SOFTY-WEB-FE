@@ -905,7 +905,7 @@ const AvatarCircle = styled.span`
   width: 40px;
   height: 40px;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.teacherSettings.avatarBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: inline-flex;
   align-items: center;
@@ -928,7 +928,7 @@ const WorkdayList = styled.div`
 const WorkdayRow = styled.div`
   border-radius: 14px;
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
-  background: ${({ theme }) => theme.colors.teacherSettings.workdayRowBackground};
+  background: ${({ theme }) => theme.colors.background.bg3};
   padding: 12px 14px;
   display: flex;
   align-items: center;
@@ -947,7 +947,7 @@ const ToggleButton = styled.button<{ isEnabled: boolean }>`
   border-radius: 999px;
   padding: 3px;
   background: ${({ isEnabled, theme }) =>
-    isEnabled ? theme.colors.brand.primary : theme.colors.teacherSettings.toggleOffBackground};
+    isEnabled ? theme.colors.brand.primary : theme.colors.background.bg5};
   display: flex;
   align-items: center;
   justify-content: ${({ isEnabled }) => (isEnabled ? 'flex-end' : 'flex-start')};
@@ -959,9 +959,7 @@ const ToggleThumb = styled.span<{ isEnabled: boolean }>`
   height: 20px;
   border-radius: 999px;
   background: ${({ isEnabled, theme }) =>
-    isEnabled
-      ? theme.colors.background.bg1
-      : theme.colors.teacherSettings.toggleThumbOffBackground};
+    isEnabled ? theme.colors.background.bg1 : theme.colors.background.bg1};
   box-shadow: ${({ theme }) => theme.colors.shadow.toggleThumb};
 `;
 
@@ -997,7 +995,7 @@ const TimeInput = styled.input`
   }
 
   &:disabled {
-    background: ${({ theme }) => theme.colors.teacherSettings.inputDisabledBackground};
+    background: ${({ theme }) => theme.colors.background.bg3};
     color: ${({ theme }) => theme.colors.text.text4};
     cursor: not-allowed;
   }
@@ -1066,8 +1064,8 @@ const ClassCodeActions = styled.div`
 const ClassCodeBadge = styled.span`
   ${({ theme }) => theme.fonts.labelS};
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.classCodeBadgeBorder};
-  background: ${({ theme }) => theme.colors.teacherSettings.classCodeBadgeBackground};
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  background: ${({ theme }) => theme.colors.background.bg4};
   color: ${({ theme }) => theme.colors.text.text1};
   padding: 10px 18px;
 `;
@@ -1116,7 +1114,7 @@ const ModalOverlay = styled.div`
   position: fixed;
   inset: 0;
   z-index: 1200;
-  background: ${({ theme }) => theme.colors.overlay.dim2};
+  background: ${({ theme }) => theme.colors.overlay.dim};
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1136,7 +1134,7 @@ const ModalIconWrap = styled.div`
   width: 58px;
   height: 58px;
   border-radius: 999px;
-  background: ${({ theme }) => theme.colors.teacherSettings.modalIconBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
   color: ${({ theme }) => theme.colors.brand.dark};
   display: flex;
   align-items: center;
@@ -1150,12 +1148,12 @@ const ModalIconWrap = styled.div`
 `;
 
 const ConfirmIconWrap = styled(ModalIconWrap)`
-  background: ${({ theme }) => theme.colors.teacherSettings.confirmIconBackground};
-  color: ${({ theme }) => theme.colors.teacherSettings.confirmIconColor};
+  background: ${({ theme }) => theme.colors.semantic.warningSoft};
+  color: ${({ theme }) => theme.colors.semantic.warning};
 `;
 
 const SuccessIconWrap = styled(ModalIconWrap)`
-  background: ${({ theme }) => theme.colors.teacherSettings.modalIconBackground};
+  background: ${({ theme }) => theme.colors.background.bg4};
   color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
@@ -1240,8 +1238,8 @@ const FormSelect = styled.select`
 const ConfirmSummaryBox = styled.div`
   margin-top: 18px;
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBorder};
-  background: ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBackground};
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  background: ${({ theme }) => theme.colors.background.bg4};
   padding: 12px;
   display: flex;
   flex-direction: column;
@@ -1268,8 +1266,8 @@ const ConfirmSummaryValue = styled.span`
 const ConfirmErrorBox = styled.div`
   margin-top: 14px;
   border-radius: 12px;
-  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmErrorBorder};
-  background: ${({ theme }) => theme.colors.teacherSettings.confirmErrorBackground};
+  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
+  background: ${({ theme }) => theme.colors.semantic.errorSoft};
   padding: 10px 12px;
   display: flex;
   align-items: center;
@@ -1307,8 +1305,8 @@ const ConfirmErrorDescription = styled.p`
 const SuccessCodeCard = styled.div`
   margin-top: 16px;
   border-radius: 14px;
-  border: 1px solid ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBorder};
-  background: ${({ theme }) => theme.colors.teacherSettings.confirmSummaryBackground};
+  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  background: ${({ theme }) => theme.colors.background.bg4};
   padding: 14px;
   text-align: center;
 `;
@@ -1386,8 +1384,8 @@ const ModalPrimaryButton = styled.button`
   padding: 11px 12px;
 
   &:disabled {
-    background: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledBackground};
-    color: ${({ theme }) => theme.colors.teacherSettings.primaryDisabledText};
+    background: ${({ theme }) => theme.colors.background.bg5};
+    color: ${({ theme }) => theme.colors.text.text4};
     cursor: not-allowed;
   }
 `;

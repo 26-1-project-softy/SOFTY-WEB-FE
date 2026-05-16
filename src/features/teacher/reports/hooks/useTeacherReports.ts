@@ -7,7 +7,7 @@ import {
   type ReportChatRoomItem,
 } from '@/services/teacher/reportsApi';
 import { useToastStore } from '@/stores/toastStore';
-import { formatDateOnly } from '@/utils/reports/reportFormatters';
+import { formatDateOnly } from '@/features/teacher/reports/lib/reportFormatters';
 
 const PREVIEW_PAGE_SIZE = 30;
 

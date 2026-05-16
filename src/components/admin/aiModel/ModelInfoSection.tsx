@@ -3,7 +3,7 @@ import { SectionCard, SectionCardContent } from '@/components/common/SectionCard
 import { Alert } from '@/components/common/Alert';
 import { useLatestModelInfo } from '@/features/admin/aiModel/hooks/useLatestModelInfo';
 import { Loader } from '@/components/common/Loader';
-import { formatDateTime } from '@/utils/formatDateTime';
+import { formatAiModelDateTime } from '@/utils/formatDateTime';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { IcDashboard } from '@/icons';
 
@@ -55,7 +55,7 @@ export const ModelInfoSection = () => {
       },
       {
         label: '마지막 학습',
-        value: formatDateTime(modelInfo.lastTrainedAt),
+        value: formatAiModelDateTime(modelInfo.lastTrainedAt),
       },
     ];
 

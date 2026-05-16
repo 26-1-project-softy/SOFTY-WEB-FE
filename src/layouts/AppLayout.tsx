@@ -1,5 +1,5 @@
 import styled from '@emotion/styled';
-import { type ReactNode, useState } from 'react';
+import { type ReactNode, useCallback, useState } from 'react';
 import { Outlet, useLocation, useMatches } from 'react-router-dom';
 import { useDashboardTabs } from '@/features/admin/dashboard/hooks/useDashboardTabs';
 import { Sidebar } from '@/components/common/Sidebar';
@@ -27,13 +27,23 @@ export const AppLayout = () => {
 
   const headerActions =
     headerActionState.pathname === pathname ? headerActionState.actions : undefined;
-  const setHeaderActions = (actions?: ReactNode) => {
-    setHeaderActionState({ pathname, actions });
-  };
+  const setHeaderActions = useCallback(
+    (actions?: ReactNode) => {
+      setHeaderActionState(prev => {
+        if (prev.pathname === pathname && prev.actions === actions) {
+          return prev;
+        }
+
+        return { pathname, actions };
+      });
+    },
+    [pathname]
+  );
   const currentMatch = [...matches].reverse().find(match => match.handle);
 
   const title = currentMatch?.handle?.title;
   const tabsConfig = currentMatch?.handle?.tabs;
+  const hasHeader = Boolean(title);
 
   const firstTab = tabsConfig?.items[0]?.id ?? '';
   const [activeTab, setActiveTab] = useState<string>(firstTab);
@@ -61,7 +71,7 @@ export const AppLayout = () => {
           />
         ) : null}
 
-        <Content>
+        <Content $hasHeader={hasHeader}>
           <Outlet
             context={{
               setHeaderActions,
@@ -85,7 +95,8 @@ const Main = styled.div`
   margin-left: ${SIDEBAR_WIDTH.closed}px;
 `;
 
-const Content = styled.main`
-  min-height: calc(100vh - ${HEADER_HEIGHT}px);
-  margin-top: ${HEADER_HEIGHT}px;
+const Content = styled.main<{ $hasHeader: boolean }>`
+  height: ${({ $hasHeader }) => ($hasHeader ? `calc(100vh - ${HEADER_HEIGHT}px)` : '100vh')};
+  min-height: 0;
+  margin-top: ${({ $hasHeader }) => ($hasHeader ? `${HEADER_HEIGHT}px` : 0)};
 `;
