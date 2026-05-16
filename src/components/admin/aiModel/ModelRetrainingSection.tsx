@@ -6,7 +6,7 @@ import { Loader } from '@/components/common/Loader';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { InfoFieldGrid } from '@/components/admin/aiModel/InfoFieldGrid';
 import { useModelRetraining } from '@/features/admin/aiModel/hooks/useModelRetraining';
-import { formatDateTime } from '@/utils/formatDateTime';
+import { formatAiModelDateTime } from '@/utils/formatDateTime';
 import { IcDashboard, IcRefresh } from '@/icons';
 
 type RetrainingStatusAlertProps = {
@@ -129,7 +129,7 @@ export const ModelRetrainingSection = () => {
     },
     {
       label: '마지막 학습',
-      value: formatDateTime(latestModelInfo.lastTrainedAt),
+      value: formatAiModelDateTime(latestModelInfo.lastTrainedAt),
     },
   ];
 
