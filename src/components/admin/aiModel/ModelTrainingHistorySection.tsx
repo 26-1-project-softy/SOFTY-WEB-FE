@@ -6,7 +6,7 @@ import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { InlineButton } from '@/components/common/InlineButton';
 import { TrainingHistoryChart } from '@/components/admin/aiModel/TrainingHistoryChart';
 import { useTrainingHistory } from '@/features/admin/aiModel/hooks/useTrainingHistory';
-import { formatDateTime } from '@/utils/formatDateTime';
+import { formatAiModelDateTime } from '@/utils/formatDateTime';
 import { IcDashboard } from '@/icons';
 
 export const ModelTrainingHistorySection = () => {
@@ -79,7 +79,7 @@ export const ModelTrainingHistorySection = () => {
               <tbody>
                 {trainingHistoryList.map(item => (
                   <tr key={`${item.version}-${item.trainedAt}`}>
-                    <TableCell>{formatDateTime(item.trainedAt)}</TableCell>
+                    <TableCell>{formatAiModelDateTime(item.trainedAt)}</TableCell>
                     <TableCell>{item.version || '-'}</TableCell>
                     <TableCell>{item.datasetVersion || '-'}</TableCell>
                     <TableCell>{item.f1Score.toFixed(2)}</TableCell>
