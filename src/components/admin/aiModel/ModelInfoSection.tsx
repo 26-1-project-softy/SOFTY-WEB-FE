@@ -44,28 +44,28 @@ export const ModelInfoSection = () => {
     );
   }
 
-    const modelInfoFields = [
-      {
-        label: '모델명',
-        value: modelInfo.modelName || '-',
-      },
-      {
-        label: '버전',
-        value: modelInfo.modelVersion || '-',
-      },
-      {
-        label: '데이터셋',
-        value: modelInfo.datasetVersion || '-',
-      },
-      {
-        label: '상태',
-        value: modelInfo.status || '-',
-      },
-      {
-        label: '마지막 학습',
-        value: formatAiModelDateTime(modelInfo.lastTrainedAt),
-      },
-    ];
+  const modelInfoFields = [
+    {
+      label: '모델명',
+      value: modelInfo.modelName || '-',
+    },
+    {
+      label: '버전',
+      value: modelInfo.modelVersion || '-',
+    },
+    {
+      label: '데이터셋',
+      value: modelInfo.datasetVersion || '-',
+    },
+    {
+      label: '상태',
+      value: modelInfo.status || '-',
+    },
+    {
+      label: '마지막 학습',
+      value: formatAiModelDateTime(modelInfo.lastTrainedAt),
+    },
+  ];
 
   return (
     <SectionCard title="모델 정보">
