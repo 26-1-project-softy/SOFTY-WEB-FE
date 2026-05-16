@@ -244,8 +244,7 @@ const ConversationPanel = styled.section`
 
 const AssistantPanel = styled.aside`
   display: flex;
-  width: clamp(360px, 28vw, 440px);
-  min-width: 360px;
+  width: min(360px, 30vw);
   min-height: 0;
   flex-direction: column;
   overflow: hidden;
@@ -253,17 +252,17 @@ const AssistantPanel = styled.aside`
 `;
 
 const AssistantHeader = styled.header`
-  ${({ theme }) => theme.fonts.labelM};
   display: flex;
   align-items: center;
+  word-break: keep-all;
+  ${({ theme }) => theme.fonts.labelM};
+  color: ${({ theme }) => theme.colors.brand.dark};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
   padding: 16px 14px;
   gap: 8px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
-  color: ${({ theme }) => theme.colors.brand.dark};
 
   svg {
-    width: 16px;
-    height: 16px;
+    flex-shrink: 0;
   }
 `;
 
@@ -372,17 +371,17 @@ const LowRiskCard = styled.div<{ $risk: 'low' | 'high' }>`
   padding: 12px;
   border: 1px solid
     ${({ $risk, theme }) =>
-  $risk === 'high' ? theme.colors.semantic.error : theme.colors.border.border1};
+      $risk === 'high' ? theme.colors.semantic.error : theme.colors.border.border1};
   border-radius: 12px;
   background: ${({ $risk, theme }) =>
-  $risk === 'high' ? theme.colors.semantic.errorSoft : theme.colors.semantic.successSoft};
+    $risk === 'high' ? theme.colors.semantic.errorSoft : theme.colors.semantic.successSoft};
 `;
 
 const LowRiskTitle = styled.p<{ $risk: 'low' | 'high' }>`
   ${({ theme }) => theme.fonts.labelXS};
   margin: 0;
   color: ${({ $risk, theme }) =>
-  $risk === 'high' ? theme.colors.semantic.error : theme.colors.semantic.success};
+    $risk === 'high' ? theme.colors.semantic.error : theme.colors.semantic.success};
 `;
 
 const LowRiskDescription = styled.p`
@@ -414,12 +413,12 @@ const FeedbackScoreButton = styled.button<{ $selected: boolean }>`
   height: 30px;
   border: 1px solid
     ${({ theme, $selected }) =>
-  $selected ? theme.colors.brand.primary : theme.colors.border.border1};
+      $selected ? theme.colors.brand.primary : theme.colors.border.border1};
   border-radius: 8px;
   background: ${({ theme, $selected }) =>
-  $selected ? theme.colors.brand.primary : theme.colors.background.bg1};
+    $selected ? theme.colors.brand.primary : theme.colors.background.bg1};
   color: ${({ theme, $selected }) =>
-  $selected ? theme.colors.text.textW : theme.colors.text.text2};
+    $selected ? theme.colors.text.textW : theme.colors.text.text2};
   cursor: pointer;
 `;
 

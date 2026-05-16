@@ -48,7 +48,6 @@ const ComposerWrap = styled.div`
   padding: 12px;
   background: ${({ theme }) => theme.colors.background.bg1};
   border-top: 1px solid ${({ theme }) => theme.colors.border.border1};
-  border-radius: 16px 16px 0 0;
 `;
 
 const SendErrorBanner = styled.div`

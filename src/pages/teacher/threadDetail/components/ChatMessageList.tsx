@@ -2,6 +2,7 @@
 import { Alert } from '@/components/common/Alert';
 import { InlineButton } from '@/components/common/InlineButton';
 import { Loader } from '@/components/common/Loader';
+import { Avatar } from '@/components/common/Avatar';
 import { IcError, IcRefresh } from '@/icons';
 
 type DetailLoadState = 'loading' | 'error' | 'success';
@@ -105,17 +106,12 @@ export const ChatMessageList = ({
       ) : null}
 
       {messages.map(message => (
-        <MessageRow key={message.id} $isMine={message.isMine}>
-          {!message.isMine ? (
-            <IncomingMeta>
-              <Avatar>{message.senderName.charAt(0)}</Avatar>
-              <IncomingInfo>
-                <SenderName>{message.senderName}</SenderName>
-                <MessageTime>{message.sentAt}</MessageTime>
-              </IncomingInfo>
-            </IncomingMeta>
-          ) : (
-            <OutgoingTime>{message.sentAt}</OutgoingTime>
+        <MessageItem key={message.id} $isMine={message.isMine}>
+          {!message.isMine && (
+            <CounterpartInfo>
+              <Avatar lastName={message.senderName.charAt(0)} />
+              <SenderName>{message.senderName}</SenderName>
+            </CounterpartInfo>
           )}
 
           <BubbleWrap $isMine={message.isMine}>
@@ -124,7 +120,9 @@ export const ChatMessageList = ({
               <UnreadMarker>{message.unreadCount}</UnreadMarker>
             ) : null}
           </BubbleWrap>
-        </MessageRow>
+
+          <MessageTime $isMine={message.isMine}>{message.sentAt}</MessageTime>
+        </MessageItem>
       ))}
     </MessageArea>
   );
@@ -185,35 +183,17 @@ const LoadMoreWrap = styled.div`
   align-self: center;
 `;
 
-const MessageRow = styled.article<{ $isMine: boolean }>`
+const MessageItem = styled.article<{ $isMine: boolean }>`
   display: flex;
   flex-direction: column;
   align-items: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
   gap: 8px;
 `;
 
-const IncomingMeta = styled.div`
+const CounterpartInfo = styled.div`
   display: flex;
   align-items: center;
   gap: 10px;
-`;
-
-const Avatar = styled.span`
-  ${({ theme }) => theme.fonts.labelXS};
-  width: 28px;
-  height: 28px;
-  border-radius: 999px;
-  background: ${({ theme }) => theme.colors.background.bg4};
-  color: ${({ theme }) => theme.colors.brand.dark};
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-`;
-
-const IncomingInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 8px;
 `;
 
 const SenderName = styled.span`
@@ -221,13 +201,10 @@ const SenderName = styled.span`
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
-const MessageTime = styled.span`
+const MessageTime = styled.span<{ $isMine: boolean }>`
+  text-align: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
   ${({ theme }) => theme.fonts.caption};
   color: ${({ theme }) => theme.colors.text.text4};
-`;
-
-const OutgoingTime = styled(MessageTime)`
-  margin-right: 4px;
 `;
 
 const BubbleWrap = styled.div<{ $isMine: boolean }>`
@@ -238,8 +215,8 @@ const BubbleWrap = styled.div<{ $isMine: boolean }>`
 
 const MessageBubble = styled.div<{ $isMine: boolean }>`
   ${({ theme }) => theme.fonts.body2};
-  border-radius: 16px;
-  padding: 16px;
+  border-radius: ${({ $isMine }) => ($isMine ? '20px 0' : '0 20px')} 20px 20px;
+  padding: 12px 16px;
   line-height: 1.45;
   color: ${({ $isMine, theme }) => ($isMine ? theme.colors.text.textW : theme.colors.text.text2)};
   background: ${({ $isMine, theme }) =>

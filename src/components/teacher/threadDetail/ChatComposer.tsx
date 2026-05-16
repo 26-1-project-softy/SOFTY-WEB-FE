@@ -23,7 +23,6 @@ export const ChatComposer = ({
 }: ChatComposerProps) => {
   const actionIcon = actionMode === 'send' ? IcSend : IcSparkles;
   const actionLabel = actionMode === 'send' ? '메시지 전송' : 'AI 소통 어시스턴트';
-  const actionVariant = isActionDisabled ? 'ghost' : 'primary';
 
   return (
     <ComposerContainer>
@@ -35,7 +34,7 @@ export const ChatComposer = ({
       <ActionButtonWrap>
         <IconButton
           icon={actionIcon}
-          variant={actionVariant}
+          variant="primary"
           accessibilityLabel={actionLabel}
           disabled={isActionDisabled}
           onClick={onActionClick}
