@@ -1,7 +1,10 @@
 ﻿import styled from '@emotion/styled';
 import { IconButton } from '@/components/common/IconButton';
 import { InlineButton } from '@/components/common/InlineButton';
-import { StatusTagButton, type StatusTagTone } from '@/components/common/chat/StatusTagButton';
+import {
+  StatusTagButton,
+  type StatusTagTone,
+} from '@/components/teacher/threadDetail/StatusTagButton';
 import { IcBack } from '@/icons';
 import type { ThreadStatus } from '@/stores/threadStatusStore';
 

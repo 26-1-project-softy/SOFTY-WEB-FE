@@ -1,5 +1,5 @@
 ﻿import styled from '@emotion/styled';
-import { ChatComposer } from '@/components/common/chat/ChatComposer';
+import { ChatComposer } from '@/components/teacher/threadDetail/ChatComposer';
 import { IcError } from '@/icons';
 
 type ChatInputProps = {

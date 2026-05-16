@@ -1,8 +1,10 @@
 ﻿import { useEffect, useMemo, useState } from 'react';
 import styled from '@emotion/styled';
 import { useNavigate } from 'react-router-dom';
-import { InlineButton } from '@/components/common/InlineButton';
-import { StatusTagButton, type StatusTagTone } from '@/components/common/chat/StatusTagButton';
+import {
+  StatusTagButton,
+  type StatusTagTone,
+} from '@/components/teacher/threadDetail/StatusTagButton';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { ROUTES } from '@/constants/routes';
 import { apiClient } from '@/services/http/apiClient';
@@ -12,10 +14,16 @@ import {
   useThreadStatusStore,
   type ThreadStatus,
 } from '@/stores/threadStatusStore';
-import { IcChat, IcError, IcRefresh } from '@/icons';
+import { IcChat } from '@/icons';
+import { SectionErrorState } from '@/components/common/SectionErrorState';
+import {
+  getInquiryIntentByType,
+  INQUIRY_INTENT_COLOR_KEY,
+  INQUIRY_INTENT_LABEL,
+  type InquiryIntentType,
+} from '@/constants/inquiryIntent';
 
 type InboxLoadState = 'loading' | 'error' | 'empty' | 'success';
-type IntentTone = 'counsel' | 'progress' | 'inquiry' | 'absence' | 'request' | 'done';
 
 type ThreadRoomItem = {
   id: number;
@@ -24,7 +32,10 @@ type ThreadRoomItem = {
   preview: string;
   timeText: string;
   unreadCount: number;
-  intentTag: { label: string; tone: IntentTone };
+  intentTag: {
+    type: InquiryIntentType;
+    label: string;
+  };
   status: ThreadStatus;
 };
 
@@ -36,7 +47,7 @@ type ChatRoomResponse = {
   lastMessageAt: string;
   unreadCount: number;
   status: string;
-  intentLabel: string;
+  intentType?: string | null;
 };
 
 type ChatRoomsApiResponse = {
@@ -51,21 +62,6 @@ type ChatRoomsApiResponse = {
   nextCursor?: number | null;
   size?: number;
   hasNext?: boolean;
-};
-
-const resolveTagTone = (label: string): IntentTone => {
-  const value = label.trim().toLowerCase();
-
-  if (value.includes('상담') || value.includes('counsel')) return 'counsel';
-  if (value.includes('처리') || value.includes('진행') || value.includes('process'))
-    return 'progress';
-  if (value.includes('문의') || value.includes('question') || value.includes('inquiry'))
-    return 'inquiry';
-  if (value.includes('결석') || value.includes('지각') || value.includes('absence'))
-    return 'absence';
-  if (value.includes('요청') || value.includes('request')) return 'request';
-
-  return 'done';
 };
 
 const formatTimeText = (value: string) => {
@@ -92,11 +88,12 @@ const formatTimeText = (value: string) => {
   const year = parsed.getFullYear();
   const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
   const day = `${parsed.getDate()}`.padStart(2, '0');
+
   return `${year}-${month}-${day}`;
 };
 
 const toThreadRoomItem = (room: ChatRoomResponse): ThreadRoomItem => {
-  const intentLabel = room.intentLabel?.trim() || '미분류';
+  const intentType = getInquiryIntentByType(room.intentType);
 
   return {
     id: room.chatRoomId,
@@ -105,7 +102,10 @@ const toThreadRoomItem = (room: ChatRoomResponse): ThreadRoomItem => {
     preview: room.lastMessage || '-',
     timeText: formatTimeText(room.lastMessageAt),
     unreadCount: room.unreadCount ?? 0,
-    intentTag: { label: intentLabel, tone: resolveTagTone(intentLabel) },
+    intentTag: {
+      type: intentType,
+      label: INQUIRY_INTENT_LABEL[intentType],
+    },
     status: mapApiStatusToThreadStatus(room.status),
   };
 };
@@ -126,7 +126,8 @@ export const TeacherThreadListPage = () => {
         params: { page: 0, size: 20 },
       });
 
-      const list = data.data?.content ?? [];
+      const list = data.data?.content ?? data.data?.items ?? data.content ?? [];
+
       setRooms(list.map(toThreadRoomItem));
     } catch {
       setRooms([]);
@@ -144,6 +145,7 @@ export const TeacherThreadListPage = () => {
     if (isLoading) return 'loading';
     if (errorMessage) return 'error';
     if (rooms.length === 0) return 'empty';
+
     return 'success';
   }, [errorMessage, isLoading, rooms.length]);
 
@@ -174,7 +176,7 @@ export const TeacherThreadListPage = () => {
                   <PreviewText>{room.preview}</PreviewText>
                   <BottomRow>
                     <TagWrap>
-                      <Tag tone={room.intentTag.tone}>{room.intentTag.label}</Tag>
+                      <Tag $intentType={room.intentTag.type}>{room.intentTag.label}</Tag>
                       <StatusTagButton
                         label={toThreadStatusLabel(statusByRoomId[room.id] ?? room.status)}
                         tone={resolveThreadStatusTone(statusByRoomId[room.id] ?? room.status)}
@@ -200,21 +202,11 @@ export const TeacherThreadListPage = () => {
       </InboxListSection>
 
       {loadState === 'error' ? (
-        <ErrorStateSection>
-          <ErrorIconWrap>
-            <IcError />
-          </ErrorIconWrap>
-          <ErrorTitle>대화 목록을 불러올 수 없어요</ErrorTitle>
-          <ErrorDescription>잠시 후 다시 시도해주세요.</ErrorDescription>
-          <RetryButton
-            type="button"
-            variant="primary"
-            size="L"
-            icon={IcRefresh}
-            label="다시 시도"
-            onClick={() => void loadRooms()}
-          />
-        </ErrorStateSection>
+        <SectionErrorState
+          onRetry={() => void loadRooms()}
+          title="대화 목록을 불러올 수 없어요"
+          description="잠시 후 다시 시도해주세요."
+        />
       ) : null}
     </ThreadListPageContainer>
   );
@@ -328,35 +320,21 @@ const TagWrap = styled.div`
   gap: 8px;
 `;
 
-const Tag = styled.span<{ tone: IntentTone }>`
+const Tag = styled.span<{ $intentType: InquiryIntentType }>`
   ${({ theme }) => theme.fonts.labelXS};
   border-radius: 999px;
   padding: 4px 10px;
-  border: 1px solid
-    ${({ tone, theme }) => {
-      if (tone === 'counsel') return theme.colors.intent.counseling.border;
-      if (tone === 'progress') return theme.colors.threadStatus.processing.border;
-      if (tone === 'inquiry') return theme.colors.intent.inquiry.border;
-      if (tone === 'absence') return theme.colors.intent.absenceLate.border;
-      if (tone === 'request') return theme.colors.intent.request.border;
-      return theme.colors.border.border2;
-    }};
-  color: ${({ tone, theme }) => {
-    if (tone === 'counsel') return theme.colors.intent.counseling.text;
-    if (tone === 'progress') return theme.colors.threadStatus.processing.text;
-    if (tone === 'inquiry') return theme.colors.intent.inquiry.text;
-    if (tone === 'absence') return theme.colors.intent.absenceLate.text;
-    if (tone === 'request') return theme.colors.intent.request.text;
-    return theme.colors.text.text3;
-  }};
-  background: ${({ tone, theme }) => {
-    if (tone === 'counsel') return theme.colors.intent.counseling.background;
-    if (tone === 'progress') return theme.colors.threadStatus.processing.background;
-    if (tone === 'inquiry') return theme.colors.intent.inquiry.background;
-    if (tone === 'absence') return theme.colors.intent.absenceLate.background;
-    if (tone === 'request') return theme.colors.intent.request.background;
-    return theme.colors.background.bg3;
-  }};
+
+  ${({ $intentType, theme }) => {
+    const colorKey = INQUIRY_INTENT_COLOR_KEY[$intentType];
+    const color = theme.colors.intent[colorKey];
+
+    return `
+      border: 1px solid ${color.border};
+      color: ${color.text};
+      background: ${color.background};
+    `;
+  }}
 `;
 
 const UnreadBadge = styled.span`
@@ -374,43 +352,4 @@ const UnreadBadge = styled.span`
 
 const EmptySection = styled.div`
   min-height: calc(100vh - 180px);
-`;
-
-const ErrorStateSection = styled.div`
-  min-height: calc(100vh - 240px);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-`;
-
-const ErrorIconWrap = styled.span`
-  color: ${({ theme }) => theme.colors.semantic.error};
-
-  svg {
-    width: 28px;
-    height: 28px;
-  }
-`;
-
-const ErrorTitle = styled.p`
-  ${({ theme }) => theme.fonts.labelM};
-  margin: 8px 0 0;
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const ErrorDescription = styled.p`
-  ${({ theme }) => theme.fonts.body3};
-  margin: 8px 0 0;
-  color: ${({ theme }) => theme.colors.text.text3};
-`;
-
-const RetryButton = styled(InlineButton)`
-  margin-top: 14px;
-
-  svg {
-    width: 16px;
-    height: 16px;
-  }
 `;
