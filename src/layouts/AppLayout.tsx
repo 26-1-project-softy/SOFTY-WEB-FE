@@ -86,12 +86,14 @@ export const AppLayout = () => {
 
 const Shell = styled.div`
   min-height: 100vh;
+  background-color: ${({ theme }) => theme.colors.background.bg2};
 `;
 
 const Main = styled.div`
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100vh;
   margin-left: ${SIDEBAR_WIDTH.closed}px;
 `;
 

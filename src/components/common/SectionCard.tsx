@@ -49,6 +49,7 @@ const SectionCardTextArea = styled.div`
   display: flex;
   flex-direction: column;
   min-width: 0;
+  gap: 4px;
 `;
 
 const SectionCardTitle = styled.h2`

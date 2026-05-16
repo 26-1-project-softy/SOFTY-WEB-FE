@@ -1,11 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef } from 'react';
 import { useToast } from '@/hooks/useToast';
-import {
-  latestEvaluationQueryOptions,
-  latestModelInfoQueryOptions,
-  rerunModelEvaluation,
-} from '@/features/admin/aiModel/queries/aiModelQueries';
+import { latestModelInfoQueryOptions } from '@/features/admin/aiModel/queries/modelInfo';
+import { latestEvaluationQueryOptions } from '@/features/admin/aiModel/queries/modelEvaluation';
+import { rerunModelEvaluation } from '@/features/admin/aiModel/mutations/modelEvaluation';
 import type { LatestModelEvaluation } from '@/services/admin/aiModelApi';
 import { aiModelQueryKeys } from '@/features/admin/aiModel/constants/aiModelQueryKeys';
 

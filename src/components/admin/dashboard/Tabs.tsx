@@ -51,6 +51,7 @@ export const Tabs = <T extends string>({
 const TabsContainer = styled.div`
   position: sticky;
   top: ${HEADER_HEIGHT}px;
+  z-index: 90;
   display: flex;
   overflow-x: auto;
   background-color: ${({ theme }) => theme.colors.background.bg1};
