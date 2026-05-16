@@ -1,10 +1,10 @@
 ﻿import { Navigate, Outlet, useLocation } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
-import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
+import { getDefaultRouteByActiveRole } from '@/utils/getDefaultRouteByActiveRole';
 import { ROUTES } from '@/constants/routes';
 
 export const PublicRoute = () => {
-  const { authStatus, role } = useAuth();
+  const { authStatus, activeRole } = useAuth();
   const location = useLocation();
 
   if (authStatus === 'SIGNUP_REQUIRED') {
@@ -15,20 +15,8 @@ export const PublicRoute = () => {
     return <Navigate to={ROUTES.teacherSignUp} replace />;
   }
 
-  if (authStatus === 'ONBOARDING_REQUIRED') {
-    if (location.pathname === ROUTES.teacherSignUp) {
-      return <Outlet />;
-    }
-
-    return <Navigate to={ROUTES.teacherSignUp} replace />;
-  }
-
-  if (authStatus === 'SIGNED_IN' && role) {
-    return <Navigate to={getDefaultRouteByRole(role)} replace />;
-  }
-
-  if (location.pathname === ROUTES.teacherSignUp) {
-    return <Navigate to={ROUTES.root} replace />;
+  if (authStatus === 'SIGNED_IN' && activeRole) {
+    return <Navigate to={getDefaultRouteByActiveRole(activeRole)} replace />;
   }
 
   return <Outlet />;

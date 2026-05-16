@@ -4,7 +4,7 @@ import { useTheme } from '@emotion/react';
 import { useAuth } from '@/hooks/useAuth';
 import { IconBadge } from '@/components/common/IconBadge';
 import { IconButton } from '@/components/common/IconButton';
-import { getDefaultRouteByRole } from '@/utils/getDefaultRouteByRole';
+import { getDefaultRouteByActiveRole } from '@/utils/getDefaultRouteByActiveRole';
 import { NAVIGATION_BY_ROLE } from '@/constants/navigation';
 import { ROUTES } from '@/constants/routes';
 import { useUiStore } from '@/stores/uiStore';
@@ -15,25 +15,25 @@ import { useLogout } from '@/hooks/useLogout';
 export const Sidebar = () => {
   const theme = useTheme();
   const navigate = useNavigate();
-  const { role, user } = useAuth();
+  const { activeRole, user } = useAuth();
   const { logout } = useLogout();
   const isSidebarOpen = useUiStore(state => state.isSidebarOpen);
   const toggleSidebar = useUiStore(state => state.toggleSidebar);
-  const items = role ? NAVIGATION_BY_ROLE[role] : [];
+  const items = activeRole ? NAVIGATION_BY_ROLE[activeRole] : [];
 
   const userName = user?.name ?? '사용자';
   const userMeta =
-    role === 'teacher' && user?.grade && user?.classNumber
+    activeRole === 'teacher' && user?.grade && user?.classNumber
       ? `${user.grade}학년 ${user.classNumber}반`
       : '';
 
   const handleClickBrand = () => {
-    if (!role) {
+    if (!activeRole) {
       navigate(ROUTES.root, { replace: true });
       return;
     }
 
-    navigate(getDefaultRouteByRole(role), { replace: true });
+    navigate(getDefaultRouteByActiveRole(activeRole), { replace: true });
   };
 
   const handleClickLogout = () => {

@@ -40,7 +40,7 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    element: <ProtectedRoute allowedRoles={['teacher']} />,
+    element: <ProtectedRoute allowedActiveRoles={['teacher']} />,
     children: [
       {
         path: ROUTES.teacherThreadList,
@@ -91,7 +91,7 @@ export const router = createBrowserRouter([
     ],
   },
   {
-    element: <ProtectedRoute allowedRoles={['admin']} />,
+    element: <ProtectedRoute allowedActiveRoles={['admin']} />,
     children: [
       {
         path: ROUTES.admin,

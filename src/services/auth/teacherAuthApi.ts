@@ -30,7 +30,7 @@ export type TeacherSignUpResponse = {
   message: string;
   data: {
     userId: number;
-    role: string;
+    activeRole: string;
   };
 };
 
