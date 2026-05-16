@@ -1,7 +1,20 @@
-export const formatDateTime = (dateTime?: string | null) => {
-  if (!dateTime) {
+export const formatDateTime = (value?: string) => {
+  if (!value) {
     return '-';
   }
 
-  return dateTime.replace('T', ' ').slice(0, 19);
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return value;
+  }
+
+  const year = parsed.getFullYear();
+  const month = `${parsed.getMonth() + 1}`.padStart(2, '0');
+  const day = `${parsed.getDate()}`.padStart(2, '0');
+  const hour24 = parsed.getHours();
+  const minute = `${parsed.getMinutes()}`.padStart(2, '0');
+  const period = hour24 >= 12 ? '오후' : '오전';
+  const hour12 = hour24 % 12 || 12;
+
+  return `${year}.${month}.${day} ${period} ${hour12}:${minute}`;
 };
