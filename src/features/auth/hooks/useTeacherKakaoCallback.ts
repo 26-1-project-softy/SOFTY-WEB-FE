@@ -71,7 +71,7 @@ export const useTeacherKakaoCallback = () => {
         authSession.setAuthStatus('SIGNED_IN');
 
         setSignedIn({
-          role: result.role,
+          activeRole: result.activeRole,
           user: result.user,
         });
 
