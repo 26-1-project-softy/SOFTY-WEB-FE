@@ -29,7 +29,6 @@ export type ReportChatRoomItem = {
   parentName: string;
   studentName: string;
   intentType: string;
-  intentLabel: string;
   status: string;
   lastMessageAt: string;
 };

@@ -6,7 +6,7 @@ import { InlineButton } from '@/components/common/InlineButton';
 import { Alert } from '@/components/common/Alert';
 import { ROUTES } from '@/constants/routes';
 import { apiClient } from '@/services/http/apiClient';
-import { useChatRead } from '@/features/chat/hooks/useChatRead';
+import { useChatRead } from '@/features/teacher/threadDetail/hooks/useChatRead';
 import {
   mapApiStatusToThreadStatus,
   useThreadStatusStore,
