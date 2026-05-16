@@ -1,19 +1,17 @@
 import styled from '@emotion/styled';
-import type { Theme } from '@emotion/react';
+import { INQUIRY_STATUS_COLOR_KEY, type InquiryStatusType } from '@/constants/inquiryStatus';
 import { IcDown } from '@/icons';
-
-export type StatusTagTone = 'processing' | 'done' | 'hold' | 'absence';
 
 type StatusTagButtonProps = {
   label: string;
-  tone: StatusTagTone;
+  status: InquiryStatusType;
   isDropdown?: boolean;
   onClick?: () => void;
 };
 
 export const StatusTagButton = ({
   label,
-  tone,
+  status,
   isDropdown = false,
   onClick,
 }: StatusTagButtonProps) => {
@@ -21,46 +19,19 @@ export const StatusTagButton = ({
 
   if (!isInteractive) {
     return (
-      <TagSpan $tone={tone}>
+      <TagText $status={status}>
         <span>{label}</span>
-      </TagSpan>
+      </TagText>
     );
   }
 
   return (
-    <TagButton type="button" $tone={tone} onClick={onClick}>
+    <TagButton type="button" $status={status} onClick={onClick}>
       <span>{label}</span>
       {isDropdown ? <IcDown /> : null}
     </TagButton>
   );
 };
-
-const toneStyle = ({ $tone, theme }: { $tone: StatusTagTone; theme: Theme }) => ({
-  border:
-    $tone === 'absence'
-      ? theme.colors.intent.absenceLate.border
-      : $tone === 'processing'
-        ? theme.colors.threadStatus.processing.border
-        : $tone === 'hold'
-          ? theme.colors.intent.request.border
-          : theme.colors.threadStatus.completed.border,
-  background:
-    $tone === 'absence'
-      ? theme.colors.intent.absenceLate.background
-      : $tone === 'processing'
-        ? theme.colors.threadStatus.processing.background
-        : $tone === 'hold'
-          ? theme.colors.intent.request.background
-          : theme.colors.threadStatus.completed.background,
-  text:
-    $tone === 'absence'
-      ? theme.colors.intent.absenceLate.text
-      : $tone === 'processing'
-        ? theme.colors.threadStatus.processing.text
-        : $tone === 'hold'
-          ? theme.colors.intent.request.text
-          : theme.colors.threadStatus.completed.text,
-});
 
 const baseTagStyle = `
   display: inline-flex;
@@ -75,18 +46,34 @@ const baseTagStyle = `
   }
 `;
 
-const TagButton = styled.button<{ $tone: StatusTagTone }>`
+const TagButton = styled.button<{ $status: InquiryStatusType }>`
   ${({ theme }) => theme.fonts.labelXS};
   ${baseTagStyle}
-  border: 1px solid ${({ $tone, theme }) => toneStyle({ $tone, theme }).border};
-  background: ${({ $tone, theme }) => toneStyle({ $tone, theme }).background};
-  color: ${({ $tone, theme }) => toneStyle({ $tone, theme }).text};
+
+  ${({ $status, theme }) => {
+    const colorKey = INQUIRY_STATUS_COLOR_KEY[$status];
+    const color = theme.colors.threadStatus[colorKey];
+
+    return `
+      border: 1px solid ${color.border};
+      background: ${color.background};
+      color: ${color.text};
+    `;
+  }}
 `;
 
-const TagSpan = styled.span<{ $tone: StatusTagTone }>`
+const TagText = styled.span<{ $status: InquiryStatusType }>`
   ${({ theme }) => theme.fonts.labelXS};
   ${baseTagStyle}
-  border: 1px solid ${({ $tone, theme }) => toneStyle({ $tone, theme }).border};
-  background: ${({ $tone, theme }) => toneStyle({ $tone, theme }).background};
-  color: ${({ $tone, theme }) => toneStyle({ $tone, theme }).text};
+
+  ${({ $status, theme }) => {
+    const colorKey = INQUIRY_STATUS_COLOR_KEY[$status];
+    const color = theme.colors.threadStatus[colorKey];
+
+    return `
+      border: 1px solid ${color.border};
+      background: ${color.background};
+      color: ${color.text};
+    `;
+  }}
 `;
