@@ -18,7 +18,7 @@ export const ErrorReviewAccordionItem = ({
     <ReviewCard type="button" $expanded={isExpanded} onClick={() => onToggle(item.id)}>
       <ReviewHeader>
         <HeaderLeft>
-          <ScoreBadge $tone={item.tone}>{item.scoreLabel}</ScoreBadge>
+          <ScoreBadge $tone={item.scoreTone}>{item.scoreLabel}</ScoreBadge>
           <TeacherName>{item.teacherName}</TeacherName>
           <ReviewedAt>{item.reviewedAt}</ReviewedAt>
         </HeaderLeft>
@@ -33,7 +33,7 @@ export const ErrorReviewAccordionItem = ({
           <AnalysisMessage>{item.analysisMessage}</AnalysisMessage>
 
           <SectionTitle>{ERROR_REVIEW_TEXT.riskTitle}</SectionTitle>
-          <RiskResult>{item.riskResult}</RiskResult>
+          <RiskResult $tone={item.riskTone}>{item.riskResult}</RiskResult>
         </ReviewBody>
       ) : null}
     </ReviewCard>
@@ -122,7 +122,6 @@ const ReviewBody = styled.div`
 
 const SectionTitle = styled.h3`
   ${({ theme }) => theme.fonts.labelS};
-  margin: 0;
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
@@ -132,8 +131,8 @@ const AnalysisMessage = styled.p`
   color: ${({ theme }) => theme.colors.text.text2};
 `;
 
-const RiskResult = styled.p`
+const RiskResult = styled.p<{ $tone: ErrorReviewTone }>`
   ${({ theme }) => theme.fonts.labelS};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
+  color: ${({ $tone, theme }) =>
+    $tone === 'danger' ? theme.colors.semantic.error : theme.colors.semantic.success};
 `;

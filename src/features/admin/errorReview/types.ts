@@ -1,3 +1,5 @@
+import type { RiskLevel } from '@/constants/riskAnalysis';
+
 export type ErrorReviewTone = 'danger' | 'warning' | 'safe';
 
 export type ErrorReviewItem = {
@@ -5,7 +7,8 @@ export type ErrorReviewItem = {
   scoreLabel: string;
   teacherName: string;
   reviewedAt: string;
-  tone: ErrorReviewTone;
+  scoreTone: ErrorReviewTone;
+  riskTone: ErrorReviewTone;
   analysisMessage: string;
   riskResult: string;
 };
@@ -14,7 +17,8 @@ export type AdminRiskFeedbackApiItem = {
   feedbackId: number;
   teacherName: string;
   feedbackResult: number;
-  aiRecommendMessage: string;
+  riskLevel: RiskLevel;
+  originalMessage: string;
   createdAt: string;
 };
 
