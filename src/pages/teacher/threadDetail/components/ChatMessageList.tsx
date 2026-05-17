@@ -107,10 +107,8 @@ export const ChatMessageList = ({
           )}
 
           <BubbleWrap $isMine={message.isMine}>
+            {message.isMine && message.isUnreadByCounterpart && <UnreadMarker>1</UnreadMarker>}
             <MessageBubble $isMine={message.isMine}>{message.content}</MessageBubble>
-            {message.isMine && message.isUnreadByCounterpart ? (
-              <UnreadMarker>{message.isUnreadByCounterpart}</UnreadMarker>
-            ) : null}
           </BubbleWrap>
 
           <MessageTime $isMine={message.isMine}>{message.sentAt}</MessageTime>
@@ -200,9 +198,16 @@ const MessageTime = styled.span<{ $isMine: boolean }>`
 `;
 
 const BubbleWrap = styled.div<{ $isMine: boolean }>`
-  position: relative;
-  max-width: min(62%, 650px);
-  ${({ $isMine }) => ($isMine ? 'margin-right: 0;' : '')}
+  display: flex;
+  align-items: flex-end;
+  justify-content: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
+  max-width: min(72%, 540px);
+  gap: 8px;
+`;
+
+const UnreadMarker = styled.span`
+  ${({ theme }) => theme.fonts.caption};
+  color: ${({ theme }) => theme.colors.brand.primary};
 `;
 
 const MessageBubble = styled.div<{ $isMine: boolean }>`
@@ -213,12 +218,4 @@ const MessageBubble = styled.div<{ $isMine: boolean }>`
   color: ${({ $isMine, theme }) => ($isMine ? theme.colors.text.textW : theme.colors.text.text2)};
   background: ${({ $isMine, theme }) =>
     $isMine ? theme.colors.brand.primary : theme.colors.background.bg1};
-`;
-
-const UnreadMarker = styled.span`
-  ${({ theme }) => theme.fonts.labelXS};
-  position: absolute;
-  left: -14px;
-  bottom: 4px;
-  color: ${({ theme }) => theme.colors.brand.dark};
 `;
