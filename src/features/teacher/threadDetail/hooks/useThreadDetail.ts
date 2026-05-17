@@ -1,60 +1,30 @@
-import { isAxiosError } from 'axios';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { threadDetailApi } from '@/services/teacher/threadDetailApi';
-import { formatChatMessageDateTime } from '@/utils/formatDateTime';
+import { getInquiryIntentByType, type InquiryIntentType } from '@/constants/inquiryIntent';
+import type { AnalysisResult, DetailLoadState } from '@/features/teacher/threadDetail/types';
 import {
-  getInquiryIntentByType,
-  INQUIRY_INTENT,
-  type InquiryIntentType,
-} from '@/constants/inquiryIntent';
-import { INQUIRY_STATUS } from '@/constants/inquiryStatus';
-import { useThreadStatusStore, type ThreadStatus } from '@/stores/threadStatusStore';
-import { getThreadDetailErrorMessage, toAnalysisResult } from '@/features/teacher/threadDetail/lib';
-import { useChatMessagesQuery } from '@/features/teacher/threadDetail/queries';
-import { useReadChatRoom, useSendTeacherMessage } from '@/features/teacher/threadDetail/mutations';
-import type {
-  AnalysisResult,
-  DetailLoadState,
-  MessageItem,
-  SendTeacherMessageRequest,
-} from '@/features/teacher/threadDetail/types';
+  useChatMessagesQuery,
+  useChatRoomDetailQuery,
+} from '@/features/teacher/threadDetail/queries';
+import { useReadChatRoom } from '@/features/teacher/threadDetail/mutations';
+import { useRefreshChatMessagesOnFocus } from '@/features/teacher/threadDetail/hooks/useRefreshChatMessagesOnFocus';
+import { useThreadAnalysisFeedback } from '@/features/teacher/threadDetail/hooks/useThreadAnalysisFeedback';
+import { useThreadComposer } from '@/features/teacher/threadDetail/hooks/useThreadComposer';
+import { useThreadStatusControl } from '@/features/teacher/threadDetail/hooks/useThreadStatusControl';
 
 type UseTeacherThreadDetailParams = {
   chatRoomId: number;
 };
 
-type ComposerActionMode = 'send' | 'assist';
-
 const FOCUS_REFRESH_THROTTLE_MS = 3000;
 
 export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) => {
-  const [status, setStatus] = useState<ThreadStatus>(INQUIRY_STATUS.IN_PROGRESS);
-  const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
-  const [messageInput, setMessageInput] = useState('');
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  const [analysisFeedbackScore, setAnalysisFeedbackScore] = useState<number | null>(null);
-  const [isFeedbackSubmitting, setIsFeedbackSubmitting] = useState(false);
-  const [feedbackSaved, setFeedbackSaved] = useState(false);
-  const [feedbackErrorMessage, setFeedbackErrorMessage] = useState('');
-  const [analysisErrorMessage, setAnalysisErrorMessage] = useState('');
-  const [sendErrorMessage, setSendErrorMessage] = useState('');
-  const [lastAnalysisId, setLastAnalysisId] = useState<number | null>(null);
-  const [isStatusUpdating, setIsStatusUpdating] = useState(false);
-  const [isAnalysisRequesting, setIsAnalysisRequesting] = useState(false);
-  const [loadState, setLoadState] = useState<DetailLoadState>('loading');
-  const [detailErrorMessage, setDetailErrorMessage] = useState('');
-  const [counterpartName, setCounterpartName] = useState('');
-  const [studentName, setStudentName] = useState('');
-  const [intentType, setIntentType] = useState<InquiryIntentType>(INQUIRY_INTENT.ETC);
-
-  const isAnalyzingRef = useRef(false);
-  const isSendingRef = useRef(false);
+  const [currentAnalysisResult, setCurrentAnalysisResult] = useState<AnalysisResult | null>(null);
   const isMarkingReadRef = useRef(false);
-  const lastFocusedRefreshAtRef = useRef(0);
-
-  const setRoomStatus = useThreadStatusStore(state => state.setRoomStatus);
 
   const isValidChatRoomId = Number.isFinite(chatRoomId) && chatRoomId > 0;
+
+  const chatRoomDetailQuery = useChatRoomDetailQuery(chatRoomId);
+  const chatRoomDetail = chatRoomDetailQuery.data;
 
   const {
     messages,
@@ -68,7 +38,6 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     appendOptimisticMessage,
   } = useChatMessagesQuery(chatRoomId);
 
-  const sendTeacherMessageMutation = useSendTeacherMessage();
   const { mutateAsync: readChatRoom } = useReadChatRoom(chatRoomId);
 
   const markMessagesAsRead = useCallback(async () => {
@@ -86,349 +55,85 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     }
   }, [isValidChatRoomId, readChatRoom]);
 
-  const loadChatRoomDetail = useCallback(
-    async ({ shouldShowLoading = true }: { shouldShowLoading?: boolean } = {}) => {
-      if (!isValidChatRoomId) {
-        setLoadState('error');
-        setDetailErrorMessage('대화 정보를 불러올 수 없어요');
-        return;
-      }
+  const refreshMessages = useCallback(() => {
+    void refetchMessages();
+    void markMessagesAsRead();
+  }, [markMessagesAsRead, refetchMessages]);
 
-      try {
-        if (shouldShowLoading) {
-          setLoadState('loading');
-        }
-
-        setDetailErrorMessage('');
-
-        const response = await threadDetailApi.getChatRoomDetail(chatRoomId);
-        const payload = response.data;
-
-        if (!payload) {
-          throw new Error('채팅방 데이터가 없습니다.');
-        }
-
-        const nextIntentType = getInquiryIntentByType(payload.intentType);
-        const overriddenStatus = useThreadStatusStore.getState().statusByRoomId[chatRoomId];
-        const nextStatus = overriddenStatus ?? payload.status;
-
-        setCounterpartName(payload.counterpartName ?? '');
-        setStudentName(payload.studentName ?? '');
-        setIntentType(nextIntentType);
-        setStatus(nextStatus);
-
-        if (!overriddenStatus) {
-          setRoomStatus(chatRoomId, payload.status);
-        }
-
-        setLoadState('success');
-      } catch {
-        setLoadState('error');
-        setDetailErrorMessage('대화 정보를 불러올 수 없어요');
-      }
-    },
-    [chatRoomId, isValidChatRoomId, setRoomStatus]
-  );
-
-  useEffect(() => {
-    void loadChatRoomDetail();
-  }, [loadChatRoomDetail]);
-
-  useEffect(() => {
-    if (!isValidChatRoomId) {
-      return;
-    }
-
-    const refreshMessagesOnFocus = () => {
-      const now = Date.now();
-
-      if (now - lastFocusedRefreshAtRef.current < FOCUS_REFRESH_THROTTLE_MS) {
-        return;
-      }
-
-      lastFocusedRefreshAtRef.current = now;
-
-      void refetchMessages();
-      void markMessagesAsRead();
-    };
-
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        refreshMessagesOnFocus();
-      }
-    };
-
-    window.addEventListener('focus', refreshMessagesOnFocus);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      window.removeEventListener('focus', refreshMessagesOnFocus);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [isValidChatRoomId, markMessagesAsRead, refetchMessages]);
+  useRefreshChatMessagesOnFocus({
+    enabled: isValidChatRoomId,
+    throttleMs: FOCUS_REFRESH_THROTTLE_MS,
+    onRefresh: refreshMessages,
+  });
 
   useEffect(() => {
     void markMessagesAsRead();
   }, [chatRoomId, markMessagesAsRead]);
 
-  useEffect(() => {
-    setAnalysisResult(null);
-    setLastAnalysisId(null);
-    setAnalysisFeedbackScore(null);
-    setFeedbackSaved(false);
-    setFeedbackErrorMessage('');
-    setAnalysisErrorMessage('');
-    setSendErrorMessage('');
-    setMessageInput('');
-  }, [chatRoomId]);
+  const { status, isStatusMenuOpen, isStatusUpdating, setIsStatusMenuOpen, handleSelectStatus } =
+    useThreadStatusControl({
+      chatRoomId,
+      isValidChatRoomId,
+      serverStatus: chatRoomDetail?.status,
+    });
 
-  const hasMessageInput = messageInput.trim().length > 0;
-  const composerActionMode: ComposerActionMode = analysisResult ? 'send' : 'assist';
-  const isComposerActionDisabled = !hasMessageInput || isAnalysisRequesting;
-  const isUnsafeRisk =
-    analysisResult?.riskLevel === 'UNSAFE' || analysisResult?.riskLevel === 'HIGH';
+  const {
+    analysisFeedbackScore,
+    isFeedbackSubmitting,
+    feedbackSaved,
+    feedbackErrorMessage,
+    resetFeedbackState,
+    handleAnalysisFeedbackClick,
+    handleRetryFeedback,
+  } = useThreadAnalysisFeedback({
+    analysisResult: currentAnalysisResult,
+  });
 
-  const resetComposerState = () => {
-    setMessageInput('');
-    setAnalysisResult(null);
-    setLastAnalysisId(null);
-    setAnalysisFeedbackScore(null);
-    setFeedbackSaved(false);
-    setFeedbackErrorMessage('');
-    setSendErrorMessage('');
-  };
-
-  const requestMessageAnalysis = useCallback(async () => {
-    if (!hasMessageInput || isAnalysisRequesting || isAnalyzingRef.current) {
-      return null;
-    }
-
-    try {
-      isAnalyzingRef.current = true;
-      setIsAnalysisRequesting(true);
-      setAnalysisErrorMessage('');
-      setSendErrorMessage('');
-      setAnalysisResult(null);
-
-      if (!isValidChatRoomId) {
-        throw new Error('유효하지 않은 채팅방입니다.');
-      }
-
-      const content = messageInput.trim();
-
-      const response = lastAnalysisId
-        ? await threadDetailApi.recheckMessage(lastAnalysisId, content)
-        : await threadDetailApi.analyzeMessage(chatRoomId, content);
-
-      const nextAnalysisResult = toAnalysisResult(response);
-
-      setAnalysisResult(nextAnalysisResult);
-      setLastAnalysisId(nextAnalysisResult.analysisId);
-      setAnalysisFeedbackScore(null);
-      setFeedbackSaved(false);
-      setFeedbackErrorMessage('');
-
-      return nextAnalysisResult;
-    } catch (error) {
-      setAnalysisErrorMessage(getThreadDetailErrorMessage(error, '메시지 분석에 실패했어요'));
-      return null;
-    } finally {
-      isAnalyzingRef.current = false;
-      setIsAnalysisRequesting(false);
-    }
-  }, [
-    chatRoomId,
-    hasMessageInput,
+  const {
+    messageInput,
+    analysisResult,
+    analysisErrorMessage,
+    sendErrorMessage,
     isAnalysisRequesting,
+    isSendingMessage,
+    composerActionMode,
+    isComposerActionDisabled,
+    isUnsafeRisk,
+    resetComposerForRoom,
+    handleMessageInputChange,
+    handleComposerActionClick,
+    handleRetryAnalysis,
+    handleApplyRecommendedReply,
+  } = useThreadComposer({
+    chatRoomId,
     isValidChatRoomId,
-    lastAnalysisId,
-    messageInput,
-  ]);
-
-  const sendTeacherMessage = useCallback(async () => {
-    if (!hasMessageInput || isAnalysisRequesting || isSendingRef.current) {
-      return;
-    }
-
-    try {
-      isSendingRef.current = true;
-      setIsAnalysisRequesting(true);
-      setAnalysisErrorMessage('');
-
-      const content = messageInput.trim();
-
-      if (!analysisResult?.analysisId) {
-        throw new Error('분석 결과가 없어 메시지를 전송할 수 없어요');
-      }
-
-      const payload: SendTeacherMessageRequest = {
-        analysisId: analysisResult.analysisId,
-        content,
-      };
-
-      const response = await sendTeacherMessageMutation.mutateAsync({
-        chatRoomId,
-        payload,
-      });
-
-      if (!response.success) {
-        throw new Error(response.message || '메시지 전송에 실패했어요');
-      }
-
-      const optimisticMessage: MessageItem = {
-        id: response.data?.messageId ?? Date.now(),
-        senderName: '나',
-        sentAt: formatChatMessageDateTime(new Date().toISOString()),
-        content,
-        isMine: true,
-        isUnreadByCounterpart: true,
-      };
-
-      resetComposerState();
-
-      const refetchResult = await refetchMessages();
-
-      if (!refetchResult.isSuccess) {
-        appendOptimisticMessage(optimisticMessage);
-      }
-
-      void markMessagesAsRead();
-    } catch (error) {
-      if (isAxiosError(error) && error.response?.status === 400) {
-        try {
-          const content = messageInput.trim();
-          const response = await threadDetailApi.getMessages(chatRoomId, { size: 5 });
-          const latestMine = response.data?.messages?.find(message => message.isMine);
-          const isActuallySent = latestMine?.content?.trim() === content;
-
-          if (isActuallySent) {
-            resetComposerState();
-
-            const refetchResult = await refetchMessages();
-
-            if (!refetchResult.isSuccess) {
-              appendOptimisticMessage({
-                id: latestMine?.messageId ?? Date.now(),
-                senderName: '나',
-                sentAt: formatChatMessageDateTime(
-                  latestMine?.createdAt ?? new Date().toISOString()
-                ),
-                content,
-                isMine: true,
-                isUnreadByCounterpart: latestMine?.isUnreadByCounterpart ?? true,
-              });
-            }
-
-            void markMessagesAsRead();
-            return;
-          }
-        } catch {
-          // 재확인 실패 시 일반 오류 처리로 진행합니다.
-        }
-      }
-
-      setSendErrorMessage(getThreadDetailErrorMessage(error, '메시지를 전송하지 못했어요'));
-    } finally {
-      isSendingRef.current = false;
-      setIsAnalysisRequesting(false);
-    }
-  }, [
-    analysisResult?.analysisId,
-    appendOptimisticMessage,
-    chatRoomId,
-    hasMessageInput,
-    isAnalysisRequesting,
-    markMessagesAsRead,
-    messageInput,
     refetchMessages,
-    sendTeacherMessageMutation,
-  ]);
+    appendOptimisticMessage,
+    markMessagesAsRead,
+    resetFeedbackState,
+    onAnalysisResultChange: setCurrentAnalysisResult,
+  });
 
-  const handleComposerActionClick = () => {
-    if (composerActionMode === 'assist') {
-      void requestMessageAnalysis();
-      return;
-    }
+  useEffect(() => {
+    resetComposerForRoom();
+    resetFeedbackState();
+    setCurrentAnalysisResult(null);
+  }, [chatRoomId, resetComposerForRoom, resetFeedbackState]);
 
-    void sendTeacherMessage();
-  };
+  const counterpartName = chatRoomDetail?.counterpartName ?? '';
+  const studentName = chatRoomDetail?.studentName ?? '';
+  const intentType: InquiryIntentType = getInquiryIntentByType(chatRoomDetail?.intentType);
 
-  const handleMessageInputChange = (nextValue: string) => {
-    setMessageInput(nextValue);
+  const loadState: DetailLoadState = !isValidChatRoomId
+    ? 'error'
+    : chatRoomDetailQuery.isLoading
+      ? 'loading'
+      : chatRoomDetailQuery.isError
+        ? 'error'
+        : 'success';
 
-    if (analysisResult) {
-      setAnalysisResult(null);
-    }
-
-    if (sendErrorMessage) {
-      setSendErrorMessage('');
-    }
-
-    if (analysisErrorMessage) {
-      setAnalysisErrorMessage('');
-    }
-  };
-
-  const handleRetryAnalysis = () => {
-    void requestMessageAnalysis();
-  };
-
-  const handleApplyRecommendedReply = async () => {
-    if (!analysisResult?.recommendedReply) {
-      return;
-    }
-
-    try {
-      const response = await threadDetailApi.saveRecommendationAdoption(analysisResult.analysisId);
-
-      if (!response.success) {
-        throw new Error(response.message || '추천문장 채택 저장에 실패했어요');
-      }
-    } catch {
-      // 채택 저장 실패하더라도 추천문장 적용 UX는 유지합니다.
-    }
-
-    setMessageInput(analysisResult.recommendedReply);
-    setAnalysisResult(null);
-    setAnalysisFeedbackScore(null);
-    setFeedbackSaved(false);
-    setFeedbackErrorMessage('');
-    setAnalysisErrorMessage('');
-    setSendErrorMessage('');
-  };
-
-  const handleAnalysisFeedbackClick = async (score: number) => {
-    if (!analysisResult || isFeedbackSubmitting) {
-      return;
-    }
-
-    try {
-      setIsFeedbackSubmitting(true);
-      setAnalysisFeedbackScore(score);
-      setFeedbackErrorMessage('');
-
-      const response = await threadDetailApi.saveAnalysisFeedback(analysisResult.analysisId, score);
-
-      if (!response.success) {
-        throw new Error(response.message || '피드백 저장에 실패했어요');
-      }
-
-      setFeedbackSaved(true);
-    } catch {
-      setFeedbackSaved(false);
-      setFeedbackErrorMessage('피드백을 저장하지 못했어요');
-    } finally {
-      setIsFeedbackSubmitting(false);
-    }
-  };
-
-  const handleRetryFeedback = () => {
-    if (analysisFeedbackScore == null) {
-      return;
-    }
-
-    void handleAnalysisFeedbackClick(analysisFeedbackScore);
-  };
+  const detailErrorMessage =
+    !isValidChatRoomId || chatRoomDetailQuery.isError ? '대화 정보를 불러올 수 없어요' : '';
 
   const handleLoadMoreMessages = () => {
     if (!messagesHasNext || isMessagesLoadingMore) {
@@ -443,40 +148,9 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
   };
 
   const handleRetryConversation = async () => {
-    await loadChatRoomDetail();
+    await chatRoomDetailQuery.refetch();
     await refetchMessages();
     await markMessagesAsRead();
-  };
-
-  const handleSelectStatus = async (nextStatus: ThreadStatus) => {
-    if (isStatusUpdating) {
-      return;
-    }
-
-    const previousStatus = status;
-
-    setStatus(nextStatus);
-    setRoomStatus(chatRoomId, nextStatus);
-    setIsStatusMenuOpen(false);
-
-    if (!isValidChatRoomId) {
-      return;
-    }
-
-    try {
-      setIsStatusUpdating(true);
-
-      const response = await threadDetailApi.updateStatus(chatRoomId, nextStatus);
-
-      if (!response.success) {
-        throw new Error(response.message || '처리 상태 변경에 실패했어요');
-      }
-    } catch {
-      setStatus(previousStatus);
-      setRoomStatus(chatRoomId, previousStatus);
-    } finally {
-      setIsStatusUpdating(false);
-    }
   };
 
   return {
@@ -492,6 +166,7 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     sendErrorMessage,
     isStatusUpdating,
     isAnalysisRequesting,
+    isSendingMessage,
     loadState,
     detailErrorMessage,
     counterpartName,

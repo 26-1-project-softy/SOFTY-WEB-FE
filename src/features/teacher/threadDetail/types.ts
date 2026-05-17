@@ -2,7 +2,7 @@ import type { ThreadStatus } from '@/stores/threadStatusStore';
 
 export type DetailLoadState = 'loading' | 'error' | 'success';
 
-export type AnalysisRiskLevel = 'SAFE' | 'UNSAFE' | 'LOW' | 'HIGH';
+export type AnalysisRiskLevel = 'SAFE' | 'UNSAFE';
 
 export type ChatRoomDetailData = {
   chatRoomId: number;
@@ -59,7 +59,7 @@ export type AnalyzeTeacherMessageResponse = {
   data?: {
     analysisId: number;
     riskLevel: AnalysisRiskLevel;
-    recommendedMessage: string;
+    recommendedMessage: string | null;
   } | null;
 };
 
@@ -93,13 +93,14 @@ export type AnalysisFeedbackResponse = {
   success: boolean;
   code: number;
   message: string;
+  data?: Record<string, never> | null;
 };
 
 export type RecommendationAdoptionResponse = {
   success: boolean;
   code: number;
   message: string;
-  data?: null;
+  data?: Record<string, never> | null;
 };
 
 export type UpdateChatRoomStatusResponse = {
@@ -115,8 +116,9 @@ export type UpdateChatRoomStatusResponse = {
 export type AnalysisResult = {
   analysisId: number;
   riskLevel: AnalysisRiskLevel;
-  summary: string;
-  recommendedReply?: string | null;
+  title: string;
+  description: string;
+  recommendedMessage?: string | null;
 };
 
 export type MessageItem = {
