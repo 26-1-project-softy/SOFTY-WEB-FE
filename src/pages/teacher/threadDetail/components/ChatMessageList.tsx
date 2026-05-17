@@ -121,7 +121,6 @@ export const ChatMessageList = ({
 const MessageArea = styled.div`
   flex: 1;
   min-height: 0;
-  background: ${({ theme }) => theme.colors.background.bg4};
   padding: 16px 14px;
   overflow-y: auto;
   overflow-x: hidden;
