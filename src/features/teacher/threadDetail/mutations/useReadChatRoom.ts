@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { threadDetailApi } from '@/services/teacher/threadDetailApi';
-import { threadDetailQueryKeys } from '@/constants/threadDetailQueryKeys';
+import { threadQueryKeys } from '@/constants/threadQueryKeys';
 
 export const useReadChatRoom = (chatRoomId: number) => {
   const queryClient = useQueryClient();
@@ -9,7 +9,7 @@ export const useReadChatRoom = (chatRoomId: number) => {
     mutationFn: () => threadDetailApi.readRoom(chatRoomId),
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: threadDetailQueryKeys.threadList(),
+        queryKey: threadQueryKeys.threadList(),
       });
     },
   });
