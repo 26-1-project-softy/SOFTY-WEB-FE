@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQueryClient, type InfiniteData } from '@tanstack/react-query';
 import { threadDetailApi } from '@/services/teacher/threadDetailApi';
-import { threadDetailQueryKeys } from '@/constants/threadDetailQueryKeys';
+import { threadQueryKeys } from '@/constants/threadQueryKeys';
 import { toMessageItem } from '@/features/teacher/threadDetail/lib';
 import type { MessageItem } from '@/features/teacher/threadDetail/types';
 
@@ -16,7 +16,7 @@ type ChatMessagesPage = {
 export const useChatMessagesQuery = (chatRoomId: number) => {
   const queryClient = useQueryClient();
   const isValidChatRoomId = Number.isFinite(chatRoomId) && chatRoomId > 0;
-  const queryKey = threadDetailQueryKeys.messages(chatRoomId);
+  const queryKey = threadQueryKeys.messages(chatRoomId);
 
   const query = useInfiniteQuery({
     queryKey,

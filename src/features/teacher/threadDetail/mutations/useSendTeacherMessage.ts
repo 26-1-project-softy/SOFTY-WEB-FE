@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { threadDetailApi } from '@/services/teacher/threadDetailApi';
-import { threadDetailQueryKeys } from '@/constants/threadDetailQueryKeys';
+import { threadQueryKeys } from '@/constants/threadQueryKeys';
 import type { SendTeacherMessageRequest } from '@/features/teacher/threadDetail/types';
 
 type SendTeacherMessageParams = {
@@ -17,7 +17,7 @@ export const useSendTeacherMessage = () => {
     },
     onSuccess: () => {
       void queryClient.invalidateQueries({
-        queryKey: threadDetailQueryKeys.threadList(),
+        queryKey: threadQueryKeys.threadList(),
       });
     },
   });

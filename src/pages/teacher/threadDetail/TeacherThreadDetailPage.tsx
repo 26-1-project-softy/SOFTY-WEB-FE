@@ -141,9 +141,9 @@ export const TeacherThreadDetailPage = () => {
 
               <LowRiskCard $risk={isUnsafeRisk ? 'high' : 'low'}>
                 <LowRiskTitle $risk={isUnsafeRisk ? 'high' : 'low'}>
-                  {isUnsafeRisk ? '오해가 발생할 수 있는 메시지예요' : '문제 없는 메시지예요'}
+                  {analysisResult.title}
                 </LowRiskTitle>
-                <LowRiskDescription>{analysisResult.summary}</LowRiskDescription>
+                <LowRiskDescription>{analysisResult.description}</LowRiskDescription>
               </LowRiskCard>
 
               <FeedbackSection>
@@ -196,7 +196,7 @@ export const TeacherThreadDetailPage = () => {
                 <RecommendSection>
                   <RecommendTitle>AI 추천 답변</RecommendTitle>
                   <RecommendCard>
-                    {analysisResult.recommendedReply ||
+                    {analysisResult.recommendedMessage ||
                       '학부모님, 안내해주신 내용을 바탕으로 확인 후 정확하게 다시 안내드리겠습니다.'}
                   </RecommendCard>
                   <InlineButton
