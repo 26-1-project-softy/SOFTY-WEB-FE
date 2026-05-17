@@ -26,7 +26,7 @@ export type ChatRoomMessageResponse = {
   senderRole: string;
   content: string;
   createdAt: string;
-  unreadCount?: number;
+  isUnreadByCounterpart: boolean;
 };
 
 export type ChatRoomMessagesApiResponse = {
@@ -125,5 +125,5 @@ export type MessageItem = {
   sentAt: string;
   content: string;
   isMine: boolean;
-  unreadCount?: number;
+  isUnreadByCounterpart: boolean;
 };

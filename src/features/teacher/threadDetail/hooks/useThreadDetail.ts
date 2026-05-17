@@ -69,13 +69,7 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     }
 
     try {
-      const response = await threadDetailApi.readRoom(chatRoomId);
-
-      if (response.success) {
-        setMessages(prev =>
-          prev.map(message => (message.isMine ? { ...message, unreadCount: 0 } : message))
-        );
-      }
+      await threadDetailApi.readRoom(chatRoomId);
     } catch {
       // 읽음 처리는 부가 동작이므로 실패해도 화면 흐름은 유지합니다.
     }
@@ -274,7 +268,7 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
           sentAt: formatChatMessageDateTime(createdAt),
           content,
           isMine: true,
-          unreadCount: 1,
+          isUnreadByCounterpart: true,
         },
       ]);
 

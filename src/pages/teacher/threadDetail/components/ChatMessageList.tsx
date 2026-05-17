@@ -3,18 +3,10 @@ import { Alert } from '@/components/common/Alert';
 import { InlineButton } from '@/components/common/InlineButton';
 import { Loader } from '@/components/common/Loader';
 import { Avatar } from '@/components/common/Avatar';
+import type { MessageItem } from '@/features/teacher/threadDetail/types';
 import { IcError, IcRefresh } from '@/icons';
 
 type DetailLoadState = 'loading' | 'error' | 'success';
-
-type MessageItem = {
-  id: number;
-  senderName: string;
-  sentAt: string;
-  content: string;
-  isMine: boolean;
-  unreadCount?: number;
-};
 
 type ChatMessageListProps = {
   loadState: DetailLoadState;
@@ -116,8 +108,8 @@ export const ChatMessageList = ({
 
           <BubbleWrap $isMine={message.isMine}>
             <MessageBubble $isMine={message.isMine}>{message.content}</MessageBubble>
-            {message.isMine && message.unreadCount ? (
-              <UnreadMarker>{message.unreadCount}</UnreadMarker>
+            {message.isMine && message.isUnreadByCounterpart ? (
+              <UnreadMarker>{message.isUnreadByCounterpart}</UnreadMarker>
             ) : null}
           </BubbleWrap>
 

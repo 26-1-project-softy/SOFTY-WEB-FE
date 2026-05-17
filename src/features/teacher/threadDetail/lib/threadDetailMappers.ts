@@ -14,7 +14,7 @@ export const toMessageItem = (message: ChatRoomMessageResponse): MessageItem => 
     sentAt: formatChatMessageDateTime(message.createdAt),
     content: message.content || '-',
     isMine: message.isMine,
-    unreadCount: message.unreadCount ?? 0,
+    isUnreadByCounterpart: message.isUnreadByCounterpart,
   };
 };
 
