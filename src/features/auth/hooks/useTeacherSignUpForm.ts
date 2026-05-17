@@ -80,6 +80,30 @@ export const useTeacherSignUpForm = () => {
     authStatus === 'SIGNUP_REQUIRED' &&
     step === 'FORM';
 
+  const applySignedInState = async () => {
+    authSession.setAuthStatus('SIGNED_IN');
+
+    try {
+      const me = await authApi.getMe();
+
+      setSignedIn({
+        activeRole: me.activeRole,
+        user: me.user,
+      });
+
+      return;
+    } catch {
+      setSignedIn({
+        activeRole: 'teacher',
+        user: {
+          name: teacherName.trim() || '선생님',
+          grade: validationResult.parsedGrade,
+          classNumber: validationResult.parsedClassNumber,
+        },
+      });
+    }
+  };
+
   const handleSubmit: FormSubmitHandler = async event => {
     event.preventDefault();
 
@@ -109,7 +133,7 @@ export const useTeacherSignUpForm = () => {
         classNumber: validationResult.parsedClassNumber,
       });
 
-      if (!response.success || !response.data?.userId || !response.data?.activeRole) {
+      if (!response.success) {
         setGlobalError({
           title: response.message || FORM_ERROR_FALLBACK.title,
           description: FORM_ERROR_FALLBACK.description,
@@ -155,6 +179,7 @@ export const useTeacherSignUpForm = () => {
       }
 
       setGeneratedClassCode(classCodeResponse.data.classCode.trim());
+      await applySignedInState();
       setStep('CLASS_CODE_READY');
     } catch (error) {
       if (error instanceof AxiosError) {
@@ -201,29 +226,8 @@ export const useTeacherSignUpForm = () => {
   };
 
   const handleGoToInbox = async () => {
-    try {
-      const me = await authApi.getMe();
-
-      authSession.setAuthStatus('SIGNED_IN');
-      setSignedIn({
-        activeRole: me.activeRole,
-        user: me.user,
-      });
-
-      navigate(ROUTES.teacherThreadList, { replace: true });
-    } catch {
-      authSession.setAuthStatus('SIGNED_IN');
-      setSignedIn({
-        activeRole: 'teacher',
-        user: {
-          name: teacherName.trim() || '선생님',
-          grade: validationResult.parsedGrade,
-          classNumber: validationResult.parsedClassNumber,
-        },
-      });
-
-      navigate(ROUTES.teacherThreadList, { replace: true });
-    }
+    await applySignedInState();
+    navigate(ROUTES.teacherThreadList, { replace: true });
   };
 
   return {
