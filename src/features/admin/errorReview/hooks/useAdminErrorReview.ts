@@ -1,13 +1,12 @@
 import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
+import { getErrorReviewItem } from '@/features/admin/errorReview/lib/getErrorReviewItem';
 import { errorReviewApi } from '@/services/admin/errorReviewApi';
 import {
   ERROR_REVIEW_DEFAULT_EXPANDED_ID,
   ERROR_REVIEW_DEFAULT_QUERY_PARAMS,
-  toErrorReviewItem,
+  ERROR_REVIEW_QUERY_KEY,
 } from '@/features/admin/errorReview/constants';
-
-const ERROR_REVIEW_QUERY_KEY = ['admin', 'errorReview', 'riskFeedbacks'] as const;
 
 export const useAdminErrorReview = () => {
   const [page] = useState(ERROR_REVIEW_DEFAULT_QUERY_PARAMS.page);
@@ -28,7 +27,7 @@ export const useAdminErrorReview = () => {
     staleTime: 1000 * 60,
   });
 
-  const items = query.data?.items?.map(toErrorReviewItem) ?? [];
+  const items = query.data?.items?.map(getErrorReviewItem) ?? [];
 
   const handleToggle = (id: number) => {
     setExpandedId(prev => (prev === id ? 0 : id));
