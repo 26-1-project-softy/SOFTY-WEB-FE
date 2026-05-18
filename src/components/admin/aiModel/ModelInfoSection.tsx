@@ -8,7 +8,7 @@ import { InfoFieldGrid } from '@/components/admin/aiModel/InfoFieldGrid';
 import { useLatestModelInfo } from '@/features/admin/aiModel/hooks/useLatestModelInfo';
 import { IcDashboard } from '@/icons';
 
-const MODEL_CATEGORY_LABEL = 'LLM 모델';
+const MODEL_CATEGORY_LABEL = 'AI 모델';
 
 export const ModelInfoSection = () => {
   const { modelInfo, isLoading, isError, errorMessage } = useLatestModelInfo();

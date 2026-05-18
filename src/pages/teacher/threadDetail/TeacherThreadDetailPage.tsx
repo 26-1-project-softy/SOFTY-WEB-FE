@@ -99,117 +99,120 @@ export const TeacherThreadDetailPage = () => {
             <span>AI 소통 어시스턴트</span>
           </AssistantHeader>
 
-          {isAnalysisRequesting ? (
-            <AssistantAnalyzing>
-              <AnalyzingDots aria-hidden>
-                <span />
-                <span />
-                <span />
-              </AnalyzingDots>
-              <AssistantAnalyzingTitle>메시지를 살펴보고 있어요</AssistantAnalyzingTitle>
-              <AssistantAnalyzingText>
-                표현의 톤과 오해 소지를 점검하고 있어요.
-              </AssistantAnalyzingText>
-            </AssistantAnalyzing>
-          ) : null}
+          <AssistantBody>
+            {isAnalysisRequesting ? (
+              <AssistantAnalyzing>
+                <AnalyzingDots aria-hidden>
+                  <span />
+                  <span />
+                  <span />
+                </AnalyzingDots>
+                <AssistantAnalyzingTitle>메시지를 살펴보고 있어요</AssistantAnalyzingTitle>
+                <AssistantAnalyzingText>
+                  표현의 톤과 오해 소지를 점검하고 있어요.
+                </AssistantAnalyzingText>
+              </AssistantAnalyzing>
+            ) : null}
 
-          {!isAnalysisRequesting && !analysisResult && !analysisErrorMessage ? (
-            <AssistantEmpty>
-              <IcSparkles />
-              <AssistantEmptyTitle>아직 분석할 메시지가 없어요</AssistantEmptyTitle>
-              <AssistantEmptyText>
-                메시지를 작성하면 분쟁 가능성을 살펴보고, 필요한 경우 더 부드러운 답장을 추천드려요.
-              </AssistantEmptyText>
-            </AssistantEmpty>
-          ) : null}
+            {!isAnalysisRequesting && !analysisResult && !analysisErrorMessage ? (
+              <AssistantEmpty>
+                <IcSparkles />
+                <AssistantEmptyTitle>아직 분석할 메시지가 없어요</AssistantEmptyTitle>
+                <AssistantEmptyText>
+                  메시지를 작성하면 분쟁 가능성을 살펴보고, 필요한 경우 더 부드러운 답장을
+                  추천드려요.
+                </AssistantEmptyText>
+              </AssistantEmpty>
+            ) : null}
 
-          {!isAnalysisRequesting && !analysisResult && analysisErrorMessage ? (
-            <AnalysisResultSection>
-              <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
-              <Alert
-                title={analysisErrorMessage}
-                description="잠시 후 다시 시도해 주세요."
-                variant="error"
-                onRetry={isAnalysisRequesting ? undefined : handleRetryAnalysis}
-              />
-            </AnalysisResultSection>
-          ) : null}
+            {!isAnalysisRequesting && !analysisResult && analysisErrorMessage ? (
+              <AnalysisResultSection>
+                <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
+                <Alert
+                  title={analysisErrorMessage}
+                  description="잠시 후 다시 시도해 주세요."
+                  variant="error"
+                  onRetry={isAnalysisRequesting ? undefined : handleRetryAnalysis}
+                />
+              </AnalysisResultSection>
+            ) : null}
 
-          {!isAnalysisRequesting && analysisResult ? (
-            <AnalysisResultSection>
-              <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
+            {!isAnalysisRequesting && analysisResult ? (
+              <AnalysisResultSection>
+                <AnalysisTitle>AI 분쟁 가능성 분석</AnalysisTitle>
 
-              <LowRiskCard $risk={isUnsafeRisk ? 'high' : 'low'}>
-                <LowRiskTitle $risk={isUnsafeRisk ? 'high' : 'low'}>
-                  {analysisResult.title}
-                </LowRiskTitle>
-                <LowRiskDescription>{analysisResult.description}</LowRiskDescription>
-              </LowRiskCard>
+                <LowRiskCard $risk={isUnsafeRisk ? 'high' : 'low'}>
+                  <LowRiskTitle $risk={isUnsafeRisk ? 'high' : 'low'}>
+                    {analysisResult.title}
+                  </LowRiskTitle>
+                  <LowRiskDescription>{analysisResult.description}</LowRiskDescription>
+                </LowRiskCard>
 
-              <FeedbackSection>
-                <FeedbackQuestion>분쟁 가능성 분석 결과가 얼마나 적절했나요?</FeedbackQuestion>
-                <FeedbackScale>
-                  {[1, 2, 3, 4, 5].map(score => (
-                    <FeedbackScoreButton
-                      key={score}
-                      type="button"
-                      $selected={analysisFeedbackScore === score}
-                      onClick={() => void handleAnalysisFeedbackClick(score)}
-                      aria-pressed={analysisFeedbackScore === score}
-                      disabled={isFeedbackSubmitting}
-                    >
-                      {score}
-                    </FeedbackScoreButton>
-                  ))}
-                </FeedbackScale>
+                <FeedbackSection>
+                  <FeedbackQuestion>분쟁 가능성 분석 결과가 얼마나 적절했나요?</FeedbackQuestion>
+                  <FeedbackScale>
+                    {[1, 2, 3, 4, 5].map(score => (
+                      <FeedbackScoreButton
+                        key={score}
+                        type="button"
+                        $selected={analysisFeedbackScore === score}
+                        onClick={() => void handleAnalysisFeedbackClick(score)}
+                        aria-pressed={analysisFeedbackScore === score}
+                        disabled={isFeedbackSubmitting}
+                      >
+                        {score}
+                      </FeedbackScoreButton>
+                    ))}
+                  </FeedbackScale>
 
-                <FeedbackLabels>
-                  <span>매우 부적절</span>
-                  <span>매우 적절</span>
-                </FeedbackLabels>
+                  <FeedbackLabels>
+                    <span>매우 부적절</span>
+                    <span>매우 적절</span>
+                  </FeedbackLabels>
 
-                {analysisFeedbackScore != null && feedbackSaved ? (
-                  <FeedbackAppliedBox role="status" aria-live="polite">
-                    <FeedbackAppliedIcon>
-                      <IcInfo />
-                    </FeedbackAppliedIcon>
-                    <FeedbackAppliedTextArea>
-                      <FeedbackAppliedTitle>의견이 반영되었어요</FeedbackAppliedTitle>
-                      <FeedbackAppliedDescription>
-                        보내주신 피드백은 분석 품질 개선에 활용돼요.
-                      </FeedbackAppliedDescription>
-                    </FeedbackAppliedTextArea>
-                  </FeedbackAppliedBox>
+                  {analysisFeedbackScore != null && feedbackSaved ? (
+                    <FeedbackAppliedBox role="status" aria-live="polite">
+                      <FeedbackAppliedIcon>
+                        <IcInfo />
+                      </FeedbackAppliedIcon>
+                      <FeedbackAppliedTextArea>
+                        <FeedbackAppliedTitle>의견이 반영되었어요</FeedbackAppliedTitle>
+                        <FeedbackAppliedDescription>
+                          보내주신 피드백은 분석 품질 개선에 활용돼요.
+                        </FeedbackAppliedDescription>
+                      </FeedbackAppliedTextArea>
+                    </FeedbackAppliedBox>
+                  ) : null}
+
+                  {analysisFeedbackScore != null && !feedbackSaved && feedbackErrorMessage ? (
+                    <Alert
+                      title={feedbackErrorMessage}
+                      description="잠시 후 다시 시도해 주세요."
+                      variant="error"
+                      onRetry={isFeedbackSubmitting ? undefined : handleRetryFeedback}
+                    />
+                  ) : null}
+                </FeedbackSection>
+
+                {isUnsafeRisk ? (
+                  <RecommendSection>
+                    <RecommendTitle>AI 추천 답변</RecommendTitle>
+                    <RecommendCard>
+                      {analysisResult.recommendedMessage ||
+                        '학부모님, 안내해주신 내용을 바탕으로 확인 후 정확하게 다시 안내드리겠습니다.'}
+                    </RecommendCard>
+                    <InlineButton
+                      variant="ghost"
+                      size="M"
+                      width="100%"
+                      label="적용하기"
+                      onClick={handleApplyRecommendedReply}
+                    />
+                  </RecommendSection>
                 ) : null}
-
-                {analysisFeedbackScore != null && !feedbackSaved && feedbackErrorMessage ? (
-                  <Alert
-                    title={feedbackErrorMessage}
-                    description="잠시 후 다시 시도해 주세요."
-                    variant="error"
-                    onRetry={isFeedbackSubmitting ? undefined : handleRetryFeedback}
-                  />
-                ) : null}
-              </FeedbackSection>
-
-              {isUnsafeRisk ? (
-                <RecommendSection>
-                  <RecommendTitle>AI 추천 답변</RecommendTitle>
-                  <RecommendCard>
-                    {analysisResult.recommendedMessage ||
-                      '학부모님, 안내해주신 내용을 바탕으로 확인 후 정확하게 다시 안내드리겠습니다.'}
-                  </RecommendCard>
-                  <InlineButton
-                    variant="ghost"
-                    size="M"
-                    width="100%"
-                    label="적용하기"
-                    onClick={handleApplyRecommendedReply}
-                  />
-                </RecommendSection>
-              ) : null}
-            </AnalysisResultSection>
-          ) : null}
+              </AnalysisResultSection>
+            ) : null}
+          </AssistantBody>
         </AssistantPanel>
       </ThreadBody>
     </ThreadDetailPageContainer>
@@ -244,10 +247,10 @@ const ConversationPanel = styled.section`
 
 const AssistantPanel = styled.aside`
   display: flex;
-  width: min(360px, 30vw);
+  flex: 0 0 clamp(180px, 30vw, 360px);
+  width: clamp(180px, 30vw, 360px);
   min-height: 0;
   flex-direction: column;
-  overflow: hidden;
   background: ${({ theme }) => theme.colors.background.bg1};
 `;
 
@@ -264,6 +267,14 @@ const AssistantHeader = styled.header`
   svg {
     flex-shrink: 0;
   }
+`;
+
+const AssistantBody = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 40px;
 `;
 
 const AssistantEmpty = styled.div`
