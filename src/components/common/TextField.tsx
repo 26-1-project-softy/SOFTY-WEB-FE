@@ -37,7 +37,6 @@ export const TextField = ({
 const FieldContainer = styled.div`
   display: flex;
   flex-direction: column;
-  width: min(calc(100vw - 32px - 80px), 361px);
   gap: 8px;
 `;
 
