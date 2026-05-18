@@ -19,7 +19,6 @@ type TeacherSignUpFormProps = {
   globalError: AuthErrorMessage | null;
   isSubmitting: boolean;
   isCreatingClassCode: boolean;
-  isSubmitAttempted: boolean;
   isSignUpEnabled: boolean;
   step: SignUpStep;
   generatedClassCode: string;
@@ -42,7 +41,6 @@ export const TeacherSignUpForm = ({
   globalError,
   isSubmitting,
   isCreatingClassCode,
-  isSubmitAttempted,
   isSignUpEnabled,
   step,
   generatedClassCode,
@@ -55,7 +53,6 @@ export const TeacherSignUpForm = ({
   handleCopyClassCode,
   handleGoToInbox,
 }: TeacherSignUpFormProps) => {
-  const showFieldErrors = isSubmitAttempted;
   const progressRatio = step === 'CLASS_CODE_READY' ? 1 : step === 'SIGN_UP_SUCCESS' ? 0.66 : 0.33;
 
   return (
@@ -72,7 +69,7 @@ export const TeacherSignUpForm = ({
 
             <SignUpFormSection onSubmit={handleSubmit}>
               <InputGroup>
-                <FieldInput
+                <TextField
                   id="teacherName"
                   name="teacherName"
                   label="이름"
@@ -80,12 +77,12 @@ export const TeacherSignUpForm = ({
                   value={teacherName}
                   onChange={event => setTeacherName(event.target.value)}
                   placeholder="홍길동"
-                  errorMessage={showFieldErrors ? fieldErrors.teacherName : undefined}
+                  errorMessage={fieldErrors.teacherName}
                 />
               </InputGroup>
 
               <InputGroup>
-                <FieldInput
+                <TextField
                   id="schoolName"
                   name="schoolName"
                   label="학교명"
@@ -93,34 +90,36 @@ export const TeacherSignUpForm = ({
                   value={schoolName}
                   onChange={event => setSchoolName(event.target.value)}
                   placeholder="한국초등학교"
-                  errorMessage={showFieldErrors ? fieldErrors.schoolName : undefined}
+                  errorMessage={fieldErrors.schoolName}
                 />
               </InputGroup>
 
               <InlineTwoColumn>
                 <InputGroup>
-                  <FieldInput
+                  <TextField
                     id="grade"
                     name="grade"
+                    inputMode="numeric"
                     label="학년"
                     isRequired
                     value={grade}
                     onChange={event => setGrade(event.target.value)}
                     placeholder="3"
-                    errorMessage={showFieldErrors ? fieldErrors.grade : undefined}
+                    errorMessage={fieldErrors.grade}
                   />
                 </InputGroup>
 
                 <InputGroup>
-                  <FieldInput
+                  <TextField
                     id="classNumber"
                     name="classNumber"
+                    inputMode="numeric"
                     label="반"
                     isRequired
                     value={classNumber}
                     onChange={event => setClassNumber(event.target.value)}
                     placeholder="2"
-                    errorMessage={showFieldErrors ? fieldErrors.classNumber : undefined}
+                    errorMessage={fieldErrors.classNumber}
                   />
                 </InputGroup>
               </InlineTwoColumn>
@@ -300,10 +299,6 @@ const InlineTwoColumn = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-`;
-
-const FieldInput = styled(TextField)`
-  width: 100%;
 `;
 
 const ErrorBox = styled.div`
