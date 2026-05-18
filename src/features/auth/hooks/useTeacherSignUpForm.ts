@@ -179,7 +179,6 @@ export const useTeacherSignUpForm = () => {
       }
 
       setGeneratedClassCode(classCodeResponse.data.classCode.trim());
-      await applySignedInState();
       setStep('CLASS_CODE_READY');
     } catch (error) {
       if (error instanceof AxiosError) {
