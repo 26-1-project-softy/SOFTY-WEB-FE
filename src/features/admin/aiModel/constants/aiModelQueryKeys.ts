@@ -6,4 +6,5 @@ export const aiModelQueryKeys = {
   trainingHistory: (page: number, size: number) =>
     [...aiModelQueryKeys.all, 'training-history', page, size] as const,
   tokenUsage: () => [...aiModelQueryKeys.all, 'token-usage'] as const,
+  trainingJob: (jobId: string) => [...aiModelQueryKeys.all, 'trainingJob', jobId] as const,
 };

@@ -1,13 +1,15 @@
 import type { ApiResponse } from '@/types/apiResponse';
 import { apiClient } from '@/services/http/apiClient';
 
+export type TrainingJobStatus = 'QUEUED' | 'RUNNING' | 'PAUSED' | 'COMPLETED' | 'FAILED';
+
 export type LatestModelInfo = {
   jobId: string;
   modelName: string;
   modelVersion: string;
   datasetVersion: string;
-  status: string;
-  lastTrainedAt: string;
+  status: TrainingJobStatus;
+  lastTrainedAt: string | null;
 };
 
 export type LatestModelEvaluationStatus = 'queued' | 'running' | 'completed' | 'failed';
@@ -18,7 +20,7 @@ export type LatestModelEvaluation = {
   recall: number;
   f1Score: number;
   status: LatestModelEvaluationStatus;
-  progressPercent: number;
+  progressPercent: number | null;
   passed: boolean;
   version: string;
   resultCode: number;
@@ -32,7 +34,7 @@ export type RerunModelEvaluationRequest = {
 
 export type RerunModelEvaluationResult = {
   evaluationId: string;
-  status: string;
+  status: LatestModelEvaluationStatus;
   resultCode: number;
   resultMessage: string;
   contentType: string;
@@ -42,15 +44,26 @@ export type RerunModelEvaluationResult = {
 
 export type RetrainModelResult = {
   jobId: string;
-  status: string;
+  status: TrainingJobStatus;
+};
+
+export type TrainingJobDetail = {
+  jobId: string;
+  modelName: string;
+  modelVersion: string;
+  datasetVersion: string;
+  status: TrainingJobStatus;
+  progressPercent: number | null;
+  startedAt: string | null;
+  finishedAt: string | null;
 };
 
 export type TrainingHistoryItem = {
   trainedAt: string;
   version: string;
   datasetVersion: string;
-  f1Score: number;
-  status: string;
+  f1Score: number | null;
+  status: TrainingJobStatus;
 };
 
 export type TrainingHistory = {
@@ -85,6 +98,7 @@ export type LatestModelInfoResponse = ApiResponse<LatestModelInfo | null>;
 export type LatestModelEvaluationResponse = ApiResponse<LatestModelEvaluation | null>;
 export type RerunModelEvaluationResponse = ApiResponse<RerunModelEvaluationResult | null>;
 export type RetrainModelResponse = ApiResponse<RetrainModelResult | null>;
+export type TrainingJobDetailResponse = ApiResponse<TrainingJobDetail | null>;
 export type TrainingHistoryResponse = ApiResponse<TrainingHistory>;
 
 export const aiModelApi = {
@@ -116,6 +130,14 @@ export const aiModelApi = {
 
   retrainModel: async () => {
     const { data } = await apiClient.post<RetrainModelResponse>('/admin/retraining');
+
+    return data;
+  },
+
+  getTrainingJob: async (jobId: string) => {
+    const { data } = await apiClient.get<TrainingJobDetailResponse>(
+      `/admin/training-jobs/${jobId}`
+    );
 
     return data;
   },

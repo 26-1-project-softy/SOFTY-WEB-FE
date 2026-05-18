@@ -22,8 +22,8 @@ type TrainingHistoryChartData = {
   f1Score: number;
 };
 
-const isValidF1Score = (value: TrainingHistoryItem['f1Score']): value is number => {
-  return Number.isFinite(value);
+const isValidF1Score = (value: unknown): value is number => {
+  return typeof value === 'number' && Number.isFinite(value);
 };
 
 export const TrainingHistoryChart = ({ data }: TrainingHistoryChartProps) => {
@@ -31,12 +31,21 @@ export const TrainingHistoryChart = ({ data }: TrainingHistoryChartProps) => {
 
   const chartData: TrainingHistoryChartData[] = [...data]
     .reverse()
-    .filter(item => isValidF1Score(item.f1Score))
-    .map((item, index) => ({
-      chartId: `${item.version}-${item.trainedAt}-${index}`,
-      version: item.version || '-',
-      f1Score: item.f1Score,
-    }));
+    .reduce<TrainingHistoryChartData[]>((acc, item, index) => {
+      const f1Score = item.f1Score;
+
+      if (!isValidF1Score(f1Score)) {
+        return acc;
+      }
+
+      acc.push({
+        chartId: `${item.version}-${item.trainedAt}-${index}`,
+        version: item.version || '-',
+        f1Score,
+      });
+
+      return acc;
+    }, []);
 
   return (
     <ResponsiveContainer width="100%" height={260}>
