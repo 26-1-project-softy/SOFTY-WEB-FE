@@ -5,29 +5,48 @@ import { Alert } from '@/components/common/Alert';
 import { Loader } from '@/components/common/Loader';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { InfoFieldGrid } from '@/components/admin/aiModel/InfoFieldGrid';
+import { ProgressBar } from '@/components/admin/aiModel/ProgressBar';
 import { useModelRetraining } from '@/features/admin/aiModel/hooks/useModelRetraining';
+import { getModelTrainingStatusText } from '@/features/admin/aiModel/lib/modelTrainingStatus';
 import { formatAiModelDateTime } from '@/utils/formatDateTime';
 import { IcDashboard, IcRefresh } from '@/icons';
 
 type RetrainingStatusAlertProps = {
   isRetrainingInProgress: boolean;
+  isRetrainingPaused: boolean;
   isRetrainingFailed: boolean;
   isPerformanceDegraded: boolean;
   retrainError: boolean;
+  progressPercent: number;
 };
 
 const RetrainingStatusAlert = ({
   isRetrainingInProgress,
+  isRetrainingPaused,
   isRetrainingFailed,
   isPerformanceDegraded,
   retrainError,
+  progressPercent,
 }: RetrainingStatusAlertProps) => {
   if (isRetrainingInProgress) {
     return (
+      <RetrainingProgressArea>
+        <Alert
+          variant="success"
+          title="모델 재학습을 진행 중이에요"
+          description="재학습이 완료되면 최신 모델 정보와 성능 평가가 갱신돼요."
+        />
+        <ProgressBar label="진행률" value={progressPercent} />
+      </RetrainingProgressArea>
+    );
+  }
+
+  if (isRetrainingPaused) {
+    return (
       <Alert
-        variant="success"
-        title="모델 재학습을 진행 중이에요"
-        description="재학습이 완료되면 최신 모델 정보와 성능 평가가 갱신돼요."
+        variant="warning"
+        title="모델 재학습이 일시중지되었어요"
+        description="재학습 상태를 확인한 뒤 다시 실행해주세요."
       />
     );
   }
@@ -61,10 +80,12 @@ const RetrainingStatusAlert = ({
 export const ModelRetrainingSection = () => {
   const {
     latestModelInfo,
+    progressPercent,
     isLoading,
     isError,
     isRetraining,
     isRetrainingInProgress,
+    isRetrainingPaused,
     isRetrainingFailed,
     isPerformanceDegraded,
     retrainError,
@@ -125,7 +146,7 @@ export const ModelRetrainingSection = () => {
     },
     {
       label: '현재 상태',
-      value: latestModelInfo.status || '-',
+      value: getModelTrainingStatusText(latestModelInfo.status),
     },
     {
       label: '마지막 학습',
@@ -143,9 +164,11 @@ export const ModelRetrainingSection = () => {
         <RetrainingContainer>
           <RetrainingStatusAlert
             isRetrainingInProgress={isRetrainingInProgress}
+            isRetrainingPaused={isRetrainingPaused}
             isRetrainingFailed={isRetrainingFailed}
             isPerformanceDegraded={isPerformanceDegraded}
             retrainError={retrainError}
+            progressPercent={progressPercent}
           />
 
           <InfoFieldGrid fields={retrainingInfoFields} />
@@ -159,4 +182,10 @@ const RetrainingContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 24px;
+`;
+
+const RetrainingProgressArea = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 `;

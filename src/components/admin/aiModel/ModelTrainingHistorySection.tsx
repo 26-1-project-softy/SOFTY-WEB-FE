@@ -8,6 +8,7 @@ import { TrainingHistoryChart } from '@/components/admin/aiModel/TrainingHistory
 import { useTrainingHistory } from '@/features/admin/aiModel/hooks/useTrainingHistory';
 import { formatAiModelDateTime } from '@/utils/formatDateTime';
 import { IcDashboard } from '@/icons';
+import { formatF1Score } from '@/features/admin/aiModel/lib/formatF1Score';
 
 export const ModelTrainingHistorySection = () => {
   const {
@@ -82,7 +83,7 @@ export const ModelTrainingHistorySection = () => {
                     <TableCell>{formatAiModelDateTime(item.trainedAt)}</TableCell>
                     <TableCell>{item.version || '-'}</TableCell>
                     <TableCell>{item.datasetVersion || '-'}</TableCell>
-                    <TableCell>{item.f1Score.toFixed(2)}</TableCell>
+                    <TableCell>{formatF1Score(item.f1Score)}</TableCell>
                     <TableCell>{item.status || '-'}</TableCell>
                   </tr>
                 ))}
