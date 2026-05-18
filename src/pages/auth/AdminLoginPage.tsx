@@ -130,6 +130,7 @@ const AdminLoginTitle = styled.h1`
 const AdminLoginInputSection = styled.div`
   display: flex;
   flex-direction: column;
+  width: min(40vw, 361px);
   gap: 16px;
 `;
 
