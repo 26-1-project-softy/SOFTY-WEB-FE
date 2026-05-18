@@ -68,60 +68,52 @@ export const TeacherSignUpForm = ({
             <Description>가입을 위해 선생님의 정보를 입력해주세요.</Description>
 
             <SignUpFormSection onSubmit={handleSubmit}>
-              <InputGroup>
-                <TextField
-                  id="teacherName"
-                  name="teacherName"
-                  label="이름"
-                  isRequired
-                  value={teacherName}
-                  onChange={event => setTeacherName(event.target.value)}
-                  placeholder="홍길동"
-                  errorMessage={fieldErrors.teacherName}
-                />
-              </InputGroup>
+              <TextField
+                id="teacherName"
+                name="teacherName"
+                label="이름"
+                isRequired
+                value={teacherName}
+                onChange={event => setTeacherName(event.target.value)}
+                placeholder="홍길동"
+                errorMessage={fieldErrors.teacherName}
+              />
 
-              <InputGroup>
-                <TextField
-                  id="schoolName"
-                  name="schoolName"
-                  label="학교명"
-                  isRequired
-                  value={schoolName}
-                  onChange={event => setSchoolName(event.target.value)}
-                  placeholder="한국초등학교"
-                  errorMessage={fieldErrors.schoolName}
-                />
-              </InputGroup>
+              <TextField
+                id="schoolName"
+                name="schoolName"
+                label="학교명"
+                isRequired
+                value={schoolName}
+                onChange={event => setSchoolName(event.target.value)}
+                placeholder="한국초등학교"
+                errorMessage={fieldErrors.schoolName}
+              />
 
               <InlineTwoColumn>
-                <InputGroup>
-                  <TextField
-                    id="grade"
-                    name="grade"
-                    inputMode="numeric"
-                    label="학년"
-                    isRequired
-                    value={grade}
-                    onChange={event => setGrade(event.target.value)}
-                    placeholder="3"
-                    errorMessage={fieldErrors.grade}
-                  />
-                </InputGroup>
+                <TextField
+                  id="grade"
+                  name="grade"
+                  inputMode="numeric"
+                  label="학년"
+                  isRequired
+                  value={grade}
+                  onChange={event => setGrade(event.target.value)}
+                  placeholder="3"
+                  errorMessage={fieldErrors.grade}
+                />
 
-                <InputGroup>
-                  <TextField
-                    id="classNumber"
-                    name="classNumber"
-                    inputMode="numeric"
-                    label="반"
-                    isRequired
-                    value={classNumber}
-                    onChange={event => setClassNumber(event.target.value)}
-                    placeholder="2"
-                    errorMessage={fieldErrors.classNumber}
-                  />
-                </InputGroup>
+                <TextField
+                  id="classNumber"
+                  name="classNumber"
+                  inputMode="numeric"
+                  label="반"
+                  isRequired
+                  value={classNumber}
+                  onChange={event => setClassNumber(event.target.value)}
+                  placeholder="2"
+                  errorMessage={fieldErrors.classNumber}
+                />
               </InlineTwoColumn>
 
               {globalError ? (
@@ -287,12 +279,6 @@ const SignUpFormSection = styled.form`
   display: flex;
   flex-direction: column;
   gap: 16px;
-`;
-
-const InputGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0;
 `;
 
 const InlineTwoColumn = styled.div`

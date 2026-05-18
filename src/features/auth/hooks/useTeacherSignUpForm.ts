@@ -15,7 +15,7 @@ import {
   validateNumberText,
   validateSchoolName,
   validateTeacherName,
-} from '@/features/auth/lib/teacherSignUpValidation';
+} from '@/utils/teacherClassInfoValidation';
 import { authApi, authSession, teacherAuthApi } from '@/services/auth';
 import { ROUTES } from '@/constants/routes';
 import { useToast } from '@/hooks/useToast';
