@@ -19,7 +19,6 @@ type TeacherSignUpFormProps = {
   globalError: AuthErrorMessage | null;
   isSubmitting: boolean;
   isCreatingClassCode: boolean;
-  isSubmitAttempted: boolean;
   isSignUpEnabled: boolean;
   step: SignUpStep;
   generatedClassCode: string;
@@ -42,7 +41,6 @@ export const TeacherSignUpForm = ({
   globalError,
   isSubmitting,
   isCreatingClassCode,
-  isSubmitAttempted,
   isSignUpEnabled,
   step,
   generatedClassCode,
@@ -55,7 +53,6 @@ export const TeacherSignUpForm = ({
   handleCopyClassCode,
   handleGoToInbox,
 }: TeacherSignUpFormProps) => {
-  const showFieldErrors = isSubmitAttempted;
   const progressRatio = step === 'CLASS_CODE_READY' ? 1 : step === 'SIGN_UP_SUCCESS' ? 0.66 : 0.33;
 
   return (
@@ -71,58 +68,52 @@ export const TeacherSignUpForm = ({
             <Description>가입을 위해 선생님의 정보를 입력해주세요.</Description>
 
             <SignUpFormSection onSubmit={handleSubmit}>
-              <InputGroup>
-                <FieldInput
-                  id="teacherName"
-                  name="teacherName"
-                  label="이름"
-                  isRequired
-                  value={teacherName}
-                  onChange={event => setTeacherName(event.target.value)}
-                  placeholder="홍길동"
-                  errorMessage={showFieldErrors ? fieldErrors.teacherName : undefined}
-                />
-              </InputGroup>
+              <TextField
+                id="teacherName"
+                name="teacherName"
+                label="이름"
+                isRequired
+                value={teacherName}
+                onChange={event => setTeacherName(event.target.value)}
+                placeholder="홍길동"
+                errorMessage={fieldErrors.teacherName}
+              />
 
-              <InputGroup>
-                <FieldInput
-                  id="schoolName"
-                  name="schoolName"
-                  label="학교명"
-                  isRequired
-                  value={schoolName}
-                  onChange={event => setSchoolName(event.target.value)}
-                  placeholder="한국초등학교"
-                  errorMessage={showFieldErrors ? fieldErrors.schoolName : undefined}
-                />
-              </InputGroup>
+              <TextField
+                id="schoolName"
+                name="schoolName"
+                label="학교명"
+                isRequired
+                value={schoolName}
+                onChange={event => setSchoolName(event.target.value)}
+                placeholder="한국초등학교"
+                errorMessage={fieldErrors.schoolName}
+              />
 
               <InlineTwoColumn>
-                <InputGroup>
-                  <FieldInput
-                    id="grade"
-                    name="grade"
-                    label="학년"
-                    isRequired
-                    value={grade}
-                    onChange={event => setGrade(event.target.value)}
-                    placeholder="3"
-                    errorMessage={showFieldErrors ? fieldErrors.grade : undefined}
-                  />
-                </InputGroup>
+                <TextField
+                  id="grade"
+                  name="grade"
+                  inputMode="numeric"
+                  label="학년"
+                  isRequired
+                  value={grade}
+                  onChange={event => setGrade(event.target.value)}
+                  placeholder="3"
+                  errorMessage={fieldErrors.grade}
+                />
 
-                <InputGroup>
-                  <FieldInput
-                    id="classNumber"
-                    name="classNumber"
-                    label="반"
-                    isRequired
-                    value={classNumber}
-                    onChange={event => setClassNumber(event.target.value)}
-                    placeholder="2"
-                    errorMessage={showFieldErrors ? fieldErrors.classNumber : undefined}
-                  />
-                </InputGroup>
+                <TextField
+                  id="classNumber"
+                  name="classNumber"
+                  inputMode="numeric"
+                  label="반"
+                  isRequired
+                  value={classNumber}
+                  onChange={event => setClassNumber(event.target.value)}
+                  placeholder="2"
+                  errorMessage={fieldErrors.classNumber}
+                />
               </InlineTwoColumn>
 
               {globalError ? (
@@ -290,20 +281,10 @@ const SignUpFormSection = styled.form`
   gap: 16px;
 `;
 
-const InputGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-`;
-
 const InlineTwoColumn = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 10px;
-`;
-
-const FieldInput = styled(TextField)`
-  width: 100%;
 `;
 
 const ErrorBox = styled.div`

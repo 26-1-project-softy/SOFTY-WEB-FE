@@ -3,11 +3,20 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
 import { useOutletContext } from 'react-router-dom';
 import { InlineButton } from '@/components/common/InlineButton';
+import { TextField } from '@/components/common/TextField';
 import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
 import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
 import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
 import { useToast } from '@/hooks/useToast';
 import { useTeacherWithdraw } from '@/features/teacher/settings/hooks/useTeacherWithdraw';
+import {
+  getClassNumberErrorMessage,
+  getGradeErrorMessage,
+  getNumberDigits,
+  getSchoolNameErrorMessage,
+  validateNumberText,
+  validateSchoolName,
+} from '@/utils/teacherClassInfoValidation';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
@@ -96,16 +105,6 @@ const toWorkdays = (setting: TeacherSetting): Workday[] => {
   });
 };
 
-const extractClassNumber = (raw: string) => {
-  const digits = raw.replace(/\D/g, '');
-
-  if (!digits) {
-    return null;
-  }
-
-  return Number(digits);
-};
-
 export const TeacherSettingsPage = () => {
   const { showToast } = useToast();
   const {
@@ -117,7 +116,9 @@ export const TeacherSettingsPage = () => {
     handleConfirmWithdraw,
     handleLogout,
   } = useTeacherWithdraw();
+
   const { setHeaderActions } = useOutletContext<AppLayoutOutletContext>();
+
   const [setting, setSetting] = useState<TeacherSetting | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
@@ -132,6 +133,7 @@ export const TeacherSettingsPage = () => {
   const [schoolNameInput, setSchoolNameInput] = useState('');
   const [gradeInput, setGradeInput] = useState('');
   const [classInput, setClassInput] = useState('');
+
   const [initialWorkdays, setInitialWorkdays] = useState<Workday[]>([]);
   const [workdays, setWorkdays] = useState<Workday[]>([]);
   const [isSavingWorkHours, setIsSavingWorkHours] = useState(false);
@@ -143,6 +145,7 @@ export const TeacherSettingsPage = () => {
       try {
         setIsLoading(true);
         setErrorMessage('');
+
         const response = await teacherApi.getTeacherSetting();
 
         if (!isMounted) {
@@ -183,30 +186,80 @@ export const TeacherSettingsPage = () => {
     setWorkdays(nextWorkdays);
   }, [setting]);
 
+  useEffect(() => {
+    setHeaderActions(undefined);
+
+    return () => {
+      setHeaderActions(undefined);
+    };
+  }, [setHeaderActions]);
+
   const profileName = setting?.teacherName?.trim() ? setting.teacherName : '-';
   const profileInitial = profileName !== '-' ? profileName.charAt(0) : '-';
+
+  const classChangeFieldErrors = useMemo(
+    () => ({
+      schoolName: getSchoolNameErrorMessage(schoolNameInput),
+      grade: getGradeErrorMessage(gradeInput),
+      classNumber: getClassNumberErrorMessage(classInput),
+    }),
+    [classInput, gradeInput, schoolNameInput]
+  );
+
   const isClassChangeEnabled =
-    schoolNameInput.trim().length > 0 &&
-    gradeInput.trim().length > 0 &&
-    classInput.trim().length > 0;
+    validateSchoolName(schoolNameInput) &&
+    validateNumberText(gradeInput) &&
+    validateNumberText(classInput) &&
+    !isClassChangeSubmitting;
 
   const classSummaryText = useMemo(() => {
     if (!gradeInput.trim() || !classInput.trim()) {
       return '-';
     }
 
-    return `${gradeInput}학년 ${classInput}`;
+    return `${gradeInput}학년 ${classInput}반`;
   }, [classInput, gradeInput]);
+
+  const hasWorkHoursChanges = useMemo(() => {
+    if (initialWorkdays.length !== workdays.length) {
+      return true;
+    }
+
+    return workdays.some((day, index) => {
+      const initialDay = initialWorkdays[index];
+
+      if (!initialDay) {
+        return true;
+      }
+
+      return (
+        day.key !== initialDay.key ||
+        day.enabled !== initialDay.enabled ||
+        day.start !== initialDay.start ||
+        day.end !== initialDay.end
+      );
+    });
+  }, [initialWorkdays, workdays]);
 
   const handleOpenClassChangeModal = () => {
     setSchoolNameInput(setting?.schoolName ?? '');
     setGradeInput(setting?.grade != null ? String(setting.grade) : '');
-    setClassInput(setting?.classNumber != null ? `${setting.classNumber}반` : '');
+    setClassInput(setting?.classNumber != null ? String(setting.classNumber) : '');
+    setClassChangeErrorTitle('');
     setIsClassChangeModalOpen(true);
   };
 
   const handleCloseClassChangeModal = () => {
+    setClassChangeErrorTitle('');
     setIsClassChangeModalOpen(false);
+  };
+
+  const handleChangeClassGrade = (value: string) => {
+    setGradeInput(getNumberDigits(value));
+  };
+
+  const handleChangeClassNumber = (value: string) => {
+    setClassInput(getNumberDigits(value));
   };
 
   const handleOpenClassChangeConfirmModal = () => {
@@ -233,20 +286,22 @@ export const TeacherSettingsPage = () => {
   };
 
   const handleConfirmClassChange = async () => {
-    const classNumber = extractClassNumber(classInput.trim());
-
-    if (!classNumber) {
-      setClassChangeErrorTitle('반 정보를 확인해주세요.');
+    if (!isClassChangeEnabled) {
+      setClassChangeErrorTitle('학급 정보를 다시 확인해주세요.');
       return;
     }
+
+    const nextGrade = Number(gradeInput);
+    const nextClassNumber = Number(classInput);
 
     try {
       setIsClassChangeSubmitting(true);
       setClassChangeErrorTitle('');
+
       const response = await teacherApi.changeTeacherClass({
         schoolName: schoolNameInput.trim(),
-        grade: Number(gradeInput),
-        class: classNumber,
+        grade: nextGrade,
+        class: nextClassNumber,
       });
 
       if (!response.success) {
@@ -262,8 +317,8 @@ export const TeacherSettingsPage = () => {
         return {
           ...prev,
           schoolName: schoolNameInput.trim(),
-          grade: Number(gradeInput),
-          classNumber,
+          grade: nextGrade,
+          classNumber: nextClassNumber,
           classCode: response.classCode || prev.classCode,
         };
       });
@@ -343,26 +398,7 @@ export const TeacherSettingsPage = () => {
       })
     );
   };
-  const hasWorkHoursChanges = useMemo(() => {
-    if (initialWorkdays.length !== workdays.length) {
-      return true;
-    }
 
-    return workdays.some((day, index) => {
-      const initialDay = initialWorkdays[index];
-
-      if (!initialDay) {
-        return true;
-      }
-
-      return (
-        day.key !== initialDay.key ||
-        day.enabled !== initialDay.enabled ||
-        day.start !== initialDay.start ||
-        day.end !== initialDay.end
-      );
-    });
-  }, [initialWorkdays, workdays]);
   const handleResetWorkHours = useCallback(() => {
     if (isLoading || !hasWorkHoursChanges) {
       return;
@@ -378,6 +414,7 @@ export const TeacherSettingsPage = () => {
     }
 
     const enabledWorkdays = workdays.filter(day => day.enabled);
+
     if (enabledWorkdays.length === 0) {
       showToast('근무 요일을 1개 이상 활성화해주세요.', 'error');
       return;
@@ -395,6 +432,7 @@ export const TeacherSettingsPage = () => {
     const invalidOrderWorkday = enabledWorkdays.find(
       day => toMinutes(day.start) >= toMinutes(day.end)
     );
+
     if (invalidOrderWorkday) {
       showToast(`${invalidOrderWorkday.label}요일 종료 시간은 시작 시간보다 늦어야 해요.`, 'error');
       return;
@@ -402,6 +440,7 @@ export const TeacherSettingsPage = () => {
 
     try {
       setIsSavingWorkHours(true);
+
       const schedules = enabledWorkdays.map(day => {
         const dayInfo = DAY_INFO.find(info => info.key === day.key);
 
@@ -420,6 +459,7 @@ export const TeacherSettingsPage = () => {
           : response.code
             ? `근무시간 저장에 실패했어요. (code: ${response.code})`
             : '근무시간 저장에 실패했어요.';
+
         showToast(failMessage, 'error');
         return;
       }
@@ -446,11 +486,13 @@ export const TeacherSettingsPage = () => {
         message?: string;
         error?: { message?: string };
       }>;
+
       const status = axiosError.response?.status;
       const serverMessage =
         axiosError.response?.data?.message ??
         axiosError.response?.data?.error?.message ??
         axiosError.message;
+
       showToast(
         `${serverMessage || '근무시간 저장에 실패했어요.'}${status ? ` (HTTP ${status})` : ''}`,
         'error'
@@ -459,14 +501,6 @@ export const TeacherSettingsPage = () => {
       setIsSavingWorkHours(false);
     }
   }, [hasWorkHoursChanges, isLoading, isSavingWorkHours, showToast, workdays]);
-
-  useEffect(() => {
-    setHeaderActions(undefined);
-
-    return () => {
-      setHeaderActions(undefined);
-    };
-  }, [setHeaderActions]);
 
   return (
     <PageContainer>
@@ -501,6 +535,7 @@ export const TeacherSettingsPage = () => {
               />
             </SectionActionGroup>
           </SectionHeader>
+
           <SectionDescription>
             학부모님들이 메시지를 보낼 때 참고할 수 있는 시간이에요. 근무 시간 외에는 확인이 늦어질
             수 있다는 안내를 해드려요.
@@ -608,50 +643,6 @@ export const TeacherSettingsPage = () => {
         </CardSection>
       </ContentArea>
 
-      {isWithdrawModalOpen ? (
-        <ModalOverlay onClick={handleCloseWithdrawModal}>
-          <ModalCard onClick={event => event.stopPropagation()}>
-            <ConfirmIconWrap>
-              <IcInfo />
-            </ConfirmIconWrap>
-
-            <ModalTitle>회원 탈퇴하시겠어요?</ModalTitle>
-            <ModalDescription>
-              탈퇴하면 계정 정보가 삭제되며 복구할 수 없어요.
-              <br />
-              정말 탈퇴하시려면 아래 버튼을 눌러 주세요.
-            </ModalDescription>
-
-            {withdrawErrorMessage ? (
-              <ConfirmErrorBox role="alert">
-                <ConfirmErrorIcon>
-                  <IcError />
-                </ConfirmErrorIcon>
-                <ConfirmErrorTextWrap>
-                  <ConfirmErrorTitle>{withdrawErrorMessage}</ConfirmErrorTitle>
-                  <ConfirmErrorDescription>잠시 후 다시 시도해 주세요.</ConfirmErrorDescription>
-                </ConfirmErrorTextWrap>
-              </ConfirmErrorBox>
-            ) : null}
-
-            <ModalButtonRow>
-              <ModalGhostButton type="button" onClick={handleCloseWithdrawModal}>
-                취소
-              </ModalGhostButton>
-              <ModalPrimaryButton
-                type="button"
-                onClick={() => {
-                  void handleConfirmWithdraw();
-                }}
-                disabled={isWithdrawing}
-              >
-                {isWithdrawing ? '탈퇴 중...' : '회원 탈퇴'}
-              </ModalPrimaryButton>
-            </ModalButtonRow>
-          </ModalCard>
-        </ModalOverlay>
-      ) : null}
-
       {isClassChangeModalOpen ? (
         <ModalOverlay onClick={handleCloseClassChangeModal}>
           <ModalCard onClick={event => event.stopPropagation()}>
@@ -665,48 +656,44 @@ export const TeacherSettingsPage = () => {
             </ModalDescription>
 
             <ModalForm>
-              <FormGroup>
-                <FormLabel>
-                  학교명 <RequiredAsterisk>*</RequiredAsterisk>
-                </FormLabel>
-                <FormInput
-                  value={schoolNameInput}
-                  onChange={event => setSchoolNameInput(event.target.value)}
-                  placeholder="학교명을 입력해주세요."
-                  autoComplete="off"
-                />
-              </FormGroup>
+              <TextField
+                id="classChangeSchoolName"
+                name="classChangeSchoolName"
+                label="학교명"
+                isRequired
+                value={schoolNameInput}
+                onChange={event => setSchoolNameInput(event.target.value)}
+                placeholder="학교명을 입력해주세요."
+                autoComplete="off"
+                errorMessage={classChangeFieldErrors.schoolName}
+              />
 
               <FormRow>
-                <FormGroup>
-                  <FormLabel>
-                    학년 <RequiredAsterisk>*</RequiredAsterisk>
-                  </FormLabel>
-                  <FormSelect
-                    value={gradeInput}
-                    onChange={event => setGradeInput(event.target.value)}
-                  >
-                    <option value="">학년을 선택해주세요.</option>
-                    <option value="1">1학년</option>
-                    <option value="2">2학년</option>
-                    <option value="3">3학년</option>
-                    <option value="4">4학년</option>
-                    <option value="5">5학년</option>
-                    <option value="6">6학년</option>
-                  </FormSelect>
-                </FormGroup>
+                <FieldInput
+                  id="classChangeGrade"
+                  name="classChangeGrade"
+                  inputMode="numeric"
+                  label="학년"
+                  isRequired
+                  value={gradeInput}
+                  onChange={event => handleChangeClassGrade(event.target.value)}
+                  placeholder="3"
+                  autoComplete="off"
+                  errorMessage={classChangeFieldErrors.grade}
+                />
 
-                <FormGroup>
-                  <FormLabel>
-                    반 <RequiredAsterisk>*</RequiredAsterisk>
-                  </FormLabel>
-                  <FormInput
-                    value={classInput}
-                    onChange={event => setClassInput(event.target.value)}
-                    placeholder="2반"
-                    autoComplete="off"
-                  />
-                </FormGroup>
+                <FieldInput
+                  id="classChangeClassNumber"
+                  name="classChangeClassNumber"
+                  inputMode="numeric"
+                  label="반"
+                  isRequired
+                  value={classInput}
+                  onChange={event => handleChangeClassNumber(event.target.value)}
+                  placeholder="2"
+                  autoComplete="off"
+                  errorMessage={classChangeFieldErrors.classNumber}
+                />
               </FormRow>
             </ModalForm>
 
@@ -958,8 +945,7 @@ const ToggleThumb = styled.span<{ isEnabled: boolean }>`
   width: 20px;
   height: 20px;
   border-radius: 999px;
-  background: ${({ isEnabled, theme }) =>
-    isEnabled ? theme.colors.background.bg1 : theme.colors.background.bg1};
+  background: ${({ theme }) => theme.colors.background.bg1};
   box-shadow: ${({ theme }) => theme.colors.shadow.toggleThumb};
 `;
 
@@ -1189,50 +1175,9 @@ const FormRow = styled.div`
   gap: 10px;
 `;
 
-const FormGroup = styled.label`
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-`;
-
-const FormLabel = styled.span`
-  ${({ theme }) => theme.fonts.labelXS};
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const RequiredAsterisk = styled.span`
-  color: ${({ theme }) => theme.colors.semantic.error};
-`;
-
-const FormInput = styled.input`
-  ${({ theme }) => theme.fonts.body2};
+const FieldInput = styled(TextField)`
   width: 100%;
   min-width: 0;
-  display: block;
-  border: 1px solid ${({ theme }) => theme.colors.border.border2};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  padding: 10px 12px;
-  appearance: none;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-
-  &::placeholder {
-    color: ${({ theme }) => theme.colors.text.text4};
-  }
-`;
-
-const FormSelect = styled.select`
-  ${({ theme }) => theme.fonts.body2};
-  width: 100%;
-  min-width: 0;
-  display: block;
-  border: 1px solid ${({ theme }) => theme.colors.border.border2};
-  border-radius: 10px;
-  background: ${({ theme }) => theme.colors.background.bg1};
-  color: ${({ theme }) => theme.colors.text.text1};
-  padding: 10px 12px;
 `;
 
 const ConfirmSummaryBox = styled.div`

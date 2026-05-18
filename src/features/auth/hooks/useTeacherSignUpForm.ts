@@ -6,6 +6,16 @@ import {
   getAuthErrorMessage,
   type AuthErrorMessage,
 } from '@/features/auth/lib/getAuthErrorMessage';
+import {
+  getClassNumberErrorMessage,
+  getGradeErrorMessage,
+  getNumberDigits,
+  getSchoolNameErrorMessage,
+  getTeacherNameErrorMessage,
+  validateNumberText,
+  validateSchoolName,
+  validateTeacherName,
+} from '@/utils/teacherClassInfoValidation';
 import { authApi, authSession, teacherAuthApi } from '@/services/auth';
 import { ROUTES } from '@/constants/routes';
 import { useToast } from '@/hooks/useToast';
@@ -39,8 +49,6 @@ export const useTeacherSignUpForm = () => {
   const [schoolName, setSchoolName] = useState('');
   const [grade, setGrade] = useState('');
   const [classNumber, setClassNumber] = useState('');
-  const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
-  const [isSubmitAttempted, setIsSubmitAttempted] = useState(false);
   const [globalError, setGlobalError] = useState<GlobalError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingClassCode, setIsCreatingClassCode] = useState(false);
@@ -48,27 +56,26 @@ export const useTeacherSignUpForm = () => {
   const [generatedClassCode, setGeneratedClassCode] = useState('');
 
   const validationResult = useMemo(() => {
-    const errors: FieldErrors = {};
+    const fieldErrors: FieldErrors = {
+      teacherName: getTeacherNameErrorMessage(teacherName),
+      schoolName: getSchoolNameErrorMessage(schoolName),
+      grade: getGradeErrorMessage(grade),
+      classNumber: getClassNumberErrorMessage(classNumber),
+    };
 
-    if (teacherName.trim().length < 2) {
-      errors.teacherName = '이름은 2자 이상 입력해 주세요.';
-    }
+    const visibleErrors = Object.fromEntries(
+      Object.entries(fieldErrors).filter(([, message]) => Boolean(message))
+    ) as FieldErrors;
 
-    if (schoolName.trim().length === 0) {
-      errors.schoolName = '학교명을 입력해 주세요.';
-    }
-
-    if (!/^\d+$/.test(grade.trim())) {
-      errors.grade = '숫자만 입력해 주세요.';
-    }
-
-    if (!/^\d+$/.test(classNumber.trim())) {
-      errors.classNumber = '숫자만 입력해 주세요.';
-    }
+    const isValid =
+      validateTeacherName(teacherName) &&
+      validateSchoolName(schoolName) &&
+      validateNumberText(grade) &&
+      validateNumberText(classNumber);
 
     return {
-      errors,
-      isValid: Object.keys(errors).length === 0,
+      errors: visibleErrors,
+      isValid,
       parsedGrade: parseNumberText(grade),
       parsedClassNumber: parseNumberText(classNumber),
     };
@@ -80,11 +87,49 @@ export const useTeacherSignUpForm = () => {
     authStatus === 'SIGNUP_REQUIRED' &&
     step === 'FORM';
 
+  const handleChangeTeacherName = (value: string) => {
+    setTeacherName(value);
+  };
+
+  const handleChangeSchoolName = (value: string) => {
+    setSchoolName(value);
+  };
+
+  const handleChangeGrade = (value: string) => {
+    setGrade(getNumberDigits(value));
+  };
+
+  const handleChangeClassNumber = (value: string) => {
+    setClassNumber(getNumberDigits(value));
+  };
+
+  const applySignedInState = async () => {
+    authSession.setAuthStatus('SIGNED_IN');
+
+    try {
+      const me = await authApi.getMe();
+
+      setSignedIn({
+        activeRole: me.activeRole,
+        user: me.user,
+      });
+
+      return;
+    } catch {
+      setSignedIn({
+        activeRole: 'teacher',
+        user: {
+          name: teacherName.trim() || '선생님',
+          grade: validationResult.parsedGrade,
+          classNumber: validationResult.parsedClassNumber,
+        },
+      });
+    }
+  };
+
   const handleSubmit: FormSubmitHandler = async event => {
     event.preventDefault();
 
-    setIsSubmitAttempted(true);
-    setFieldErrors(validationResult.errors);
     setGlobalError(null);
 
     if (authStatus !== 'SIGNUP_REQUIRED') {
@@ -109,7 +154,7 @@ export const useTeacherSignUpForm = () => {
         classNumber: validationResult.parsedClassNumber,
       });
 
-      if (!response.success || !response.data?.userId || !response.data?.activeRole) {
+      if (!response.success) {
         setGlobalError({
           title: response.message || FORM_ERROR_FALLBACK.title,
           description: FORM_ERROR_FALLBACK.description,
@@ -201,29 +246,8 @@ export const useTeacherSignUpForm = () => {
   };
 
   const handleGoToInbox = async () => {
-    try {
-      const me = await authApi.getMe();
-
-      authSession.setAuthStatus('SIGNED_IN');
-      setSignedIn({
-        activeRole: me.activeRole,
-        user: me.user,
-      });
-
-      navigate(ROUTES.teacherThreadList, { replace: true });
-    } catch {
-      authSession.setAuthStatus('SIGNED_IN');
-      setSignedIn({
-        activeRole: 'teacher',
-        user: {
-          name: teacherName.trim() || '선생님',
-          grade: validationResult.parsedGrade,
-          classNumber: validationResult.parsedClassNumber,
-        },
-      });
-
-      navigate(ROUTES.teacherThreadList, { replace: true });
-    }
+    await applySignedInState();
+    navigate(ROUTES.teacherThreadList, { replace: true });
   };
 
   return {
@@ -231,18 +255,17 @@ export const useTeacherSignUpForm = () => {
     schoolName,
     grade,
     classNumber,
-    fieldErrors,
+    fieldErrors: validationResult.errors,
     globalError,
     isSubmitting,
     isCreatingClassCode,
-    isSubmitAttempted,
     isSignUpEnabled,
     step,
     generatedClassCode,
-    setTeacherName,
-    setSchoolName,
-    setGrade,
-    setClassNumber,
+    setTeacherName: handleChangeTeacherName,
+    setSchoolName: handleChangeSchoolName,
+    setGrade: handleChangeGrade,
+    setClassNumber: handleChangeClassNumber,
     handleSubmit,
     handleOpenClassCodeModal,
     handleCopyClassCode,
