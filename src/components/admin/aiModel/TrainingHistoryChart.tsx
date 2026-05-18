@@ -10,19 +10,33 @@ import {
 } from 'recharts';
 import type { TrainingHistoryItem } from '@/services/admin/aiModelApi';
 import type { ValueType } from 'recharts/types/component/DefaultTooltipContent';
+import { formatF1Score } from '@/features/admin/aiModel/lib/formatF1Score';
 
 type TrainingHistoryChartProps = {
   data: TrainingHistoryItem[];
 };
 
+type TrainingHistoryChartData = {
+  chartId: string;
+  version: string;
+  f1Score: number;
+};
+
+const isValidF1Score = (value: TrainingHistoryItem['f1Score']): value is number => {
+  return Number.isFinite(value);
+};
+
 export const TrainingHistoryChart = ({ data }: TrainingHistoryChartProps) => {
   const theme = useTheme();
 
-  const chartData = [...data].reverse().map((item, index) => ({
-    chartId: `${item.version}-${item.trainedAt}-${index}`,
-    version: item.version,
-    f1Score: item.f1Score,
-  }));
+  const chartData: TrainingHistoryChartData[] = [...data]
+    .reverse()
+    .filter(item => isValidF1Score(item.f1Score))
+    .map((item, index) => ({
+      chartId: `${item.version}-${item.trainedAt}-${index}`,
+      version: item.version || '-',
+      f1Score: item.f1Score,
+    }));
 
   return (
     <ResponsiveContainer width="100%" height={260}>
@@ -49,9 +63,7 @@ export const TrainingHistoryChart = ({ data }: TrainingHistoryChartProps) => {
           axisLine={false}
           width={36}
         />
-        <Tooltip
-          formatter={(value: ValueType | undefined) => [Number(value).toFixed(2), 'F1-score']}
-        />
+        <Tooltip formatter={(value: ValueType | undefined) => [formatF1Score(value), 'F1-score']} />
         <Area
           type="monotone"
           dataKey="f1Score"
