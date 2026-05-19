@@ -1,4 +1,4 @@
-import { RISK_ANALYSIS_TITLE, RISK_LEVEL } from '@/constants/riskAnalysis';
+﻿import { RISK_ANALYSIS_TITLE, RISK_LEVEL } from '@/constants/riskAnalysis';
 import { formatAiModelDateTime } from '@/utils/formatDateTime';
 import type {
   AdminRiskFeedbackApiItem,
@@ -14,7 +14,10 @@ const getScoreTone = (score: number): ErrorReviewTone => {
 };
 
 const getRiskTone = (riskLevel: AdminRiskFeedbackApiItem['riskLevel']): ErrorReviewTone => {
-  return riskLevel === RISK_LEVEL.UNSAFE ? 'danger' : 'safe';
+  if (riskLevel === RISK_LEVEL.UNSAFE) return 'danger';
+  if (riskLevel === RISK_LEVEL.WARNING) return 'warning';
+
+  return 'safe';
 };
 
 export const getErrorReviewItem = (item: AdminRiskFeedbackApiItem): ErrorReviewItem => {
