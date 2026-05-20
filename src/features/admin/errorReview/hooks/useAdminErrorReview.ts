@@ -3,16 +3,22 @@ import { useQuery } from '@tanstack/react-query';
 import { getErrorReviewItem } from '@/features/admin/errorReview/lib/getErrorReviewItem';
 import { errorReviewApi } from '@/services/admin/errorReviewApi';
 import {
+  ERROR_REVIEW_ALL_VALUE,
+  ERROR_REVIEW_COLLAPSED_ID,
   ERROR_REVIEW_DEFAULT_EXPANDED_ID,
   ERROR_REVIEW_DEFAULT_FILTERS,
   ERROR_REVIEW_DEFAULT_QUERY_PARAMS,
+  ERROR_REVIEW_EMPTY_VALUE,
+  ERROR_REVIEW_FALLBACK_ERROR_MESSAGE,
   ERROR_REVIEW_QUERY_KEY,
+  ERROR_REVIEW_QUERY_STALE_TIME_MS,
 } from '@/features/admin/errorReview/constants';
 import type { AdminRiskFeedbackFilterValues } from '@/features/admin/errorReview/types';
 
 const normalizeFilterParams = (filters: AdminRiskFeedbackFilterValues) => ({
-  riskLevel: filters.riskLevel === 'ALL' ? undefined : filters.riskLevel,
-  feedbackResult: filters.feedbackResult === 'ALL' ? undefined : filters.feedbackResult,
+  riskLevel: filters.riskLevel === ERROR_REVIEW_ALL_VALUE ? undefined : filters.riskLevel,
+  feedbackResult:
+    filters.feedbackResult === ERROR_REVIEW_ALL_VALUE ? undefined : filters.feedbackResult,
   teacherName: filters.teacherName.trim() ? filters.teacherName.trim() : undefined,
   startDate: filters.startDate || undefined,
   endDate: filters.endDate || undefined,
@@ -36,11 +42,11 @@ export const useAdminErrorReview = () => {
       ...ERROR_REVIEW_QUERY_KEY,
       page,
       size,
-      normalizedFilters.riskLevel ?? 'ALL',
-      normalizedFilters.feedbackResult ?? 'ALL',
-      normalizedFilters.teacherName ?? '',
-      normalizedFilters.startDate ?? '',
-      normalizedFilters.endDate ?? '',
+      normalizedFilters.riskLevel ?? ERROR_REVIEW_ALL_VALUE,
+      normalizedFilters.feedbackResult ?? ERROR_REVIEW_ALL_VALUE,
+      normalizedFilters.teacherName ?? ERROR_REVIEW_EMPTY_VALUE,
+      normalizedFilters.startDate ?? ERROR_REVIEW_EMPTY_VALUE,
+      normalizedFilters.endDate ?? ERROR_REVIEW_EMPTY_VALUE,
     ],
     queryFn: async () => {
       const response = await errorReviewApi.getRiskFeedbacks({
@@ -50,12 +56,12 @@ export const useAdminErrorReview = () => {
       });
 
       if (!response.success) {
-        throw new Error(response.message || '오류 검토 목록 조회에 실패했습니다.');
+        throw new Error(response.message || ERROR_REVIEW_FALLBACK_ERROR_MESSAGE);
       }
 
       return response.data;
     },
-    staleTime: 1000 * 60,
+    staleTime: ERROR_REVIEW_QUERY_STALE_TIME_MS,
   });
 
   const items = query.data?.items?.map(getErrorReviewItem) ?? [];
@@ -63,7 +69,7 @@ export const useAdminErrorReview = () => {
   const totalElements = query.data?.totalElements ?? 0;
 
   const handleToggle = (id: number) => {
-    setExpandedId(prev => (prev === id ? 0 : id));
+    setExpandedId(prev => (prev === id ? ERROR_REVIEW_COLLAPSED_ID : id));
   };
 
   const handleApplyFilters = () => {

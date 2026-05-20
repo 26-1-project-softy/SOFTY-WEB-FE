@@ -15,6 +15,26 @@ import {
 } from '@/features/admin/errorReview/constants';
 import { IcErrorReview } from '@/icons';
 
+const ERROR_REVIEW_PAGE_LAYOUT = {
+  headerHeight: '72px',
+  pagePadding: '16px',
+  contentTopMargin: '12px',
+  paginationTopMargin: '12px',
+  stateHeightOffset: '220px',
+  iconSize: '24px',
+} as const;
+
+const ERROR_REVIEW_FILTER_LAYOUT = {
+  columnsDesktop: 7,
+  columnsTablet: 4,
+  columnsMobile: 2,
+  gap: '12px',
+  breakpointTablet: '1280px',
+  breakpointMobile: '900px',
+  controlHeight: '42px',
+  controlHorizontalPadding: '14px',
+} as const;
+
 export const AdminErrorReviewPage = () => {
   const {
     items,
@@ -56,7 +76,7 @@ export const AdminErrorReviewPage = () => {
         <SelectDropdown
           value={draftFilters.riskLevel}
           options={ERROR_REVIEW_RISK_LEVEL_OPTIONS}
-          placeholder="위험도"
+          placeholder={ERROR_REVIEW_TEXT.riskLevelPlaceholder}
           hasSelected={hasRiskLevelSelected}
           onChange={value => {
             setHasRiskLevelSelected(true);
@@ -67,7 +87,7 @@ export const AdminErrorReviewPage = () => {
         <SelectDropdown
           value={draftFilters.feedbackResult}
           options={ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS}
-          placeholder="피드백"
+          placeholder={ERROR_REVIEW_TEXT.feedbackPlaceholder}
           hasSelected={hasFeedbackSelected}
           onChange={value => {
             setHasFeedbackSelected(true);
@@ -78,7 +98,7 @@ export const AdminErrorReviewPage = () => {
         <FieldWrap>
           <TextField
             type="text"
-            placeholder="교사명 검색"
+            placeholder={ERROR_REVIEW_TEXT.teacherNamePlaceholder}
             value={draftFilters.teacherName}
             onChange={e => setDraftFilters(prev => ({ ...prev, teacherName: e.target.value }))}
           />
@@ -87,7 +107,7 @@ export const AdminErrorReviewPage = () => {
         <FieldWrap>
           <TextField
             type={draftFilters.startDate ? 'date' : 'text'}
-            placeholder="시작일"
+            placeholder={ERROR_REVIEW_TEXT.startDatePlaceholder}
             value={draftFilters.startDate}
             onFocus={e => {
               e.currentTarget.type = 'date';
@@ -102,7 +122,7 @@ export const AdminErrorReviewPage = () => {
         <FieldWrap>
           <TextField
             type={draftFilters.endDate ? 'date' : 'text'}
-            placeholder="종료일"
+            placeholder={ERROR_REVIEW_TEXT.endDatePlaceholder}
             value={draftFilters.endDate}
             onFocus={e => {
               e.currentTarget.type = 'date';
@@ -120,7 +140,7 @@ export const AdminErrorReviewPage = () => {
             variant={hasSelectedFilters ? 'primary' : 'ghost'}
             size="L"
             width="100%"
-            label="조회"
+            label={ERROR_REVIEW_TEXT.searchButtonLabel}
             onClick={handleApplyFilters}
           />
         </ButtonWrap>
@@ -130,7 +150,7 @@ export const AdminErrorReviewPage = () => {
             variant="ghost"
             size="L"
             width="100%"
-            label="초기화"
+            label={ERROR_REVIEW_TEXT.resetButtonLabel}
             onClick={handleResetAll}
           />
         </ButtonWrap>
@@ -173,14 +193,14 @@ export const AdminErrorReviewPage = () => {
 
       <PaginationBar>
         <PaginationMeta>
-          총 {totalElements}건 · {page} / {totalPages} 페이지
+          {ERROR_REVIEW_TEXT.paginationMeta(totalElements, page, totalPages)}
         </PaginationMeta>
         <PaginationButtons>
           <InlineButton
             type="button"
             variant="ghost"
             size="M"
-            label="이전"
+            label={ERROR_REVIEW_TEXT.previousButtonLabel}
             disabled={isFirstPage}
             onClick={() => setPage(page - 1)}
           />
@@ -188,7 +208,7 @@ export const AdminErrorReviewPage = () => {
             type="button"
             variant="ghost"
             size="M"
-            label="다음"
+            label={ERROR_REVIEW_TEXT.nextButtonLabel}
             disabled={isLastPage}
             onClick={() => setPage(page + 1)}
           />
@@ -199,24 +219,24 @@ export const AdminErrorReviewPage = () => {
 };
 
 const PageContainer = styled.div`
-  min-height: calc(100vh - 72px);
-  padding: 16px;
+  min-height: calc(100vh - ${ERROR_REVIEW_PAGE_LAYOUT.headerHeight});
+  padding: ${ERROR_REVIEW_PAGE_LAYOUT.pagePadding};
   background: ${({ theme }) => theme.colors.background.bg2};
   border-top: 1px solid ${({ theme }) => theme.colors.border.border1};
 `;
 
 const FilterBar = styled.div`
   display: grid;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsDesktop}, minmax(0, 1fr));
+  gap: ${ERROR_REVIEW_FILTER_LAYOUT.gap};
   align-items: start;
 
-  @media (max-width: 1280px) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointTablet}) {
+    grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsTablet}, minmax(0, 1fr));
   }
 
-  @media (max-width: 900px) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointMobile}) {
+    grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsMobile}, minmax(0, 1fr));
   }
 `;
 
@@ -226,12 +246,13 @@ const FieldWrap = styled.div`
   }
 
   input {
-    height: 42px;
-    padding: 0 14px;
+    ${({ theme }) => theme.fonts.labelS};
+    height: ${ERROR_REVIEW_FILTER_LAYOUT.controlHeight};
+    padding: 0 ${ERROR_REVIEW_FILTER_LAYOUT.controlHorizontalPadding};
   }
 
   input[type='date'] {
-    ${({ theme }) => theme.fonts.body2};
+    ${({ theme }) => theme.fonts.labelS};
     color: ${({ theme }) => theme.colors.text.text1};
     border-radius: 8px;
     accent-color: ${({ theme }) => theme.colors.brand.primary};
@@ -242,17 +263,21 @@ const ButtonWrap = styled.div`
   width: 100%;
 
   button {
-    height: 42px;
-    padding: 0 14px;
+    height: ${ERROR_REVIEW_FILTER_LAYOUT.controlHeight};
+    padding: 0 ${ERROR_REVIEW_FILTER_LAYOUT.controlHorizontalPadding};
+  }
+
+  span {
+    ${({ theme }) => theme.fonts.labelS};
   }
 `;
 
 const ContentArea = styled.div`
-  margin-top: 12px;
+  margin-top: ${ERROR_REVIEW_PAGE_LAYOUT.contentTopMargin};
 `;
 
 const PageStateContainer = styled.div`
-  height: calc(100vh - 220px);
+  height: calc(100vh - ${ERROR_REVIEW_PAGE_LAYOUT.stateHeightOffset});
 `;
 
 const EmptyStateWrap = styled.div`
@@ -263,17 +288,17 @@ const EmptyStateWrap = styled.div`
   color: ${({ theme }) => theme.colors.text.text4};
 
   svg {
-    width: 24px;
-    height: 24px;
+    width: ${ERROR_REVIEW_PAGE_LAYOUT.iconSize};
+    height: ${ERROR_REVIEW_PAGE_LAYOUT.iconSize};
   }
 `;
 
 const PaginationBar = styled.div`
-  margin-top: 12px;
+  margin-top: ${ERROR_REVIEW_PAGE_LAYOUT.paginationTopMargin};
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: ${ERROR_REVIEW_FILTER_LAYOUT.gap};
 `;
 
 const PaginationMeta = styled.span`

@@ -76,7 +76,7 @@ const DropdownWrap = styled.div`
 `;
 
 const DropdownButton = styled.button`
-  ${({ theme }) => theme.fonts.body2};
+  ${({ theme }) => theme.fonts.labelS};
   display: flex;
   width: 100%;
   height: 42px;

@@ -3,6 +3,21 @@ import { IcDown } from '@/icons';
 import type { ErrorReviewItem, ErrorReviewTone } from '@/features/admin/errorReview/types';
 import { ERROR_REVIEW_TEXT } from '@/features/admin/errorReview/constants';
 
+const ERROR_REVIEW_ACCORDION_STYLE = {
+  radius: '18px',
+  paddingExpanded: '18px 20px',
+  paddingCollapsed: '16px 20px',
+  headerGap: '10px',
+  headerLeftGap: '14px',
+  scoreBadgeMinWidth: '48px',
+  scoreBadgePadding: '2px 12px',
+  scoreBadgeRadius: '999px',
+  bodyTopMargin: '16px',
+  bodyGap: '10px',
+  analysisBottomMargin: '14px',
+  arrowTransitionDuration: '0.2s',
+} as const;
+
 type ErrorReviewAccordionItemProps = {
   item: ErrorReviewItem;
   isExpanded: boolean;
@@ -43,10 +58,13 @@ export const ErrorReviewAccordionItem = ({
 const ReviewCard = styled.button<{ $expanded: boolean }>`
   width: 100%;
   border: 1px solid ${({ theme }) => theme.colors.border.border2};
-  border-radius: 18px;
+  border-radius: ${ERROR_REVIEW_ACCORDION_STYLE.radius};
   background: ${({ theme }) => theme.colors.background.bg1};
   text-align: left;
-  padding: ${({ $expanded }) => ($expanded ? '18px 20px' : '16px 20px')};
+  padding: ${({ $expanded }) =>
+    $expanded
+      ? ERROR_REVIEW_ACCORDION_STYLE.paddingExpanded
+      : ERROR_REVIEW_ACCORDION_STYLE.paddingCollapsed};
   cursor: pointer;
 
   &:hover {
@@ -58,13 +76,13 @@ const ReviewHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: ${ERROR_REVIEW_ACCORDION_STYLE.headerGap};
 `;
 
 const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: ${ERROR_REVIEW_ACCORDION_STYLE.headerLeftGap};
   min-width: 0;
 `;
 
@@ -73,9 +91,9 @@ const ScoreBadge = styled.span<{ $tone: ErrorReviewTone }>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 48px;
-  padding: 2px 12px;
-  border-radius: 999px;
+  min-width: ${ERROR_REVIEW_ACCORDION_STYLE.scoreBadgeMinWidth};
+  padding: ${ERROR_REVIEW_ACCORDION_STYLE.scoreBadgePadding};
+  border-radius: ${ERROR_REVIEW_ACCORDION_STYLE.scoreBadgeRadius};
   border: 1px solid
     ${({ $tone, theme }) => {
       if ($tone === 'danger') return theme.colors.semantic.error;
@@ -110,14 +128,14 @@ const ArrowIcon = styled.span<{ $expanded: boolean }>`
   display: inline-flex;
   color: ${({ theme }) => theme.colors.text.text2};
   transform: rotate(${({ $expanded }) => ($expanded ? '180deg' : '0deg')});
-  transition: transform 0.2s ease;
+  transition: transform ${ERROR_REVIEW_ACCORDION_STYLE.arrowTransitionDuration} ease;
 `;
 
 const ReviewBody = styled.div`
-  margin-top: 16px;
+  margin-top: ${ERROR_REVIEW_ACCORDION_STYLE.bodyTopMargin};
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: ${ERROR_REVIEW_ACCORDION_STYLE.bodyGap};
 `;
 
 const SectionTitle = styled.h3`
@@ -127,7 +145,7 @@ const SectionTitle = styled.h3`
 
 const AnalysisMessage = styled.p`
   ${({ theme }) => theme.fonts.body1};
-  margin: 0 0 14px;
+  margin: 0 0 ${ERROR_REVIEW_ACCORDION_STYLE.analysisBottomMargin};
   color: ${({ theme }) => theme.colors.text.text2};
 `;
 
