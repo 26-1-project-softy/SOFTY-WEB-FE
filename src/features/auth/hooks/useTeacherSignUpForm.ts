@@ -26,7 +26,6 @@ import {
 } from '@/utils/teacherClassInfoValidation';
 import { authApi, authSession, teacherAuthApi } from '@/services/auth';
 import { ROUTES } from '@/constants/routes';
-import { useToast } from '@/hooks/useToast';
 
 type FieldErrors = {
   teacherName?: string;
@@ -83,7 +82,6 @@ export const useTeacherSignUpForm = () => {
   const navigate = useNavigate();
   const { authStatus, setSignedIn, setSignedOut } = useAuth();
   const { logout } = useLogout();
-  const { showToast } = useToast();
 
   const storedTeacherSignUpState = getStoredTeacherSignUpState();
 
@@ -365,27 +363,6 @@ export const useTeacherSignUpForm = () => {
     void handleSignUpAction();
   };
 
-  const handleCopyClassCode = async () => {
-    const classCode = generatedClassCode.trim();
-
-    if (!classCode) {
-      showToast('복사할 학급코드가 없어요.', 'error');
-      return;
-    }
-
-    if (!navigator.clipboard) {
-      showToast('현재 브라우저에서는 복사를 지원하지 않아요.', 'error');
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(classCode);
-      showToast('학급코드를 복사했어요.', 'success');
-    } catch {
-      showToast('학급코드 복사에 실패했어요.', 'error');
-    }
-  };
-
   return {
     teacherName,
     schoolName,
@@ -403,6 +380,5 @@ export const useTeacherSignUpForm = () => {
     handleLogout,
     handleSubmit,
     handleSignUpAction,
-    handleCopyClassCode,
   };
 };

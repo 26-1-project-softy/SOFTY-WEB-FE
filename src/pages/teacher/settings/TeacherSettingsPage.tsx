@@ -1,14 +1,10 @@
 import styled from '@emotion/styled';
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AxiosError } from 'axios';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useOutletContext } from 'react-router-dom';
-import { InlineButton } from '@/components/common/InlineButton';
-import { TextField } from '@/components/common/TextField';
-import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
-import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
-import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
 import { useToast } from '@/hooks/useToast';
 import { useTeacherWithdraw } from '@/features/teacher/settings/hooks/useTeacherWithdraw';
+import { useCopyClassCode } from '@/hooks/useCopyClassCode';
 import {
   getClassNumberErrorMessage,
   getGradeErrorMessage,
@@ -17,6 +13,11 @@ import {
   validateNumberText,
   validateSchoolName,
 } from '@/utils/teacherClassInfoValidation';
+import { InlineButton } from '@/components/common/InlineButton';
+import { TextField } from '@/components/common/TextField';
+import type { AppLayoutOutletContext } from '@/layouts/AppLayout';
+import { teacherApi, type TeacherSetting } from '@/services/teacher/teacherApi';
+import { IcChange, IcCheck, IcCopy, IcError, IcInfo } from '@/icons';
 
 type WorkdayKey = 'mon' | 'tue' | 'wed' | 'thu' | 'fri' | 'sat' | 'sun';
 
@@ -116,6 +117,7 @@ export const TeacherSettingsPage = () => {
     handleConfirmWithdraw,
     handleLogout,
   } = useTeacherWithdraw();
+  const { copyClassCode } = useCopyClassCode();
 
   const { setHeaderActions } = useOutletContext<AppLayoutOutletContext>();
 
@@ -332,35 +334,6 @@ export const TeacherSettingsPage = () => {
     } finally {
       setIsClassChangeSubmitting(false);
     }
-  };
-
-  const copyClassCodeWithToast = async (rawClassCode: string | null | undefined) => {
-    const classCode = rawClassCode?.trim();
-
-    if (!classCode) {
-      showToast('복사할 학급코드가 없어요.', 'error');
-      return;
-    }
-
-    if (!navigator.clipboard) {
-      showToast('현재 브라우저에서는 복사를 지원하지 않아요.', 'error');
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(classCode);
-      showToast('학급코드를 복사했어요.', 'success');
-    } catch {
-      showToast('학급코드 복사에 실패했어요.', 'error');
-    }
-  };
-
-  const handleCopyClassCode = async () => {
-    await copyClassCodeWithToast(setting?.classCode);
-  };
-
-  const handleCopyNewClassCode = async () => {
-    await copyClassCodeWithToast(newClassCode);
   };
 
   const handleToggleWorkday = (targetKey: WorkdayKey) => {
@@ -622,7 +595,7 @@ export const TeacherSettingsPage = () => {
               <ClassCodeBadge>
                 {setting?.classCode?.trim() ? setting.classCode : '-'}
               </ClassCodeBadge>
-              <CodeCopyButton type="button" onClick={handleCopyClassCode}>
+              <CodeCopyButton type="button" onClick={() => void copyClassCode(setting?.classCode)}>
                 <IcCopy />
                 학급코드 복사하기
               </CodeCopyButton>
@@ -786,7 +759,7 @@ export const TeacherSettingsPage = () => {
               <SuccessCodeValue>{newClassCode || '-'}</SuccessCodeValue>
             </SuccessCodeCard>
 
-            <SuccessCopyButton type="button" onClick={handleCopyNewClassCode}>
+            <SuccessCopyButton type="button" onClick={() => void copyClassCode(newClassCode)}>
               <IcCopy />
               학급코드 복사하기
             </SuccessCopyButton>
