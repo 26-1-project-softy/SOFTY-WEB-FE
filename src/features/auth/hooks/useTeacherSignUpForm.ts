@@ -13,6 +13,7 @@ import {
   getNumberDigits,
   getSchoolNameErrorMessage,
   getTeacherNameErrorMessage,
+  validateGradeText,
   validateNumberText,
   validateSchoolName,
   validateTeacherName,
@@ -32,7 +33,11 @@ export type SignUpStep = 'FORM' | 'SIGN_UP_SUCCESS' | 'CLASS_CODE_READY';
 
 type GlobalError = AuthErrorMessage | null;
 
-const FORM_ERROR_FALLBACK: AuthErrorMessage = {
+type ApiErrorResponse = {
+  message?: string;
+};
+
+const SIGN_UP_ERROR_FALLBACK: AuthErrorMessage = {
   title: '회원가입 중 문제가 발생했어요.',
   description: '잠시 후 다시 시도해 주세요.',
 };
@@ -42,7 +47,29 @@ const CLASS_CODE_ERROR_FALLBACK: AuthErrorMessage = {
   description: '잠시 후 다시 시도해 주세요.',
 };
 
+const ALREADY_SIGNED_UP_ERROR: AuthErrorMessage = {
+  title: '이미 교사 회원가입이 완료된 사용자입니다.',
+  description: '로그아웃한 뒤 다시 로그인해 주세요.',
+};
+
 const parseNumberText = (value: string) => Number(value.trim());
+
+const getApiErrorMessage = (error: AxiosError) => {
+  const responseData = error.response?.data as ApiErrorResponse | undefined;
+
+  return responseData?.message;
+};
+
+const getTeacherSignUpErrorMessage = (message?: string): AuthErrorMessage => {
+  if (message === ALREADY_SIGNED_UP_ERROR.title) {
+    return ALREADY_SIGNED_UP_ERROR;
+  }
+
+  return {
+    title: message || SIGN_UP_ERROR_FALLBACK.title,
+    description: SIGN_UP_ERROR_FALLBACK.description,
+  };
+};
 
 type FormSubmitHandler = NonNullable<ComponentProps<'form'>['onSubmit']>;
 
@@ -77,7 +104,7 @@ export const useTeacherSignUpForm = () => {
     const isValid =
       validateTeacherName(teacherName) &&
       validateSchoolName(schoolName) &&
-      validateNumberText(grade) &&
+      validateGradeText(grade) &&
       validateNumberText(classNumber);
 
     return {
@@ -186,10 +213,7 @@ export const useTeacherSignUpForm = () => {
       });
 
       if (!response.success) {
-        setGlobalError({
-          title: response.message || FORM_ERROR_FALLBACK.title,
-          description: FORM_ERROR_FALLBACK.description,
-        });
+        setGlobalError(getTeacherSignUpErrorMessage(response.message));
         return;
       }
 
@@ -202,9 +226,14 @@ export const useTeacherSignUpForm = () => {
           resetInvalidAuthSession();
           return;
         }
+
+        if (status === 409) {
+          setGlobalError(getTeacherSignUpErrorMessage(getApiErrorMessage(error)));
+          return;
+        }
       }
 
-      setGlobalError(getAuthErrorMessage(error, FORM_ERROR_FALLBACK));
+      setGlobalError(getAuthErrorMessage(error, SIGN_UP_ERROR_FALLBACK));
     } finally {
       setIsSubmitting(false);
     }
