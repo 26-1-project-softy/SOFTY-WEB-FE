@@ -70,6 +70,14 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     void markMessagesAsRead();
   }, [chatRoomId, markMessagesAsRead]);
 
+  useEffect(() => {
+    if (messages.length === 0) {
+      return;
+    }
+
+    void markMessagesAsRead();
+  }, [messages.length, markMessagesAsRead]);
+
   const { status, isStatusMenuOpen, isStatusUpdating, setIsStatusMenuOpen, handleSelectStatus } =
     useThreadStatusControl({
       chatRoomId,
