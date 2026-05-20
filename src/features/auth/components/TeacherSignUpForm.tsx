@@ -1,9 +1,15 @@
 import styled from '@emotion/styled';
+import { useTheme } from '@emotion/react';
+import type { ComponentProps } from 'react';
 import { InlineButton } from '@/components/common/InlineButton';
 import { TextField } from '@/components/common/TextField';
-import { IcCheck, IcCopy, IcInfo, IcSparkles } from '@/icons';
+import { IconButton } from '@/components/common/IconButton';
+import { Alert } from '@/components/common/Alert';
+import { IconBadge } from '@/components/common/IconBadge';
 import type { AuthErrorMessage } from '@/features/auth/lib/getAuthErrorMessage';
 import type { SignUpStep } from '@/features/auth/hooks/useTeacherSignUpForm';
+import { IcCopy, IcLogout } from '@/icons';
+import { TEACHER_SIGN_UP_STEP_CONTENT } from '@/features/auth/constants/signupSteps';
 
 type TeacherSignUpFormProps = {
   teacherName: string;
@@ -17,19 +23,17 @@ type TeacherSignUpFormProps = {
     classNumber?: string;
   };
   globalError: AuthErrorMessage | null;
-  isSubmitting: boolean;
-  isCreatingClassCode: boolean;
-  isSignUpEnabled: boolean;
+  isSignUpActionDisabled: boolean;
   step: SignUpStep;
   generatedClassCode: string;
   setTeacherName: (value: string) => void;
   setSchoolName: (value: string) => void;
   setGrade: (value: string) => void;
   setClassNumber: (value: string) => void;
-  handleSubmit: React.FormEventHandler<HTMLFormElement>;
-  handleOpenClassCodeModal: () => void | Promise<void>;
+  handleLogout: () => void;
+  handleSubmit: NonNullable<ComponentProps<'form'>['onSubmit']>;
+  handleSignUpAction: () => void | Promise<void>;
   handleCopyClassCode: () => void | Promise<void>;
-  handleGoToInbox: () => void | Promise<void>;
 };
 
 export const TeacherSignUpForm = ({
@@ -39,211 +43,175 @@ export const TeacherSignUpForm = ({
   classNumber,
   fieldErrors,
   globalError,
-  isSubmitting,
-  isCreatingClassCode,
-  isSignUpEnabled,
+  isSignUpActionDisabled,
   step,
   generatedClassCode,
   setTeacherName,
   setSchoolName,
   setGrade,
   setClassNumber,
+  handleLogout,
   handleSubmit,
-  handleOpenClassCodeModal,
+  handleSignUpAction,
   handleCopyClassCode,
-  handleGoToInbox,
 }: TeacherSignUpFormProps) => {
-  const progressRatio = step === 'CLASS_CODE_READY' ? 1 : step === 'SIGN_UP_SUCCESS' ? 0.66 : 0.33;
+  const theme = useTheme();
+  const {
+    progressRatio,
+    iconBadge: Icon,
+    title,
+    description,
+    actionLabel,
+  } = TEACHER_SIGN_UP_STEP_CONTENT[step];
 
   return (
-    <PageContainer>
-      <Card>
-        <ProgressTrack aria-hidden>
-          <ProgressFill style={{ width: `${progressRatio * 100}%` }} />
-        </ProgressTrack>
+    <SignUpPageContainer>
+      <SignUpContent>
+        {step === 'FORM' && (
+          <IconButton
+            icon={IcLogout}
+            variant="plain"
+            onClick={handleLogout}
+            accessibilityLabel="로그아웃"
+          />
+        )}
+        <SignUpCard>
+          <ProgressTrack aria-hidden>
+            <ProgressFill style={{ width: `${progressRatio * 100}%` }} />
+          </ProgressTrack>
 
-        {step === 'FORM' ? (
-          <>
-            <Title>교사 정보 입력</Title>
-            <Description>가입을 위해 선생님의 정보를 입력해주세요.</Description>
-
-            <SignUpFormSection onSubmit={handleSubmit}>
-              <TextField
-                id="teacherName"
-                name="teacherName"
-                label="이름"
-                isRequired
-                value={teacherName}
-                onChange={event => setTeacherName(event.target.value)}
-                placeholder="홍길동"
-                errorMessage={fieldErrors.teacherName}
-              />
-
-              <TextField
-                id="schoolName"
-                name="schoolName"
-                label="학교명"
-                isRequired
-                value={schoolName}
-                onChange={event => setSchoolName(event.target.value)}
-                placeholder="한국초등학교"
-                errorMessage={fieldErrors.schoolName}
-              />
-
-              <InlineTwoColumn>
+          <SignUpFormSection onSubmit={handleSubmit}>
+            <SignUpHeaderSection>
+              {Icon && (
+                <IconBadge
+                  icon={Icon}
+                  bgColor={theme.colors.background.bg4}
+                  color={theme.colors.brand.dark}
+                />
+              )}
+              <SignUpHeaderTextArea>
+                <Title>{title}</Title>
+                <Description>{description}</Description>
+              </SignUpHeaderTextArea>
+            </SignUpHeaderSection>
+            {step === 'FORM' ? (
+              <SignUpBodySection>
                 <TextField
-                  id="grade"
-                  name="grade"
-                  inputMode="numeric"
-                  label="학년"
+                  id="teacherName"
+                  name="teacherName"
+                  label="이름"
                   isRequired
-                  value={grade}
-                  onChange={event => setGrade(event.target.value)}
-                  placeholder="3"
-                  errorMessage={fieldErrors.grade}
+                  value={teacherName}
+                  onChange={event => setTeacherName(event.target.value)}
+                  placeholder="홍길동"
+                  errorMessage={fieldErrors.teacherName}
                 />
 
                 <TextField
-                  id="classNumber"
-                  name="classNumber"
-                  inputMode="numeric"
-                  label="반"
+                  id="schoolName"
+                  name="schoolName"
+                  label="학교명"
                   isRequired
-                  value={classNumber}
-                  onChange={event => setClassNumber(event.target.value)}
-                  placeholder="2"
-                  errorMessage={fieldErrors.classNumber}
+                  value={schoolName}
+                  onChange={event => setSchoolName(event.target.value)}
+                  placeholder="한국초등학교"
+                  errorMessage={fieldErrors.schoolName}
                 />
-              </InlineTwoColumn>
 
-              {globalError ? (
-                <ErrorBox role="alert">
-                  <ErrorIcon>
-                    <IcInfo />
-                  </ErrorIcon>
-                  <ErrorMessageGroup>
-                    <ErrorTitle>{globalError.title}</ErrorTitle>
-                    <ErrorDescription>{globalError.description}</ErrorDescription>
-                  </ErrorMessageGroup>
-                </ErrorBox>
-              ) : null}
+                <InlineTwoColumn>
+                  <TextField
+                    id="grade"
+                    name="grade"
+                    inputMode="numeric"
+                    label="학년"
+                    isRequired
+                    value={grade}
+                    onChange={event => setGrade(event.target.value)}
+                    placeholder="3"
+                    errorMessage={fieldErrors.grade}
+                  />
 
-              <PrimaryButton
-                type="submit"
-                variant="primary"
-                size="L"
-                width="100%"
-                label={isSubmitting ? '가입 중...' : '가입하기'}
-                disabled={!isSignUpEnabled}
-              />
-            </SignUpFormSection>
-          </>
-        ) : null}
+                  <TextField
+                    id="classNumber"
+                    name="classNumber"
+                    inputMode="numeric"
+                    label="반"
+                    isRequired
+                    value={classNumber}
+                    onChange={event => setClassNumber(event.target.value)}
+                    placeholder="2"
+                    errorMessage={fieldErrors.classNumber}
+                  />
+                </InlineTwoColumn>
+              </SignUpBodySection>
+            ) : step === 'CLASS_CODE_READY' ? (
+              <SignUpBodySection>
+                <ClassCodeCard>
+                  <ClassLabel>
+                    {schoolName || '한국초등학교'} {grade || '3'}학년 {classNumber || '2'}반
+                  </ClassLabel>
+                  <ClassCode>{generatedClassCode}</ClassCode>
+                </ClassCodeCard>
 
-        {step === 'SIGN_UP_SUCCESS' ? (
-          <SuccessSection>
-            <SuccessIconContainer>
-              <IcCheck />
-            </SuccessIconContainer>
-            <SuccessTitle>가입 완료</SuccessTitle>
-            <SuccessDescription>
-              교사 가입이 완료되었어요.
-              <br />
-              이제 학급을 개설하고, 학부모님과 안전한 소통을 시작해보세요.
-            </SuccessDescription>
-
-            {globalError ? (
-              <ErrorBox role="alert">
-                <ErrorIcon>
-                  <IcInfo />
-                </ErrorIcon>
-                <ErrorMessageGroup>
-                  <ErrorTitle>{globalError.title}</ErrorTitle>
-                  <ErrorDescription>{globalError.description}</ErrorDescription>
-                </ErrorMessageGroup>
-              </ErrorBox>
+                <InlineButton
+                  type="button"
+                  variant="ghost"
+                  size="L"
+                  icon={IcCopy}
+                  label="학급코드 복사하기"
+                  onClick={handleCopyClassCode}
+                />
+              </SignUpBodySection>
             ) : null}
 
-            <PrimaryButton
-              type="button"
-              variant="primary"
-              size="L"
-              width="100%"
-              label={isCreatingClassCode ? '학급 코드 생성 중...' : '학급 개설하기'}
-              onClick={handleOpenClassCodeModal}
-              disabled={isCreatingClassCode}
-            />
-          </SuccessSection>
-        ) : null}
+            <SignUpActionSection>
+              {globalError ? (
+                <Alert title={globalError.title} description={globalError.description} />
+              ) : null}
 
-        {step === 'CLASS_CODE_READY' ? (
-          <SuccessSection>
-            <SuccessIconContainer>
-              <IcSparkles />
-            </SuccessIconContainer>
-            <SuccessTitle>학급 코드 생성 완료</SuccessTitle>
-            <SuccessDescription>
-              학급이 개설되었어요.
-              <br />
-              생성된 학급 코드를 학부모님들께 공유해주세요.
-            </SuccessDescription>
-
-            <ClassCodeCard>
-              <ClassLabel>
-                {schoolName || '한국초등학교'} {grade || '3'}학년 {classNumber || '2'}반
-              </ClassLabel>
-              <ClassCode>{generatedClassCode}</ClassCode>
-            </ClassCodeCard>
-
-            <CopyButton
-              type="button"
-              variant="ghost"
-              size="L"
-              width="100%"
-              icon={IcCopy}
-              label="학급코드 복사하기"
-              onClick={handleCopyClassCode}
-            />
-
-            <PrimaryButton
-              type="button"
-              variant="primary"
-              size="L"
-              width="100%"
-              label="수신함으로 이동"
-              onClick={handleGoToInbox}
-            />
-          </SuccessSection>
-        ) : null}
-      </Card>
+              <InlineButton
+                type={step === 'FORM' ? 'submit' : 'button'}
+                variant="primary"
+                size="L"
+                label={actionLabel}
+                disabled={isSignUpActionDisabled}
+                onClick={step === 'FORM' ? undefined : handleSignUpAction}
+              />
+            </SignUpActionSection>
+          </SignUpFormSection>
+        </SignUpCard>
+      </SignUpContent>
 
       <FooterText>© 2026, 소프티 All rights reserved.</FooterText>
-    </PageContainer>
+    </SignUpPageContainer>
   );
 };
 
-const PageContainer = styled.div`
+const SignUpPageContainer = styled.div`
   min-height: 100vh;
-  background: ${({ theme }) => theme.colors.background.bg5};
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 24px 16px 28px;
+  padding: 24px 16px;
+  gap: 60px;
 `;
 
-const Card = styled.section`
-  width: 100%;
-  max-width: 560px;
-  border-radius: 20px;
-  background: ${({ theme }) => theme.colors.background.bg3};
-  box-shadow: ${({ theme }) => theme.colors.shadow.modal};
-  padding: 28px 30px;
+const SignUpContent = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
 
-  @media (max-width: 640px) {
-    padding: 20px 16px;
-    border-radius: 16px;
-  }
+const SignUpCard = styled.section`
+  display: flex;
+  flex-direction: column;
+  max-width: 441px;
+  background: ${({ theme }) => theme.colors.background.bg1};
+  box-shadow: ${({ theme }) => theme.colors.shadow.modal};
+  border-radius: 16px;
+  padding: 20px 40px 40px;
+  gap: 40px;
 `;
 
 const ProgressTrack = styled.div`
@@ -260,153 +228,82 @@ const ProgressFill = styled.div`
   transition: width 0.2s ease;
 `;
 
-const Title = styled.h1`
-  ${({ theme }) => theme.fonts.title2};
-  margin: 34px 0 0;
-  color: ${({ theme }) => theme.colors.text.text1};
-  text-align: center;
+const SignUpHeaderSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
 `;
 
-const Description = styled.p`
-  ${({ theme }) => theme.fonts.body3};
-  margin: 12px 0 0;
-  color: ${({ theme }) => theme.colors.text.text3};
-  text-align: center;
-`;
-
-const SignUpFormSection = styled.form`
-  margin-top: 28px;
+const SignUpHeaderTextArea = styled.div`
   display: flex;
   flex-direction: column;
   gap: 16px;
 `;
 
-const InlineTwoColumn = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-`;
-
-const ErrorBox = styled.div`
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  border-radius: 16px;
-  border: 1px solid ${({ theme }) => theme.colors.semantic.error};
-  background: ${({ theme }) => theme.colors.semantic.errorSoft};
-  padding: 12px 14px;
-`;
-
-const ErrorIcon = styled.span`
-  display: inline-flex;
-  color: ${({ theme }) => theme.colors.semantic.error};
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
-`;
-
-const ErrorMessageGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-`;
-
-const ErrorTitle = styled.p`
-  ${({ theme }) => theme.fonts.labelXS};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
-`;
-
-const ErrorDescription = styled.p`
-  ${({ theme }) => theme.fonts.caption};
-  margin: 0;
-  color: ${({ theme }) => theme.colors.semantic.error};
-`;
-
-const PrimaryButton = styled(InlineButton)`
-  margin-top: 14px;
-  width: 100%;
-  height: 52px;
-  border-radius: 12px;
-`;
-
-const SuccessSection = styled.section`
-  margin-top: 20px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-`;
-
-const SuccessIconContainer = styled.span`
-  width: 64px;
-  height: 64px;
-  border-radius: 999px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: ${({ theme }) => theme.colors.background.bg4};
-  color: ${({ theme }) => theme.colors.brand.dark};
-
-  svg {
-    width: 30px;
-    height: 30px;
-  }
-`;
-
-const SuccessTitle = styled.h2`
+const Title = styled.h1`
+  text-align: center;
   ${({ theme }) => theme.fonts.title2};
-  margin: 22px 0 0;
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
-const SuccessDescription = styled.p`
-  ${({ theme }) => theme.fonts.body3};
-  margin: 12px 0 0;
-  color: ${({ theme }) => theme.colors.text.text2};
+const Description = styled.p`
   text-align: center;
-  line-height: 1.7;
+  white-space: pre-line;
+  ${({ theme }) => theme.fonts.body3};
+  color: ${({ theme }) => theme.colors.text.text3};
+`;
+
+const SignUpFormSection = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 40px;
+`;
+
+const SignUpBodySection = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 361px);
+  gap: 16px;
+`;
+
+const InlineTwoColumn = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 8px;
 `;
 
 const ClassCodeCard = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   width: 100%;
-  margin-top: 18px;
   border-radius: 14px;
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
   background: ${({ theme }) => theme.colors.background.bg4};
   padding: 18px 14px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   gap: 10px;
 `;
 
 const ClassLabel = styled.p`
   ${({ theme }) => theme.fonts.caption};
-  margin: 0;
   color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
 const ClassCode = styled.p`
   ${({ theme }) => theme.fonts.title2};
-  margin: 0;
   letter-spacing: 0.02em;
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
-const CopyButton = styled(InlineButton)`
-  margin-top: 16px;
-  width: 100%;
-
-  svg {
-    width: 18px;
-    height: 18px;
-  }
+const SignUpActionSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: min(100%, 361px);
+  gap: 12px;
 `;
 
 const FooterText = styled.p`
   ${({ theme }) => theme.fonts.body3};
   color: ${({ theme }) => theme.colors.neutral.neutral500};
-  margin: 18px 0 0;
 `;
