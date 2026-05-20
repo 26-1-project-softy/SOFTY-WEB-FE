@@ -8,6 +8,12 @@ import {
   type AuthErrorMessage,
 } from '@/features/auth/lib/getAuthErrorMessage';
 import {
+  clearStoredTeacherSignUpState,
+  getStoredTeacherSignUpState,
+  setStoredTeacherSignUpState,
+  type StoredTeacherSignUpState,
+} from '@/features/auth/lib/teacherSignUpSessionStorage';
+import {
   getClassNumberErrorMessage,
   getGradeErrorMessage,
   getNumberDigits,
@@ -79,15 +85,19 @@ export const useTeacherSignUpForm = () => {
   const { logout } = useLogout();
   const { showToast } = useToast();
 
-  const [teacherName, setTeacherName] = useState('');
-  const [schoolName, setSchoolName] = useState('');
-  const [grade, setGrade] = useState('');
-  const [classNumber, setClassNumber] = useState('');
+  const storedTeacherSignUpState = getStoredTeacherSignUpState();
+
+  const [teacherName, setTeacherName] = useState(storedTeacherSignUpState?.teacherName ?? '');
+  const [schoolName, setSchoolName] = useState(storedTeacherSignUpState?.schoolName ?? '');
+  const [grade, setGrade] = useState(storedTeacherSignUpState?.grade ?? '');
+  const [classNumber, setClassNumber] = useState(storedTeacherSignUpState?.classNumber ?? '');
   const [globalError, setGlobalError] = useState<GlobalError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingClassCode, setIsCreatingClassCode] = useState(false);
-  const [step, setStep] = useState<SignUpStep>('FORM');
-  const [generatedClassCode, setGeneratedClassCode] = useState('');
+  const [step, setStep] = useState<SignUpStep>(storedTeacherSignUpState?.step ?? 'FORM');
+  const [generatedClassCode, setGeneratedClassCode] = useState(
+    storedTeacherSignUpState?.generatedClassCode ?? ''
+  );
 
   const validationResult = useMemo(() => {
     const fieldErrors: FieldErrors = {
@@ -133,20 +143,62 @@ export const useTeacherSignUpForm = () => {
     return false;
   }, [isCreatingClassCode, isSignUpEnabled, step]);
 
+  const getCurrentStoredTeacherSignUpState = (
+    overrides?: Partial<StoredTeacherSignUpState>
+  ): StoredTeacherSignUpState => {
+    return {
+      step,
+      teacherName,
+      schoolName,
+      grade,
+      classNumber,
+      generatedClassCode,
+      ...overrides,
+    };
+  };
+
+  const saveTeacherSignUpState = (overrides?: Partial<StoredTeacherSignUpState>) => {
+    setStoredTeacherSignUpState(getCurrentStoredTeacherSignUpState(overrides));
+  };
+
   const handleChangeTeacherName = (value: string) => {
     setTeacherName(value);
+
+    saveTeacherSignUpState({
+      step: 'FORM',
+      teacherName: value,
+    });
   };
 
   const handleChangeSchoolName = (value: string) => {
     setSchoolName(value);
+
+    saveTeacherSignUpState({
+      step: 'FORM',
+      schoolName: value,
+    });
   };
 
   const handleChangeGrade = (value: string) => {
-    setGrade(getNumberDigits(value));
+    const nextGrade = getNumberDigits(value);
+
+    setGrade(nextGrade);
+
+    saveTeacherSignUpState({
+      step: 'FORM',
+      grade: nextGrade,
+    });
   };
 
   const handleChangeClassNumber = (value: string) => {
-    setClassNumber(getNumberDigits(value));
+    const nextClassNumber = getNumberDigits(value);
+
+    setClassNumber(nextClassNumber);
+
+    saveTeacherSignUpState({
+      step: 'FORM',
+      classNumber: nextClassNumber,
+    });
   };
 
   const handleLogout = () => {
@@ -154,6 +206,7 @@ export const useTeacherSignUpForm = () => {
       return;
     }
 
+    clearStoredTeacherSignUpState();
     logout();
   };
 
@@ -182,6 +235,7 @@ export const useTeacherSignUpForm = () => {
   };
 
   const resetInvalidAuthSession = () => {
+    clearStoredTeacherSignUpState();
     authSession.clearSession();
     setSignedOut();
     navigate(ROUTES.root, { replace: true });
@@ -218,6 +272,9 @@ export const useTeacherSignUpForm = () => {
       }
 
       setStep('SIGN_UP_SUCCESS');
+      saveTeacherSignUpState({
+        step: 'SIGN_UP_SUCCESS',
+      });
     } catch (error) {
       if (error instanceof AxiosError) {
         const status = error.response?.status;
@@ -255,8 +312,14 @@ export const useTeacherSignUpForm = () => {
         return;
       }
 
-      setGeneratedClassCode(classCodeResponse.data.classCode.trim());
+      const nextClassCode = classCodeResponse.data.classCode.trim();
+
+      setGeneratedClassCode(nextClassCode);
       setStep('CLASS_CODE_READY');
+      saveTeacherSignUpState({
+        step: 'CLASS_CODE_READY',
+        generatedClassCode: nextClassCode,
+      });
     } catch (error) {
       if (error instanceof AxiosError) {
         const status = error.response?.status;
@@ -275,6 +338,7 @@ export const useTeacherSignUpForm = () => {
 
   const goToInbox = async () => {
     await applySignedInState();
+    clearStoredTeacherSignUpState();
     navigate(ROUTES.teacherThreadList, { replace: true });
   };
 
