@@ -9,7 +9,7 @@ export type InquiryStatusType = (typeof INQUIRY_STATUS)[keyof typeof INQUIRY_STA
 
 export const INQUIRY_STATUS_LABEL: Record<InquiryStatusType, string> = {
   IN_PROGRESS: '처리중',
-  COMPLETED: '처리완료',
+  COMPLETED: '완료',
 };
 
 export const INQUIRY_STATUS_COLOR_KEY: Record<InquiryStatusType, keyof ColorsType['threadStatus']> =
