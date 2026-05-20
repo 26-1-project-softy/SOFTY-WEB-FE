@@ -173,6 +173,7 @@ export const TeacherSignUpForm = ({
 const SignUpCard = styled.section`
   display: flex;
   flex-direction: column;
+  width: 100%;
   max-width: 441px;
   background: ${({ theme }) => theme.colors.background.bg1};
   box-shadow: ${({ theme }) => theme.colors.shadow.modal};
@@ -210,7 +211,8 @@ const SignUpHeaderTextArea = styled.div`
 
 const Title = styled.h1`
   text-align: center;
-  ${({ theme }) => theme.fonts.title2};
+  ${({ theme }) => theme.fonts.title3};
+  font-weight: bold;
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
@@ -218,7 +220,7 @@ const Description = styled.p`
   text-align: center;
   white-space: pre-line;
   ${({ theme }) => theme.fonts.body3};
-  color: ${({ theme }) => theme.colors.text.text3};
+  color: ${({ theme }) => theme.colors.text.text1};
 `;
 
 const SignUpFormSection = styled.form`
@@ -230,7 +232,7 @@ const SignUpFormSection = styled.form`
 const SignUpBodySection = styled.div`
   display: flex;
   flex-direction: column;
-  width: min(100%, 361px);
+  width: 100%;
   gap: 16px;
 `;
 
@@ -246,7 +248,7 @@ const ClassCodeCard = styled.div`
   align-items: center;
   width: 100%;
   border-radius: 14px;
-  border: 1px solid ${({ theme }) => theme.colors.border.border1};
+  border: 1px solid ${({ theme }) => theme.colors.brand.primary};
   background: ${({ theme }) => theme.colors.background.bg4};
   padding: 18px 14px;
   gap: 10px;
@@ -254,18 +256,19 @@ const ClassCodeCard = styled.div`
 
 const ClassLabel = styled.p`
   ${({ theme }) => theme.fonts.caption};
+  font-weight: 600;
   color: ${({ theme }) => theme.colors.brand.dark};
 `;
 
 const ClassCode = styled.p`
   ${({ theme }) => theme.fonts.title2};
-  letter-spacing: 0.02em;
+  font-weight: 700;
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
 const SignUpActionSection = styled.div`
   display: flex;
   flex-direction: column;
-  width: min(100%, 361px);
+  width: 100%;
   gap: 12px;
 `;

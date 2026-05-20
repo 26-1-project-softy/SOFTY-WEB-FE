@@ -10,7 +10,7 @@ export const TeacherSignUpPage = () => {
   return (
     <TeacherSignUpPageContainer>
       <TeacherSignUpContent>
-        {step === 'FORM' ? (
+        {step !== 'SIGN_UP_SUCCESS' ? (
           <IconButton
             icon={IcLogout}
             variant="plain"
@@ -40,6 +40,7 @@ const TeacherSignUpPageContainer = styled.div`
 const TeacherSignUpContent = styled.div`
   display: flex;
   flex-direction: column;
+  width: min(100%, 441px);
   gap: 16px;
 `;
 
