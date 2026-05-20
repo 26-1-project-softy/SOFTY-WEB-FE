@@ -6,6 +6,7 @@ import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { SectionErrorState } from '@/components/common/SectionErrorState';
 import { InlineButton } from '@/components/common/InlineButton';
 import { SelectDropdown } from '@/components/common/SelectDropdown';
+import { DatePickerDropdown } from '@/components/common/DatePickerDropdown';
 import { TextField } from '@/components/common/TextField';
 import { useAdminErrorReview } from '@/features/admin/errorReview/hooks/useAdminErrorReview';
 import {
@@ -105,32 +106,18 @@ export const AdminErrorReviewPage = () => {
         </FieldWrap>
 
         <FieldWrap>
-          <TextField
-            type={draftFilters.startDate ? 'date' : 'text'}
+          <DatePickerDropdown
             placeholder={ERROR_REVIEW_TEXT.startDatePlaceholder}
             value={draftFilters.startDate}
-            onFocus={e => {
-              e.currentTarget.type = 'date';
-            }}
-            onBlur={e => {
-              if (!e.currentTarget.value) e.currentTarget.type = 'text';
-            }}
-            onChange={e => setDraftFilters(prev => ({ ...prev, startDate: e.target.value }))}
+            onChange={value => setDraftFilters(prev => ({ ...prev, startDate: value }))}
           />
         </FieldWrap>
 
         <FieldWrap>
-          <TextField
-            type={draftFilters.endDate ? 'date' : 'text'}
+          <DatePickerDropdown
             placeholder={ERROR_REVIEW_TEXT.endDatePlaceholder}
             value={draftFilters.endDate}
-            onFocus={e => {
-              e.currentTarget.type = 'date';
-            }}
-            onBlur={e => {
-              if (!e.currentTarget.value) e.currentTarget.type = 'text';
-            }}
-            onChange={e => setDraftFilters(prev => ({ ...prev, endDate: e.target.value }))}
+            onChange={value => setDraftFilters(prev => ({ ...prev, endDate: value }))}
           />
         </FieldWrap>
 
