@@ -1,12 +1,11 @@
 ﻿import styled from '@emotion/styled';
+import { useChatMessageAutoScroll } from '@/features/teacher/threadDetail/hooks/useChatMessageAutoScroll';
 import { Alert } from '@/components/common/Alert';
 import { InlineButton } from '@/components/common/InlineButton';
 import { Loader } from '@/components/common/Loader';
 import { Avatar } from '@/components/common/Avatar';
-import type { MessageItem } from '@/features/teacher/threadDetail/types';
+import type { DetailLoadState, MessageItem } from '@/features/teacher/threadDetail/types';
 import { IcError, IcRefresh } from '@/icons';
-
-type DetailLoadState = 'loading' | 'error' | 'success';
 
 type ChatMessageListProps = {
   loadState: DetailLoadState;
@@ -17,6 +16,7 @@ type ChatMessageListProps = {
   messagesHasNext: boolean;
   isMessagesLoadingMore: boolean;
   messages: MessageItem[];
+  scrollToLatestRequestKey: number;
   onRetryConversation: () => void;
   onRetryMissingMessages: () => void;
   onLoadMoreMessages: () => void;
@@ -31,10 +31,18 @@ export const ChatMessageList = ({
   messagesHasNext,
   isMessagesLoadingMore,
   messages,
+  scrollToLatestRequestKey,
   onRetryConversation,
   onRetryMissingMessages,
   onLoadMoreMessages,
 }: ChatMessageListProps) => {
+  const { scrollContainerRef } = useChatMessageAutoScroll({
+    loadState,
+    isMessagesLoading,
+    messageCount: messages.length,
+    scrollToLatestRequestKey,
+  });
+
   if (loadState === 'error') {
     return (
       <DetailErrorBox>
@@ -75,7 +83,7 @@ export const ChatMessageList = ({
   }
 
   return (
-    <MessageArea>
+    <MessageArea ref={scrollContainerRef}>
       {messagesPartialError ? (
         <Alert
           title="채팅 내역을 불러오지 못했어요"
@@ -213,7 +221,6 @@ const MessageBubble = styled.div<{ $isMine: boolean }>`
   ${({ theme }) => theme.fonts.body2};
   border-radius: ${({ $isMine }) => ($isMine ? '20px 0' : '0 20px')} 20px 20px;
   padding: 12px 16px;
-  line-height: 1.45;
   color: ${({ $isMine, theme }) => ($isMine ? theme.colors.text.textW : theme.colors.text.text2)};
   background: ${({ $isMine, theme }) =>
     $isMine ? theme.colors.brand.primary : theme.colors.background.bg1};

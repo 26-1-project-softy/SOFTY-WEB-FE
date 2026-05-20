@@ -50,15 +50,11 @@ export const useChatMessagesQuery = (chatRoomId: number) => {
     },
     refetchOnWindowFocus: false,
     refetchInterval: () => {
-      if (!isValidChatRoomId) {
+      if (!isValidChatRoomId || typeof document === 'undefined') {
         return false;
       }
 
-      if (document.visibilityState !== 'visible') {
-        return false;
-      }
-
-      return MESSAGE_POLLING_INTERVAL_MS;
+      return document.visibilityState === 'visible' ? MESSAGE_POLLING_INTERVAL_MS : false;
     },
     refetchIntervalInBackground: false,
     staleTime: MESSAGE_FOCUS_REFETCH_STALE_TIME,

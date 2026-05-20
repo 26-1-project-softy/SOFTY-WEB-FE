@@ -19,6 +19,8 @@ const FOCUS_REFRESH_THROTTLE_MS = 3000;
 
 export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) => {
   const [currentAnalysisResult, setCurrentAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [scrollToLatestRequestKey, setScrollToLatestRequestKey] = useState(0);
+
   const isMarkingReadRef = useRef(false);
 
   const isValidChatRoomId = Number.isFinite(chatRoomId) && chatRoomId > 0;
@@ -39,6 +41,10 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
   } = useChatMessagesQuery(chatRoomId);
 
   const { mutateAsync: readChatRoom } = useReadChatRoom(chatRoomId);
+
+  const requestScrollToLatestMessage = useCallback(() => {
+    setScrollToLatestRequestKey(prev => prev + 1);
+  }, []);
 
   const markMessagesAsRead = useCallback(async () => {
     if (!isValidChatRoomId || isMarkingReadRef.current) {
@@ -76,7 +82,7 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     }
 
     void markMessagesAsRead();
-  }, [messages.length, markMessagesAsRead]);
+  }, [markMessagesAsRead, messages.length]);
 
   const { status, isStatusMenuOpen, isStatusUpdating, setIsStatusMenuOpen, handleSelectStatus } =
     useThreadStatusControl({
@@ -120,12 +126,14 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     markMessagesAsRead,
     resetFeedbackState,
     onAnalysisResultChange: setCurrentAnalysisResult,
+    onRequestScrollToLatestMessage: requestScrollToLatestMessage,
   });
 
   useEffect(() => {
     resetComposerForRoom();
     resetFeedbackState();
     setCurrentAnalysisResult(null);
+    setScrollToLatestRequestKey(0);
   }, [chatRoomId, resetComposerForRoom, resetFeedbackState]);
 
   const counterpartName = chatRoomDetail?.counterpartName ?? '';
@@ -189,6 +197,7 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     composerActionMode,
     isComposerActionDisabled,
     isUnsafeRisk,
+    scrollToLatestRequestKey,
 
     setIsStatusMenuOpen,
     handleMessageInputChange,

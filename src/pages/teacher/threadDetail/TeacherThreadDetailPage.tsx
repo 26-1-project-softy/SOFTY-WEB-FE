@@ -41,6 +41,7 @@ export const TeacherThreadDetailPage = () => {
     composerActionMode,
     isComposerActionDisabled,
     isUnsafeRisk,
+    scrollToLatestRequestKey,
     setIsStatusMenuOpen,
     handleMessageInputChange,
     handleComposerActionClick,
@@ -70,6 +71,7 @@ export const TeacherThreadDetailPage = () => {
       <ThreadBody>
         <ConversationPanel>
           <ChatMessageList
+            key={chatRoomId}
             loadState={loadState}
             detailErrorMessage={detailErrorMessage}
             isMessagesLoading={isMessagesLoading}
@@ -78,6 +80,7 @@ export const TeacherThreadDetailPage = () => {
             messagesHasNext={messagesHasNext}
             isMessagesLoadingMore={isMessagesLoadingMore}
             messages={messages}
+            scrollToLatestRequestKey={scrollToLatestRequestKey}
             onRetryConversation={() => void handleRetryConversation()}
             onRetryMissingMessages={handleRetryMissingMessages}
             onLoadMoreMessages={handleLoadMoreMessages}
