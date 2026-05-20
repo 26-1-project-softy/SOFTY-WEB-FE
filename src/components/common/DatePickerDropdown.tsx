@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import Calendar from 'react-calendar';
+import type { CalendarProps } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import styled from '@emotion/styled';
 import { IcDown } from '@/icons';
@@ -32,9 +33,11 @@ export const DatePickerDropdown = ({ value, placeholder, onChange }: DatePickerD
     return () => document.removeEventListener('mousedown', handleOutsideClick);
   }, []);
 
-  const handleDateChange = (selectedDate: Date | Date[] | null) => {
-    if (selectedDate instanceof Date) {
-      onChange(formatDate(selectedDate));
+  const handleDateChange: NonNullable<CalendarProps['onChange']> = selectedDate => {
+    const nextDate = Array.isArray(selectedDate) ? selectedDate[0] : selectedDate;
+
+    if (nextDate instanceof Date) {
+      onChange(formatDate(nextDate));
       setOpen(false);
     }
   };
