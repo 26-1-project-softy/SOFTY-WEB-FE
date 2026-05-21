@@ -55,9 +55,11 @@ export const DatePickerDropdown = ({ value, placeholder, onChange }: DatePickerD
         <CalendarContainer>
           <Calendar
             onChange={handleDateChange}
-            value={value ? new Date(value) : null}
+            // value가 없으면(빈 문자열이면) 오늘 날짜를 기본값으로 보여줍니다.
+            value={value ? new Date(value) : new Date()}
             calendarType="gregory"
-            formatDay={(_, date) => String(date.getDate())}
+            // 첫 번째 locale 인자를 아예 생략하거나 명시해 줍니다.
+            formatDay={(locale, date) => String(date.getDate())}
             next2Label={null}
             prev2Label={null}
           />
