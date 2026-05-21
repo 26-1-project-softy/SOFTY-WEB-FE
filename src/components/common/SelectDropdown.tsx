@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import styled from '@emotion/styled';
 import { IcDown } from '@/icons';
-import { tokens } from '@/styles/tokens';
 
 type DropdownValue = string | number;
 
@@ -80,14 +79,14 @@ const DropdownButton = styled.button`
   ${({ theme }) => theme.fonts.labelS};
   display: flex;
   width: 100%;
-  height: ${tokens.size.controlHeight};
+  height: 42px;
   align-items: center;
   justify-content: space-between;
-  border-radius: ${tokens.radius.md};
+  border-radius: 8px;
   border: 1px solid ${({ theme }) => theme.colors.border.border2};
   background: ${({ theme }) => theme.colors.background.bg1};
   color: ${({ theme }) => theme.colors.text.text1};
-  padding: 0 ${tokens.spacing.md};
+  padding: 0 14px;
 
   &:focus {
     outline: 1px solid ${({ theme }) => theme.colors.brand.primary};
@@ -100,19 +99,19 @@ const Arrow = styled.span<{ $open: boolean }>`
   transform: rotate(${({ $open }) => ($open ? '180deg' : '0deg')});
 
   svg {
-    width: ${tokens.size.iconSm};
-    height: ${tokens.size.iconSm};
+    width: 14px;
+    height: 14px;
   }
 `;
 
 const DropdownMenu = styled.div`
   position: absolute;
-  top: calc(100% + ${tokens.spacing.xs});
+  top: calc(100% + 8px);
   left: 0;
   z-index: 20;
   width: 100%;
-  padding: ${tokens.spacing.xs};
-  border-radius: ${tokens.radius.lg};
+  padding: 8px;
+  border-radius: 16px;
   border: 1px solid ${({ theme }) => theme.colors.border.border1};
   background: ${({ theme }) => theme.colors.background.bg1};
   box-shadow: ${({ theme }) => theme.colors.shadow.toast};
@@ -121,14 +120,14 @@ const DropdownMenu = styled.div`
 const DropdownOptionButton = styled.button<{ $active: boolean }>`
   ${({ theme }) => theme.fonts.labelS};
   width: 100%;
-  height: ${tokens.size.navHeight};
+  height: 40px;
   border: 0;
   background: ${({ $active, theme }) => ($active ? theme.colors.background.bg4 : 'transparent')};
   color: ${({ $active, theme }) =>
     $active ? theme.colors.brand.primary : theme.colors.text.text1};
-  border-radius: ${tokens.radius.md};
+  border-radius: 10px;
   text-align: left;
-  padding: 0 ${tokens.spacing.sm};
+  padding: 0 12px;
 
   &:hover,
   &:focus {

@@ -4,7 +4,6 @@ import type { CalendarProps } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import styled from '@emotion/styled';
 import { IcDown } from '@/icons';
-import { tokens } from '@/styles/tokens';
 
 const DATE_RANGE_SEPARATOR = ' ~ ';
 
@@ -113,14 +112,14 @@ const DropdownButton = styled.button`
   ${({ theme }) => theme.fonts.labelS};
   display: flex;
   width: 100%;
-  height: ${tokens.size.controlHeight};
+  height: 42px;
   align-items: center;
   justify-content: space-between;
-  border-radius: ${tokens.radius.md};
+  border-radius: 8px;
   border: 1px solid ${({ theme }) => theme.colors.border.border2};
   background: ${({ theme }) => theme.colors.background.bg1};
   color: ${({ theme }) => theme.colors.text.text1};
-  padding: 0 ${tokens.spacing.md};
+  padding: 0 14px;
   cursor: pointer;
 
   &:focus {
@@ -147,14 +146,14 @@ const Arrow = styled.span<{ $open: boolean }>`
   color: ${({ theme }) => theme.colors.text.text3};
 
   svg {
-    width: ${tokens.size.iconSm};
-    height: ${tokens.size.iconSm};
+    width: 14px;
+    height: 14px;
   }
 `;
 
 const CalendarContainer = styled.div`
   position: absolute;
-  top: calc(100% + ${tokens.spacing.xs});
+  top: calc(100% + 8px);
   left: 0;
   z-index: 50;
 
@@ -162,24 +161,24 @@ const CalendarContainer = styled.div`
     width: 290px;
     background: ${({ theme }) => theme.colors.background.bg1};
     border: 1px solid ${({ theme }) => theme.colors.border.border1};
-    border-radius: ${tokens.radius.lg};
+    border-radius: 16px;
     font-family: inherit;
     box-shadow: ${({ theme }) => theme.colors.shadow.toast};
-    padding: ${tokens.spacing.sm};
+    padding: 12px;
   }
 
   .react-calendar__navigation {
     display: flex;
-    height: ${tokens.size.navHeight};
-    margin-bottom: ${tokens.spacing.xs};
+    height: 40px;
+    margin-bottom: 8px;
 
     button {
-      min-width: ${tokens.size.navButtonMinWidth};
+      min-width: 32px;
       background: none;
       font-size: 15px;
       font-weight: 600;
       color: ${({ theme }) => theme.colors.text.text1};
-      border-radius: ${tokens.radius.sm};
+      border-radius: 6px;
 
       &:hover,
       &:focus {
@@ -197,7 +196,7 @@ const CalendarContainer = styled.div`
     font-weight: 600;
     font-size: 12px;
     color: ${({ theme }) => theme.colors.text.text3};
-    margin-bottom: ${tokens.spacing.xs};
+    margin-bottom: 8px;
 
     abbr {
       text-decoration: none;
@@ -206,12 +205,12 @@ const CalendarContainer = styled.div`
 
   .react-calendar__tile {
     max-width: 100%;
-    height: ${tokens.size.dateTile};
+    height: 36px;
     background: none;
     text-align: center;
     font-size: 13px;
     color: ${({ theme }) => theme.colors.text.text1};
-    border-radius: ${tokens.radius.md};
+    border-radius: 8px;
     transition: all 0.1s ease;
 
     &:hover,
