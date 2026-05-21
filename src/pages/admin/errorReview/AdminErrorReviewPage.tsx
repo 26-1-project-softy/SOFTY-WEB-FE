@@ -15,25 +15,26 @@ import {
   ERROR_REVIEW_ALL_VALUE,
 } from '@/features/admin/errorReview/constants';
 import { IcErrorReview } from '@/icons';
+import { tokens } from '@/styles/tokens';
 
 const ERROR_REVIEW_PAGE_LAYOUT = {
-  headerHeight: '72px',
-  pagePadding: '16px',
-  contentTopMargin: '12px',
-  paginationTopMargin: '12px',
-  stateHeightOffset: '220px',
-  iconSize: '24px',
+  headerHeight: tokens.size.headerHeight,
+  pagePadding: tokens.spacing.lg,
+  contentTopMargin: tokens.spacing.sm,
+  paginationTopMargin: tokens.spacing.sm,
+  stateHeightOffset: tokens.size.stateHeightOffset,
+  iconSize: tokens.size.pageIcon,
 } as const;
 
 const ERROR_REVIEW_FILTER_LAYOUT = {
   columnsDesktop: 7,
   columnsTablet: 4,
   columnsMobile: 2,
-  gap: '12px',
-  breakpointTablet: '1280px',
-  breakpointMobile: '900px',
-  controlHeight: '42px',
-  controlHorizontalPadding: '14px',
+  gap: tokens.spacing.sm,
+  breakpointTablet: tokens.breakpoint.tablet,
+  breakpointMobile: tokens.breakpoint.mobile,
+  controlHeight: tokens.size.controlHeight,
+  controlHorizontalPadding: tokens.spacing.md,
 } as const;
 
 export const AdminErrorReviewPage = () => {
@@ -200,7 +201,7 @@ const FilterBar = styled.div`
   grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsDesktop}, minmax(0, 1fr));
   gap: ${ERROR_REVIEW_FILTER_LAYOUT.gap};
   align-items: start;
-  padding: 0 16px;
+  padding: 0 ${tokens.spacing.lg};
 
   @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointTablet}) {
     grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsTablet}, minmax(0, 1fr));

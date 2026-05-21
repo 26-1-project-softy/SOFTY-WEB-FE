@@ -4,6 +4,9 @@ import type { CalendarProps } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import styled from '@emotion/styled';
 import { IcDown } from '@/icons';
+import { tokens } from '@/styles/tokens';
+
+const DATE_RANGE_SEPARATOR = ' ~ ';
 
 const formatDate = (date: Date) => {
   const year = date.getFullYear();
@@ -23,7 +26,7 @@ const parseDate = (value: string) => (value ? new Date(value) : null);
 
 const formatDisplayValue = (startDate: string, endDate: string) => {
   if (!startDate && !endDate) return '';
-  if (startDate && endDate) return `${startDate} ~ ${endDate}`;
+  if (startDate && endDate) return `${startDate}${DATE_RANGE_SEPARATOR}${endDate}`;
   return startDate || endDate;
 };
 
@@ -110,14 +113,14 @@ const DropdownButton = styled.button`
   ${({ theme }) => theme.fonts.labelS};
   display: flex;
   width: 100%;
-  height: 42px;
+  height: ${tokens.size.controlHeight};
   align-items: center;
   justify-content: space-between;
-  border-radius: 8px;
+  border-radius: ${tokens.radius.md};
   border: 1px solid ${({ theme }) => theme.colors.border.border2};
   background: ${({ theme }) => theme.colors.background.bg1};
   color: ${({ theme }) => theme.colors.text.text1};
-  padding: 0 14px;
+  padding: 0 ${tokens.spacing.md};
   cursor: pointer;
 
   &:focus {
@@ -127,7 +130,7 @@ const DropdownButton = styled.button`
 `;
 
 const LabelText = styled.span<{ $hasValue: boolean }>`
-  ${({ theme }) => theme.fonts.body2};
+  ${({ theme }) => theme.fonts.labelS};
   flex: 1;
   min-width: 0;
   white-space: nowrap;
@@ -144,14 +147,14 @@ const Arrow = styled.span<{ $open: boolean }>`
   color: ${({ theme }) => theme.colors.text.text3};
 
   svg {
-    width: 14px;
-    height: 14px;
+    width: ${tokens.size.iconSm};
+    height: ${tokens.size.iconSm};
   }
 `;
 
 const CalendarContainer = styled.div`
   position: absolute;
-  top: calc(100% + 8px);
+  top: calc(100% + ${tokens.spacing.xs});
   left: 0;
   z-index: 50;
 
@@ -159,24 +162,24 @@ const CalendarContainer = styled.div`
     width: 290px;
     background: ${({ theme }) => theme.colors.background.bg1};
     border: 1px solid ${({ theme }) => theme.colors.border.border1};
-    border-radius: 16px;
+    border-radius: ${tokens.radius.lg};
     font-family: inherit;
     box-shadow: ${({ theme }) => theme.colors.shadow.toast};
-    padding: 12px;
+    padding: ${tokens.spacing.sm};
   }
 
   .react-calendar__navigation {
     display: flex;
-    height: 40px;
-    margin-bottom: 8px;
+    height: ${tokens.size.navHeight};
+    margin-bottom: ${tokens.spacing.xs};
 
     button {
-      min-width: 32px;
+      min-width: ${tokens.size.navButtonMinWidth};
       background: none;
       font-size: 15px;
       font-weight: 600;
       color: ${({ theme }) => theme.colors.text.text1};
-      border-radius: 6px;
+      border-radius: ${tokens.radius.sm};
 
       &:hover,
       &:focus {
@@ -194,7 +197,7 @@ const CalendarContainer = styled.div`
     font-weight: 600;
     font-size: 12px;
     color: ${({ theme }) => theme.colors.text.text3};
-    margin-bottom: 8px;
+    margin-bottom: ${tokens.spacing.xs};
 
     abbr {
       text-decoration: none;
@@ -203,12 +206,12 @@ const CalendarContainer = styled.div`
 
   .react-calendar__tile {
     max-width: 100%;
-    height: 36px;
+    height: ${tokens.size.dateTile};
     background: none;
     text-align: center;
     font-size: 13px;
     color: ${({ theme }) => theme.colors.text.text1};
-    border-radius: 8px;
+    border-radius: ${tokens.radius.md};
     transition: all 0.1s ease;
 
     &:hover,

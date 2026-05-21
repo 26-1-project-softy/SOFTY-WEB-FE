@@ -2,6 +2,7 @@
   AdminRiskFeedbackFilterValues,
   AdminRiskFeedbackListParams,
 } from '@/features/admin/errorReview/types';
+import { RISK_LEVEL } from '@/constants/riskAnalysis';
 
 const ERROR_REVIEW_DEFAULT_PAGE = 1;
 const ERROR_REVIEW_DEFAULT_PAGE_SIZE = 10;
@@ -33,8 +34,8 @@ export const ERROR_REVIEW_DEFAULT_FILTERS: AdminRiskFeedbackFilterValues = {
 
 export const ERROR_REVIEW_RISK_LEVEL_OPTIONS = [
   { label: '전체', value: ERROR_REVIEW_ALL_FILTER_VALUE },
-  { label: '안전', value: 'SAFE' },
-  { label: '위험', value: 'UNSAFE' },
+  { label: '안전', value: RISK_LEVEL.SAFE },
+  { label: '위험', value: RISK_LEVEL.UNSAFE },
 ] as const;
 
 export const ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS = [
