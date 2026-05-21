@@ -49,6 +49,7 @@ export const ERROR_REVIEW_TEXT = {
   riskLevelPlaceholder: '위험도',
   feedbackPlaceholder: '피드백',
   teacherNamePlaceholder: '교사명 검색',
+  periodPlaceholder: '조회 기간',
   startDatePlaceholder: '시작일',
   endDatePlaceholder: '종료일',
   searchButtonLabel: '조회',

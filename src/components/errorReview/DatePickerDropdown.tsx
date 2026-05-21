@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import Calendar from 'react-calendar';
 import type { CalendarProps } from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
@@ -13,12 +13,26 @@ const formatDate = (date: Date) => {
 };
 
 type DatePickerDropdownProps = {
-  value: string;
+  startDate: string;
+  endDate: string;
   placeholder: string;
-  onChange: (value: string) => void;
+  onChange: (startDate: string, endDate: string) => void;
 };
 
-export const DatePickerDropdown = ({ value, placeholder, onChange }: DatePickerDropdownProps) => {
+const parseDate = (value: string) => (value ? new Date(value) : null);
+
+const formatDisplayValue = (startDate: string, endDate: string) => {
+  if (!startDate && !endDate) return '';
+  if (startDate && endDate) return `${startDate} ~ ${endDate}`;
+  return startDate || endDate;
+};
+
+export const DatePickerDropdown = ({
+  startDate,
+  endDate,
+  placeholder,
+  onChange,
+}: DatePickerDropdownProps) => {
   const [open, setOpen] = useState(false);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
 
@@ -34,18 +48,35 @@ export const DatePickerDropdown = ({ value, placeholder, onChange }: DatePickerD
   }, []);
 
   const handleDateChange: NonNullable<CalendarProps['onChange']> = selectedDate => {
-    const nextDate = Array.isArray(selectedDate) ? selectedDate[0] : selectedDate;
+    if (Array.isArray(selectedDate)) {
+      const [start, end] = selectedDate;
+      const nextStartDate = start instanceof Date ? formatDate(start) : '';
+      const nextEndDate = end instanceof Date ? formatDate(end) : '';
+      onChange(nextStartDate, nextEndDate);
 
-    if (nextDate instanceof Date) {
-      onChange(formatDate(nextDate));
+      if (start instanceof Date && end instanceof Date) {
+        setOpen(false);
+      }
+      return;
+    }
+
+    if (selectedDate instanceof Date) {
+      const nextDate = formatDate(selectedDate);
+      onChange(nextDate, nextDate);
       setOpen(false);
     }
   };
 
+  const calendarValue: CalendarProps['value'] = startDate
+    ? ([parseDate(startDate), parseDate(endDate || startDate)] as [Date | null, Date | null])
+    : null;
+
+  const displayValue = formatDisplayValue(startDate, endDate);
+
   return (
     <DropdownWrap ref={wrapperRef}>
       <DropdownButton type="button" onClick={() => setOpen(prev => !prev)}>
-        <LabelText $hasValue={Boolean(value)}>{value || placeholder}</LabelText>
+        <LabelText $hasValue={Boolean(displayValue)}>{displayValue || placeholder}</LabelText>
         <Arrow $open={open}>
           <IcDown />
         </Arrow>
@@ -55,10 +86,11 @@ export const DatePickerDropdown = ({ value, placeholder, onChange }: DatePickerD
         <CalendarContainer>
           <Calendar
             onChange={handleDateChange}
-            // value가 없으면(빈 문자열이면) 오늘 날짜를 기본값으로 보여줍니다.
-            value={value ? new Date(value) : new Date()}
+            value={calendarValue}
+            selectRange
+            allowPartialRange
+            maxDate={new Date()}
             calendarType="gregory"
-            // 첫 번째 locale 인자를 아예 생략하거나 명시해 줍니다.
             formatDay={(...args) => String(args[1].getDate())}
             next2Label={null}
             prev2Label={null}
@@ -95,6 +127,12 @@ const DropdownButton = styled.button`
 `;
 
 const LabelText = styled.span<{ $hasValue: boolean }>`
+  ${({ theme }) => theme.fonts.body2};
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
   color: ${({ $hasValue, theme }) =>
     $hasValue ? theme.colors.text.text1 : theme.colors.text.text4};
 `;
