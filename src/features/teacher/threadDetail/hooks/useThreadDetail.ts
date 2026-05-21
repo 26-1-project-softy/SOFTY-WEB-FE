@@ -84,12 +84,20 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     void markMessagesAsRead();
   }, [markMessagesAsRead, messages.length]);
 
-  const { status, isStatusMenuOpen, isStatusUpdating, setIsStatusMenuOpen, handleSelectStatus } =
-    useThreadStatusControl({
-      chatRoomId,
-      isValidChatRoomId,
-      serverStatus: chatRoomDetail?.status,
-    });
+  const {
+    status,
+    isStatusMenuOpen,
+    isStatusUpdating,
+    isStatusConfirmDialogOpen,
+    setIsStatusMenuOpen,
+    handleSelectStatus,
+    handleCloseStatusConfirmDialog,
+    handleConfirmStatusChange,
+  } = useThreadStatusControl({
+    chatRoomId,
+    isValidChatRoomId,
+    serverStatus: chatRoomDetail?.status,
+  });
 
   const {
     analysisFeedbackScore,
@@ -172,6 +180,7 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
   return {
     status,
     isStatusMenuOpen,
+    isStatusConfirmDialogOpen,
     messageInput,
     analysisResult,
     analysisFeedbackScore,
@@ -210,5 +219,7 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     handleRetryMissingMessages,
     handleRetryConversation,
     handleSelectStatus,
+    handleCloseStatusConfirmDialog,
+    handleConfirmStatusChange,
   };
 };
