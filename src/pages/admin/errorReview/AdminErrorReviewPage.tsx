@@ -93,21 +93,16 @@ export const AdminErrorReviewPage = () => {
           />
         </FieldWrap>
 
-        <FieldWrap>
+        <PeriodFieldWrap>
           <DatePickerDropdown
-            placeholder={ERROR_REVIEW_TEXT.startDatePlaceholder}
-            value={draftFilters.startDate}
-            onChange={value => setDraftFilters(prev => ({ ...prev, startDate: value }))}
+            placeholder={ERROR_REVIEW_TEXT.periodPlaceholder}
+            startDate={draftFilters.startDate}
+            endDate={draftFilters.endDate}
+            onChange={(startDate, endDate) =>
+              setDraftFilters(prev => ({ ...prev, startDate, endDate }))
+            }
           />
-        </FieldWrap>
-
-        <FieldWrap>
-          <DatePickerDropdown
-            placeholder={ERROR_REVIEW_TEXT.endDatePlaceholder}
-            value={draftFilters.endDate}
-            onChange={value => setDraftFilters(prev => ({ ...prev, endDate: value }))}
-          />
-        </FieldWrap>
+        </PeriodFieldWrap>
 
         <ButtonWrap>
           <InlineButton
@@ -205,6 +200,7 @@ const FilterBar = styled.div`
   grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsDesktop}, minmax(0, 1fr));
   gap: ${ERROR_REVIEW_FILTER_LAYOUT.gap};
   align-items: start;
+  padding: 0 16px;
 
   @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointTablet}) {
     grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsTablet}, minmax(0, 1fr));
@@ -231,6 +227,18 @@ const FieldWrap = styled.div`
     color: ${({ theme }) => theme.colors.text.text1};
     border-radius: 8px;
     accent-color: ${({ theme }) => theme.colors.brand.primary};
+  }
+`;
+
+const PeriodFieldWrap = styled(FieldWrap)`
+  grid-column: span 2;
+
+  @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointTablet}) {
+    grid-column: span 2;
+  }
+
+  @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointMobile}) {
+    grid-column: span 2;
   }
 `;
 
