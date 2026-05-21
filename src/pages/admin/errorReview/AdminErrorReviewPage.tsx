@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import styled from '@emotion/styled';
-import { ErrorReviewList } from '@/components/common/errorReview/ErrorReviewList';
+import { ErrorReviewList } from '@/components/errorReview/ErrorReviewList';
 import { Loader } from '@/components/common/Loader';
 import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { SectionErrorState } from '@/components/common/SectionErrorState';
