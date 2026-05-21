@@ -4,6 +4,8 @@ const schoolNameInvalidCharPattern = /[^A-Z0-9ㄱ-ㅎㅏ-ㅣ가-힣\s·.'’()-]
 
 const MIN_NAME_LENGTH = 2;
 const MIN_SCHOOL_NAME_LENGTH = 2;
+const MIN_GRADE = 1;
+const MAX_GRADE = 6;
 
 export const getTextWithoutSpaces = (value: string) => {
   return value.replace(/\s/g, '');
@@ -95,6 +97,16 @@ export const validateNumberText = (value: string) => {
   return /^\d+$/.test(value.trim());
 };
 
+export const validateGradeText = (value: string) => {
+  if (!validateNumberText(value)) {
+    return false;
+  }
+
+  const grade = Number(value);
+
+  return grade >= MIN_GRADE && grade <= MAX_GRADE;
+};
+
 export const getGradeErrorMessage = (value: string) => {
   if (value.length === 0) {
     return undefined;
@@ -102,6 +114,10 @@ export const getGradeErrorMessage = (value: string) => {
 
   if (!validateNumberText(value)) {
     return '숫자만 입력해 주세요.';
+  }
+
+  if (!validateGradeText(value)) {
+    return '학년은 1~6 사이여야 해요.';
   }
 
   return undefined;

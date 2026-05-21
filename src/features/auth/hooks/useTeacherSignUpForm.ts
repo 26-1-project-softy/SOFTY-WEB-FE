@@ -2,23 +2,30 @@ import { AxiosError } from 'axios';
 import { useMemo, useState, type ComponentProps } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useLogout } from '@/hooks/useLogout';
 import {
   getAuthErrorMessage,
   type AuthErrorMessage,
 } from '@/features/auth/lib/getAuthErrorMessage';
+import {
+  clearStoredTeacherSignUpState,
+  getStoredTeacherSignUpState,
+  setStoredTeacherSignUpState,
+  type StoredTeacherSignUpState,
+} from '@/features/auth/lib/teacherSignUpSessionStorage';
 import {
   getClassNumberErrorMessage,
   getGradeErrorMessage,
   getNumberDigits,
   getSchoolNameErrorMessage,
   getTeacherNameErrorMessage,
+  validateGradeText,
   validateNumberText,
   validateSchoolName,
   validateTeacherName,
 } from '@/utils/teacherClassInfoValidation';
 import { authApi, authSession, teacherAuthApi } from '@/services/auth';
 import { ROUTES } from '@/constants/routes';
-import { useToast } from '@/hooks/useToast';
 
 type FieldErrors = {
   teacherName?: string;
@@ -31,29 +38,64 @@ export type SignUpStep = 'FORM' | 'SIGN_UP_SUCCESS' | 'CLASS_CODE_READY';
 
 type GlobalError = AuthErrorMessage | null;
 
-const FORM_ERROR_FALLBACK: AuthErrorMessage = {
+type ApiErrorResponse = {
+  message?: string;
+};
+
+const SIGN_UP_ERROR_FALLBACK: AuthErrorMessage = {
   title: '회원가입 중 문제가 발생했어요.',
   description: '잠시 후 다시 시도해 주세요.',
 };
 
+const CLASS_CODE_ERROR_FALLBACK: AuthErrorMessage = {
+  title: '학급코드 생성에 실패했어요.',
+  description: '잠시 후 다시 시도해 주세요.',
+};
+
+const ALREADY_SIGNED_UP_ERROR: AuthErrorMessage = {
+  title: '이미 교사 회원가입이 완료된 사용자입니다.',
+  description: '로그아웃한 뒤 다시 로그인해 주세요.',
+};
+
 const parseNumberText = (value: string) => Number(value.trim());
+
+const getApiErrorMessage = (error: AxiosError) => {
+  const responseData = error.response?.data as ApiErrorResponse | undefined;
+
+  return responseData?.message;
+};
+
+const getTeacherSignUpErrorMessage = (message?: string): AuthErrorMessage => {
+  if (message === ALREADY_SIGNED_UP_ERROR.title) {
+    return ALREADY_SIGNED_UP_ERROR;
+  }
+
+  return {
+    title: message || SIGN_UP_ERROR_FALLBACK.title,
+    description: SIGN_UP_ERROR_FALLBACK.description,
+  };
+};
 
 type FormSubmitHandler = NonNullable<ComponentProps<'form'>['onSubmit']>;
 
 export const useTeacherSignUpForm = () => {
   const navigate = useNavigate();
   const { authStatus, setSignedIn, setSignedOut } = useAuth();
-  const { showToast } = useToast();
+  const { logout } = useLogout();
 
-  const [teacherName, setTeacherName] = useState('');
-  const [schoolName, setSchoolName] = useState('');
-  const [grade, setGrade] = useState('');
-  const [classNumber, setClassNumber] = useState('');
+  const storedTeacherSignUpState = getStoredTeacherSignUpState();
+
+  const [teacherName, setTeacherName] = useState(storedTeacherSignUpState?.teacherName ?? '');
+  const [schoolName, setSchoolName] = useState(storedTeacherSignUpState?.schoolName ?? '');
+  const [grade, setGrade] = useState(storedTeacherSignUpState?.grade ?? '');
+  const [classNumber, setClassNumber] = useState(storedTeacherSignUpState?.classNumber ?? '');
   const [globalError, setGlobalError] = useState<GlobalError>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isCreatingClassCode, setIsCreatingClassCode] = useState(false);
-  const [step, setStep] = useState<SignUpStep>('FORM');
-  const [generatedClassCode, setGeneratedClassCode] = useState('');
+  const [step, setStep] = useState<SignUpStep>(storedTeacherSignUpState?.step ?? 'FORM');
+  const [generatedClassCode, setGeneratedClassCode] = useState(
+    storedTeacherSignUpState?.generatedClassCode ?? ''
+  );
 
   const validationResult = useMemo(() => {
     const fieldErrors: FieldErrors = {
@@ -70,7 +112,7 @@ export const useTeacherSignUpForm = () => {
     const isValid =
       validateTeacherName(teacherName) &&
       validateSchoolName(schoolName) &&
-      validateNumberText(grade) &&
+      validateGradeText(grade) &&
       validateNumberText(classNumber);
 
     return {
@@ -87,20 +129,83 @@ export const useTeacherSignUpForm = () => {
     authStatus === 'SIGNUP_REQUIRED' &&
     step === 'FORM';
 
+  const isSignUpActionDisabled = useMemo(() => {
+    if (step === 'FORM') {
+      return !isSignUpEnabled;
+    }
+
+    if (step === 'SIGN_UP_SUCCESS') {
+      return isCreatingClassCode;
+    }
+
+    return false;
+  }, [isCreatingClassCode, isSignUpEnabled, step]);
+
+  const getCurrentStoredTeacherSignUpState = (
+    overrides?: Partial<StoredTeacherSignUpState>
+  ): StoredTeacherSignUpState => {
+    return {
+      step,
+      teacherName,
+      schoolName,
+      grade,
+      classNumber,
+      generatedClassCode,
+      ...overrides,
+    };
+  };
+
+  const saveTeacherSignUpState = (overrides?: Partial<StoredTeacherSignUpState>) => {
+    setStoredTeacherSignUpState(getCurrentStoredTeacherSignUpState(overrides));
+  };
+
   const handleChangeTeacherName = (value: string) => {
     setTeacherName(value);
+
+    saveTeacherSignUpState({
+      step: 'FORM',
+      teacherName: value,
+    });
   };
 
   const handleChangeSchoolName = (value: string) => {
     setSchoolName(value);
+
+    saveTeacherSignUpState({
+      step: 'FORM',
+      schoolName: value,
+    });
   };
 
   const handleChangeGrade = (value: string) => {
-    setGrade(getNumberDigits(value));
+    const nextGrade = getNumberDigits(value);
+
+    setGrade(nextGrade);
+
+    saveTeacherSignUpState({
+      step: 'FORM',
+      grade: nextGrade,
+    });
   };
 
   const handleChangeClassNumber = (value: string) => {
-    setClassNumber(getNumberDigits(value));
+    const nextClassNumber = getNumberDigits(value);
+
+    setClassNumber(nextClassNumber);
+
+    saveTeacherSignUpState({
+      step: 'FORM',
+      classNumber: nextClassNumber,
+    });
+  };
+
+  const handleLogout = () => {
+    if (step !== 'FORM') {
+      return;
+    }
+
+    clearStoredTeacherSignUpState();
+    logout();
   };
 
   const applySignedInState = async () => {
@@ -127,9 +232,14 @@ export const useTeacherSignUpForm = () => {
     }
   };
 
-  const handleSubmit: FormSubmitHandler = async event => {
-    event.preventDefault();
+  const resetInvalidAuthSession = () => {
+    clearStoredTeacherSignUpState();
+    authSession.clearSession();
+    setSignedOut();
+    navigate(ROUTES.root, { replace: true });
+  };
 
+  const submitTeacherSignUp = async () => {
     setGlobalError(null);
 
     if (authStatus !== 'SIGNUP_REQUIRED') {
@@ -155,35 +265,36 @@ export const useTeacherSignUpForm = () => {
       });
 
       if (!response.success) {
-        setGlobalError({
-          title: response.message || FORM_ERROR_FALLBACK.title,
-          description: FORM_ERROR_FALLBACK.description,
-        });
+        setGlobalError(getTeacherSignUpErrorMessage(response.message));
         return;
       }
 
       setStep('SIGN_UP_SUCCESS');
+      saveTeacherSignUpState({
+        step: 'SIGN_UP_SUCCESS',
+      });
     } catch (error) {
       if (error instanceof AxiosError) {
         const status = error.response?.status;
 
         if (status === 401 || status === 403) {
-          authSession.clearSession();
-          setSignedOut();
-          navigate(ROUTES.root, { replace: true });
+          resetInvalidAuthSession();
+          return;
+        }
+
+        if (status === 409) {
+          setGlobalError(getTeacherSignUpErrorMessage(getApiErrorMessage(error)));
           return;
         }
       }
 
-      const nextErrorState = getAuthErrorMessage(error, FORM_ERROR_FALLBACK);
-
-      setGlobalError(nextErrorState);
+      setGlobalError(getAuthErrorMessage(error, SIGN_UP_ERROR_FALLBACK));
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  const handleOpenClassCodeModal = async () => {
+  const createClassCode = async () => {
     setGlobalError(null);
 
     try {
@@ -193,61 +304,63 @@ export const useTeacherSignUpForm = () => {
 
       if (!classCodeResponse.success || !classCodeResponse.data?.classCode?.trim()) {
         setGlobalError({
-          title: classCodeResponse.message || '학급코드 생성에 실패했어요.',
-          description: '잠시 후 다시 시도해 주세요.',
+          title: classCodeResponse.message || CLASS_CODE_ERROR_FALLBACK.title,
+          description: CLASS_CODE_ERROR_FALLBACK.description,
         });
         return;
       }
 
-      setGeneratedClassCode(classCodeResponse.data.classCode.trim());
+      const nextClassCode = classCodeResponse.data.classCode.trim();
+
+      setGeneratedClassCode(nextClassCode);
       setStep('CLASS_CODE_READY');
+      saveTeacherSignUpState({
+        step: 'CLASS_CODE_READY',
+        generatedClassCode: nextClassCode,
+      });
     } catch (error) {
       if (error instanceof AxiosError) {
         const status = error.response?.status;
 
         if (status === 401 || status === 403) {
-          authSession.clearSession();
-          setSignedOut();
-          navigate(ROUTES.root, { replace: true });
+          resetInvalidAuthSession();
           return;
         }
       }
 
-      const nextErrorState = getAuthErrorMessage(error, {
-        title: '학급코드 생성에 실패했어요.',
-        description: '잠시 후 다시 시도해 주세요.',
-      });
-
-      setGlobalError(nextErrorState);
+      setGlobalError(getAuthErrorMessage(error, CLASS_CODE_ERROR_FALLBACK));
     } finally {
       setIsCreatingClassCode(false);
     }
   };
 
-  const handleCopyClassCode = async () => {
-    const classCode = generatedClassCode.trim();
-
-    if (!classCode) {
-      showToast('복사할 학급코드가 없어요.', 'error');
-      return;
-    }
-
-    if (!navigator.clipboard) {
-      showToast('현재 브라우저에서는 복사를 지원하지 않아요.', 'error');
-      return;
-    }
-
-    try {
-      await navigator.clipboard.writeText(classCode);
-      showToast('학급코드를 복사했어요.', 'success');
-    } catch {
-      showToast('학급코드 복사에 실패했어요.', 'error');
-    }
+  const goToInbox = async () => {
+    await applySignedInState();
+    clearStoredTeacherSignUpState();
+    navigate(ROUTES.teacherThreadList, { replace: true });
   };
 
-  const handleGoToInbox = async () => {
-    await applySignedInState();
-    navigate(ROUTES.teacherThreadList, { replace: true });
+  const handleSignUpAction = async () => {
+    if (isSignUpActionDisabled) {
+      return;
+    }
+
+    if (step === 'FORM') {
+      await submitTeacherSignUp();
+      return;
+    }
+
+    if (step === 'SIGN_UP_SUCCESS') {
+      await createClassCode();
+      return;
+    }
+
+    await goToInbox();
+  };
+
+  const handleSubmit: FormSubmitHandler = event => {
+    event.preventDefault();
+    void handleSignUpAction();
   };
 
   return {
@@ -257,18 +370,15 @@ export const useTeacherSignUpForm = () => {
     classNumber,
     fieldErrors: validationResult.errors,
     globalError,
-    isSubmitting,
-    isCreatingClassCode,
-    isSignUpEnabled,
     step,
     generatedClassCode,
+    isSignUpActionDisabled,
     setTeacherName: handleChangeTeacherName,
     setSchoolName: handleChangeSchoolName,
     setGrade: handleChangeGrade,
     setClassNumber: handleChangeClassNumber,
+    handleLogout,
     handleSubmit,
-    handleOpenClassCodeModal,
-    handleCopyClassCode,
-    handleGoToInbox,
+    handleSignUpAction,
   };
 };
