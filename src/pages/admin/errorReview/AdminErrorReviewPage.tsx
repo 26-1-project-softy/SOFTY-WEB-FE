@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import styled from '@emotion/styled';
 import { ErrorReviewList } from '@/components/errorReview/ErrorReviewList';
 import { Loader } from '@/components/common/Loader';
@@ -13,6 +12,7 @@ import {
   ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS,
   ERROR_REVIEW_RISK_LEVEL_OPTIONS,
   ERROR_REVIEW_TEXT,
+  ERROR_REVIEW_ALL_VALUE,
 } from '@/features/admin/errorReview/constants';
 import { IcErrorReview } from '@/icons';
 
@@ -56,45 +56,33 @@ export const AdminErrorReviewPage = () => {
 
   const isFirstPage = page <= 1;
   const isLastPage = page >= totalPages;
-  const [hasRiskLevelSelected, setHasRiskLevelSelected] = useState(false);
-  const [hasFeedbackSelected, setHasFeedbackSelected] = useState(false);
   const hasSelectedFilters =
-    hasRiskLevelSelected ||
-    hasFeedbackSelected ||
+    draftFilters.riskLevel !== ERROR_REVIEW_ALL_VALUE ||
+    draftFilters.feedbackResult !== ERROR_REVIEW_ALL_VALUE ||
     Boolean(draftFilters.teacherName.trim()) ||
     Boolean(draftFilters.startDate) ||
     Boolean(draftFilters.endDate);
 
-  const handleResetAll = () => {
-    setHasRiskLevelSelected(false);
-    setHasFeedbackSelected(false);
-    handleResetFilters();
-  };
+  const handleResetAll = () => handleResetFilters();
 
   return (
     <PageContainer>
       <FilterBar>
-        <SelectDropdown
-          value={draftFilters.riskLevel}
-          options={ERROR_REVIEW_RISK_LEVEL_OPTIONS}
-          placeholder={ERROR_REVIEW_TEXT.riskLevelPlaceholder}
-          hasSelected={hasRiskLevelSelected}
-          onChange={value => {
-            setHasRiskLevelSelected(true);
-            setDraftFilters(prev => ({ ...prev, riskLevel: value }));
-          }}
-        />
+        <FieldWrap>
+          <SelectDropdown
+            value={draftFilters.riskLevel}
+            options={ERROR_REVIEW_RISK_LEVEL_OPTIONS}
+            onChange={value => setDraftFilters(prev => ({ ...prev, riskLevel: value }))}
+          />
+        </FieldWrap>
 
-        <SelectDropdown
-          value={draftFilters.feedbackResult}
-          options={ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS}
-          placeholder={ERROR_REVIEW_TEXT.feedbackPlaceholder}
-          hasSelected={hasFeedbackSelected}
-          onChange={value => {
-            setHasFeedbackSelected(true);
-            setDraftFilters(prev => ({ ...prev, feedbackResult: value }));
-          }}
-        />
+        <FieldWrap>
+          <SelectDropdown
+            value={draftFilters.feedbackResult}
+            options={ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS}
+            onChange={value => setDraftFilters(prev => ({ ...prev, feedbackResult: value }))}
+          />
+        </FieldWrap>
 
         <FieldWrap>
           <TextField
