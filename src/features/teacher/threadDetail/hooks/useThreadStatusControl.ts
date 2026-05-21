@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { INQUIRY_STATUS } from '@/constants/inquiryStatus';
 import { useUpdateChatRoomStatus } from '@/features/teacher/threadDetail/mutations';
 import { useThreadStatusStore, type ThreadStatus } from '@/stores/threadStatusStore';
@@ -14,28 +14,17 @@ export const useThreadStatusControl = ({
   isValidChatRoomId,
   serverStatus,
 }: UseThreadStatusControlParams) => {
-  const [status, setStatus] = useState<ThreadStatus>(INQUIRY_STATUS.IN_PROGRESS);
   const [isStatusMenuOpen, setIsStatusMenuOpen] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<ThreadStatus | null>(null);
 
+  const overriddenStatus = useThreadStatusStore(state => state.statusByRoomId[chatRoomId]);
   const setRoomStatus = useThreadStatusStore(state => state.setRoomStatus);
   const updateChatRoomStatusMutation = useUpdateChatRoomStatus();
 
-  useEffect(() => {
-    if (!serverStatus) {
-      return;
-    }
+  const status = overriddenStatus ?? serverStatus ?? INQUIRY_STATUS.IN_PROGRESS;
+  const isStatusConfirmDialogOpen = pendingStatus === INQUIRY_STATUS.COMPLETED;
 
-    const overriddenStatus = useThreadStatusStore.getState().statusByRoomId[chatRoomId];
-    const nextStatus = overriddenStatus ?? serverStatus;
-
-    setStatus(nextStatus);
-
-    if (!overriddenStatus) {
-      setRoomStatus(chatRoomId, serverStatus);
-    }
-  }, [chatRoomId, serverStatus, setRoomStatus]);
-
-  const handleSelectStatus = useCallback(
+  const updateStatus = useCallback(
     async (nextStatus: ThreadStatus) => {
       if (updateChatRoomStatusMutation.isPending) {
         return;
@@ -43,11 +32,15 @@ export const useThreadStatusControl = ({
 
       const previousStatus = status;
 
-      setStatus(nextStatus);
+      const rollbackStatus = () => {
+        setRoomStatus(chatRoomId, previousStatus);
+      };
+
       setRoomStatus(chatRoomId, nextStatus);
       setIsStatusMenuOpen(false);
 
       if (!isValidChatRoomId) {
+        rollbackStatus();
         return;
       }
 
@@ -58,21 +51,57 @@ export const useThreadStatusControl = ({
         });
 
         if (!response.success) {
-          throw new Error(response.message || '처리 상태 변경에 실패했어요');
+          rollbackStatus();
         }
       } catch {
-        setStatus(previousStatus);
-        setRoomStatus(chatRoomId, previousStatus);
+        rollbackStatus();
       }
     },
     [chatRoomId, isValidChatRoomId, setRoomStatus, status, updateChatRoomStatusMutation]
   );
 
+  const handleSelectStatus = useCallback(
+    (nextStatus: ThreadStatus) => {
+      if (updateChatRoomStatusMutation.isPending || nextStatus === status) {
+        setIsStatusMenuOpen(false);
+        return;
+      }
+
+      if (nextStatus === INQUIRY_STATUS.COMPLETED && status !== INQUIRY_STATUS.COMPLETED) {
+        setPendingStatus(nextStatus);
+        setIsStatusMenuOpen(false);
+        return;
+      }
+
+      void updateStatus(nextStatus);
+    },
+    [status, updateChatRoomStatusMutation.isPending, updateStatus]
+  );
+
+  const handleCloseStatusConfirmDialog = useCallback(() => {
+    setPendingStatus(null);
+  }, []);
+
+  const handleConfirmStatusChange = useCallback(async () => {
+    if (!pendingStatus) {
+      return;
+    }
+
+    const nextStatus = pendingStatus;
+
+    setPendingStatus(null);
+    await updateStatus(nextStatus);
+  }, [pendingStatus, updateStatus]);
+
   return {
     status,
     isStatusMenuOpen,
     isStatusUpdating: updateChatRoomStatusMutation.isPending,
+    isStatusConfirmDialogOpen,
+
     setIsStatusMenuOpen,
     handleSelectStatus,
+    handleCloseStatusConfirmDialog,
+    handleConfirmStatusChange,
   };
 };

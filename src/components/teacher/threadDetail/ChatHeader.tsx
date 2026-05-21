@@ -1,5 +1,5 @@
 ﻿import styled from '@emotion/styled';
-import { IconButton } from '@/components/common/IconButton';
+import { Header } from '@/components/common/Header';
 import { InlineButton } from '@/components/common/InlineButton';
 import { StatusTagButton } from '@/components/teacher/threadDetail/StatusTagButton';
 import {
@@ -8,7 +8,6 @@ import {
   type InquiryIntentType,
 } from '@/constants/inquiryIntent';
 import { INQUIRY_STATUS, INQUIRY_STATUS_LABEL } from '@/constants/inquiryStatus';
-import { IcBack } from '@/icons';
 import type { ThreadStatus } from '@/stores/threadStatusStore';
 
 type ChatHeaderProps = {
@@ -32,81 +31,55 @@ export const ChatHeader = ({
   onToggleStatusMenu,
   onSelectStatus,
 }: ChatHeaderProps) => {
+  const parentName = counterpartName?.trim();
+
   return (
-    <ThreadHeader>
-      <BackButtonArea>
-        <IconButton
-          icon={IcBack}
-          variant="plain"
-          accessibilityLabel="수신함으로 이동"
-          onClick={onBack}
-        />
-      </BackButtonArea>
+    <Header
+      title={parentName ? `${counterpartName} 학부모님` : '채팅방'}
+      onBack={onBack}
+      metaData={
+        <ChatHeaderMetaArea>
+          <StudentName>{studentName || '-'}</StudentName>
 
-      <HeaderInfo>
-        <ParentName>{counterpartName || '-'}</ParentName>
-        <StudentName>{studentName || '-'}</StudentName>
+          <IntentTag $intentType={intentType}>{INQUIRY_INTENT_LABEL[intentType]}</IntentTag>
 
-        <IntentTag $intentType={intentType}>{INQUIRY_INTENT_LABEL[intentType]}</IntentTag>
+          <StatusDropdownArea>
+            <StatusTagButton
+              label={INQUIRY_STATUS_LABEL[status]}
+              status={status}
+              isDropdown
+              onClick={onToggleStatusMenu}
+            />
 
-        <StatusDropdownArea>
-          <StatusTagButton
-            label={INQUIRY_STATUS_LABEL[status]}
-            status={status}
-            isDropdown
-            onClick={onToggleStatusMenu}
-          />
-
-          {isStatusMenuOpen ? (
-            <StatusMenu>
-              <StatusMenuItem
-                variant="text"
-                size="M"
-                label={INQUIRY_STATUS_LABEL.IN_PROGRESS}
-                onClick={() => onSelectStatus(INQUIRY_STATUS.IN_PROGRESS)}
-              />
-              <StatusMenuItem
-                variant="text"
-                size="M"
-                label={INQUIRY_STATUS_LABEL.COMPLETED}
-                onClick={() => onSelectStatus(INQUIRY_STATUS.COMPLETED)}
-              />
-            </StatusMenu>
-          ) : null}
-        </StatusDropdownArea>
-      </HeaderInfo>
-    </ThreadHeader>
+            {isStatusMenuOpen ? (
+              <StatusMenu>
+                <StatusMenuItem
+                  variant="text"
+                  size="M"
+                  label={INQUIRY_STATUS_LABEL.IN_PROGRESS}
+                  onClick={() => onSelectStatus(INQUIRY_STATUS.IN_PROGRESS)}
+                />
+                <StatusMenuItem
+                  variant="text"
+                  size="M"
+                  label={INQUIRY_STATUS_LABEL.COMPLETED}
+                  onClick={() => onSelectStatus(INQUIRY_STATUS.COMPLETED)}
+                />
+              </StatusMenu>
+            ) : null}
+          </StatusDropdownArea>
+        </ChatHeaderMetaArea>
+      }
+    />
   );
 };
 
-const ThreadHeader = styled.header`
-  display: flex;
-  height: 84px;
-  align-items: center;
-  padding: 0 20px;
-  gap: 12px;
-  border-bottom: 1px solid ${({ theme }) => theme.colors.border.border1};
-  background: ${({ theme }) => theme.colors.background.bg1};
-`;
-
-const BackButtonArea = styled.div`
-  button {
-    width: 32px;
-    height: 32px;
-  }
-`;
-
-const HeaderInfo = styled.div`
+const ChatHeaderMetaArea = styled.div`
   position: relative;
   display: flex;
   align-items: center;
   min-width: 0;
   gap: 10px;
-`;
-
-const ParentName = styled.h2`
-  ${({ theme }) => theme.fonts.title2};
-  color: ${({ theme }) => theme.colors.text.text1};
 `;
 
 const StudentName = styled.span`
@@ -115,8 +88,8 @@ const StudentName = styled.span`
 `;
 
 const IntentTag = styled.span<{ $intentType: InquiryIntentType }>`
-  ${({ theme }) => theme.fonts.labelXS};
   display: inline-flex;
+  ${({ theme }) => theme.fonts.labelXS};
   border-radius: 999px;
   padding: 4px 10px;
 

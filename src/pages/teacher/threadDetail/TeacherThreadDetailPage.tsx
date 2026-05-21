@@ -1,16 +1,23 @@
 import styled from '@emotion/styled';
+import { useTheme } from '@emotion/react';
 import { useMemo } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useThreadDetail } from '@/features/teacher/threadDetail/hooks/useThreadDetail';
-import { ChatHeader } from '@/pages/teacher/threadDetail/components/ChatHeader';
-import { ChatInput } from '@/pages/teacher/threadDetail/components/ChatInput';
-import { ChatMessageList } from '@/pages/teacher/threadDetail/components/ChatMessageList';
+import { ChatHeader } from '@/components/teacher/threadDetail/ChatHeader';
+import { ChatInput } from '@/components/teacher/threadDetail/ChatInput';
+import { ChatMessageList } from '@/components/teacher/threadDetail/ChatMessageList';
 import { InlineButton } from '@/components/common/InlineButton';
 import { Alert } from '@/components/common/Alert';
+import { Dialog } from '@/components/common/Dialog';
+import { DialogHeader } from '@/components/common/DialogHeader';
+import { DialogFooter } from '@/components/common/DialogFooter';
+import { INQUIRY_STATUS } from '@/constants/inquiryStatus';
 import { ROUTES } from '@/constants/routes';
 import { IcInfo, IcSparkles } from '@/icons';
+import { HEADER_HEIGHT } from '@/constants/layout';
 
 export const TeacherThreadDetailPage = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const { threadId } = useParams();
   const chatRoomId = useMemo(() => Number(threadId), [threadId]);
@@ -18,6 +25,8 @@ export const TeacherThreadDetailPage = () => {
   const {
     status,
     isStatusMenuOpen,
+    isStatusUpdating,
+    isStatusConfirmDialogOpen,
     messageInput,
     analysisResult,
     analysisFeedbackScore,
@@ -41,6 +50,7 @@ export const TeacherThreadDetailPage = () => {
     composerActionMode,
     isComposerActionDisabled,
     isUnsafeRisk,
+    scrollToLatestRequestKey,
     setIsStatusMenuOpen,
     handleMessageInputChange,
     handleComposerActionClick,
@@ -52,7 +62,11 @@ export const TeacherThreadDetailPage = () => {
     handleRetryMissingMessages,
     handleRetryConversation,
     handleSelectStatus,
+    handleCloseStatusConfirmDialog,
+    handleConfirmStatusChange,
   } = useThreadDetail({ chatRoomId });
+
+  const isChatCompleted = status === INQUIRY_STATUS.COMPLETED;
 
   return (
     <ThreadDetailPageContainer>
@@ -70,6 +84,7 @@ export const TeacherThreadDetailPage = () => {
       <ThreadBody>
         <ConversationPanel>
           <ChatMessageList
+            key={chatRoomId}
             loadState={loadState}
             detailErrorMessage={detailErrorMessage}
             isMessagesLoading={isMessagesLoading}
@@ -78,19 +93,23 @@ export const TeacherThreadDetailPage = () => {
             messagesHasNext={messagesHasNext}
             isMessagesLoadingMore={isMessagesLoadingMore}
             messages={messages}
+            scrollToLatestRequestKey={scrollToLatestRequestKey}
+            isChatCompleted={isChatCompleted}
             onRetryConversation={() => void handleRetryConversation()}
             onRetryMissingMessages={handleRetryMissingMessages}
             onLoadMoreMessages={handleLoadMoreMessages}
           />
 
-          <ChatInput
-            value={messageInput}
-            onChange={handleMessageInputChange}
-            actionMode={composerActionMode}
-            isActionDisabled={isComposerActionDisabled}
-            onActionClick={handleComposerActionClick}
-            errorMessage={sendErrorMessage}
-          />
+          {!isChatCompleted ? (
+            <ChatInput
+              value={messageInput}
+              onChange={handleMessageInputChange}
+              actionMode={composerActionMode}
+              isActionDisabled={isComposerActionDisabled}
+              onActionClick={handleComposerActionClick}
+              errorMessage={sendErrorMessage}
+            />
+          ) : null}
         </ConversationPanel>
 
         <AssistantPanel>
@@ -215,17 +234,46 @@ export const TeacherThreadDetailPage = () => {
           </AssistantBody>
         </AssistantPanel>
       </ThreadBody>
+
+      <Dialog isOpen={isStatusConfirmDialogOpen} onClose={handleCloseStatusConfirmDialog}>
+        <DialogHeader
+          icon={IcInfo}
+          iconBgColor={theme.colors.background.bg4}
+          iconColor={theme.colors.brand.primary}
+          title="문의를 완료 처리할까요?"
+          description={`완료 처리하면 이 채팅방에서는 더 이상 메시지를 보낼 수 없어요. 필요한 경우 다시 처리중으로 변경할 수 있어요.`}
+        />
+
+        <DialogFooter>
+          <InlineButton
+            variant="ghost"
+            size="L"
+            label="취소"
+            width="100%"
+            onClick={handleCloseStatusConfirmDialog}
+            disabled={isStatusUpdating}
+          />
+          <InlineButton
+            variant="primary"
+            size="L"
+            label="완료"
+            width="100%"
+            onClick={() => void handleConfirmStatusChange()}
+            disabled={isStatusUpdating}
+          />
+        </DialogFooter>
+      </Dialog>
     </ThreadDetailPageContainer>
   );
 };
 
 const ThreadDetailPageContainer = styled.section`
   display: flex;
-  height: 100%;
   flex-direction: column;
   overflow: hidden;
-  border-top: 1px solid ${({ theme }) => theme.colors.border.border1};
+  height: 100%;
   background: ${({ theme }) => theme.colors.background.bg6};
+  padding-top: ${HEADER_HEIGHT}px;
 `;
 
 const ThreadBody = styled.div`

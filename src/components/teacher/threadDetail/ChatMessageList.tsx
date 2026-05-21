@@ -1,12 +1,11 @@
 ﻿import styled from '@emotion/styled';
+import { useChatMessageAutoScroll } from '@/features/teacher/threadDetail/hooks/useChatMessageAutoScroll';
 import { Alert } from '@/components/common/Alert';
 import { InlineButton } from '@/components/common/InlineButton';
 import { Loader } from '@/components/common/Loader';
 import { Avatar } from '@/components/common/Avatar';
-import type { MessageItem } from '@/features/teacher/threadDetail/types';
+import type { DetailLoadState, MessageItem } from '@/features/teacher/threadDetail/types';
 import { IcError, IcRefresh } from '@/icons';
-
-type DetailLoadState = 'loading' | 'error' | 'success';
 
 type ChatMessageListProps = {
   loadState: DetailLoadState;
@@ -17,9 +16,11 @@ type ChatMessageListProps = {
   messagesHasNext: boolean;
   isMessagesLoadingMore: boolean;
   messages: MessageItem[];
+  scrollToLatestRequestKey: number;
   onRetryConversation: () => void;
   onRetryMissingMessages: () => void;
   onLoadMoreMessages: () => void;
+  isChatCompleted?: boolean;
 };
 
 export const ChatMessageList = ({
@@ -31,10 +32,19 @@ export const ChatMessageList = ({
   messagesHasNext,
   isMessagesLoadingMore,
   messages,
+  scrollToLatestRequestKey,
   onRetryConversation,
   onRetryMissingMessages,
   onLoadMoreMessages,
+  isChatCompleted,
 }: ChatMessageListProps) => {
+  const { scrollContainerRef } = useChatMessageAutoScroll({
+    loadState,
+    isMessagesLoading,
+    messageCount: messages.length,
+    scrollToLatestRequestKey,
+  });
+
   if (loadState === 'error') {
     return (
       <DetailErrorBox>
@@ -75,7 +85,17 @@ export const ChatMessageList = ({
   }
 
   return (
-    <MessageArea>
+    <MessageArea ref={scrollContainerRef}>
+      {isChatCompleted ? (
+        <CompletedNoticeArea>
+          <Alert
+            variant="warning"
+            title="문의 처리가 완료되었어요"
+            description="이 채팅방에서는 더 이상 메시지를 보낼 수 없어요."
+          />
+        </CompletedNoticeArea>
+      ) : null}
+
       {messagesPartialError ? (
         <Alert
           title="채팅 내역을 불러오지 못했어요"
@@ -121,12 +141,18 @@ export const ChatMessageList = ({
 const MessageArea = styled.div`
   flex: 1;
   min-height: 0;
-  padding: 16px 14px;
+  padding: 12px 16px;
   overflow-y: auto;
   overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 14px;
+`;
+
+const CompletedNoticeArea = styled.div`
+  position: sticky;
+  top: 0;
+  z-index: 2;
 `;
 
 const DetailErrorBox = styled.div`
@@ -213,7 +239,6 @@ const MessageBubble = styled.div<{ $isMine: boolean }>`
   ${({ theme }) => theme.fonts.body2};
   border-radius: ${({ $isMine }) => ($isMine ? '20px 0' : '0 20px')} 20px 20px;
   padding: 12px 16px;
-  line-height: 1.45;
   color: ${({ $isMine, theme }) => ($isMine ? theme.colors.text.textW : theme.colors.text.text2)};
   background: ${({ $isMine, theme }) =>
     $isMine ? theme.colors.brand.primary : theme.colors.background.bg1};

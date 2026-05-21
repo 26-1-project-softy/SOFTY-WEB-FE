@@ -17,18 +17,19 @@ import type {
 
 type ComposerActionMode = 'send' | 'assist';
 
-type RefetchMessagesResult = {
+type RefetchMessages = () => Promise<{
   isSuccess: boolean;
-};
+}>;
 
 type UseThreadComposerParams = {
   chatRoomId: number;
   isValidChatRoomId: boolean;
-  refetchMessages: () => Promise<RefetchMessagesResult>;
+  refetchMessages: RefetchMessages;
   appendOptimisticMessage: (message: MessageItem) => void;
   markMessagesAsRead: () => Promise<void>;
   resetFeedbackState: () => void;
   onAnalysisResultChange: (analysisResult: AnalysisResult | null) => void;
+  onRequestScrollToLatestMessage: () => void;
 };
 
 export const useThreadComposer = ({
@@ -39,6 +40,7 @@ export const useThreadComposer = ({
   markMessagesAsRead,
   resetFeedbackState,
   onAnalysisResultChange,
+  onRequestScrollToLatestMessage,
 }: UseThreadComposerParams) => {
   const [messageInput, setMessageInput] = useState('');
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -52,13 +54,14 @@ export const useThreadComposer = ({
   const saveRecommendationAdoptionMutation = useSaveRecommendationAdoption();
 
   const isAnalysisRequesting =
-    analyzeTeacherMessageMutation.isPending || recheckTeacherMessageMutation.isPending;
+    analyzeTeacherMessageMutation.isPending ||
+    recheckTeacherMessageMutation.isPending ||
+    sendTeacherMessageMutation.isPending;
 
   const isSendingMessage = sendTeacherMessageMutation.isPending;
-
   const hasMessageInput = messageInput.trim().length > 0;
   const composerActionMode: ComposerActionMode = analysisResult ? 'send' : 'assist';
-  const isComposerActionDisabled = !hasMessageInput || isAnalysisRequesting || isSendingMessage;
+  const isComposerActionDisabled = !hasMessageInput || isAnalysisRequesting;
   const isUnsafeRisk = analysisResult?.riskLevel === 'UNSAFE';
 
   const resetComposerState = useCallback(() => {
@@ -77,7 +80,7 @@ export const useThreadComposer = ({
   }, [resetComposerState]);
 
   const requestMessageAnalysis = useCallback(async () => {
-    if (!hasMessageInput || isAnalysisRequesting || isSendingMessage) {
+    if (!hasMessageInput || isAnalysisRequesting) {
       return null;
     }
 
@@ -88,7 +91,8 @@ export const useThreadComposer = ({
       onAnalysisResultChange(null);
 
       if (!isValidChatRoomId) {
-        throw new Error('유효하지 않은 채팅방입니다.');
+        setAnalysisErrorMessage('유효하지 않은 채팅방입니다.');
+        return null;
       }
 
       const content = messageInput.trim();
@@ -120,7 +124,6 @@ export const useThreadComposer = ({
     chatRoomId,
     hasMessageInput,
     isAnalysisRequesting,
-    isSendingMessage,
     isValidChatRoomId,
     lastAnalysisId,
     messageInput,
@@ -129,22 +132,48 @@ export const useThreadComposer = ({
     resetFeedbackState,
   ]);
 
+  const appendFallbackMineMessage = useCallback(
+    (message: MessageItem) => {
+      appendOptimisticMessage(message);
+      onRequestScrollToLatestMessage();
+    },
+    [appendOptimisticMessage, onRequestScrollToLatestMessage]
+  );
+
+  const refreshMessagesAfterSend = useCallback(
+    async (fallbackMessage: MessageItem) => {
+      const refetchResult = await refetchMessages();
+
+      if (!refetchResult.isSuccess) {
+        appendFallbackMineMessage(fallbackMessage);
+        return;
+      }
+
+      onRequestScrollToLatestMessage();
+    },
+    [appendFallbackMineMessage, onRequestScrollToLatestMessage, refetchMessages]
+  );
+
+  const analysisId = analysisResult?.analysisId;
+
   const sendTeacherMessage = useCallback(async () => {
-    if (!hasMessageInput || isAnalysisRequesting || isSendingMessage) {
+    if (!hasMessageInput || isAnalysisRequesting) {
       return;
     }
 
     try {
       setAnalysisErrorMessage('');
+      setSendErrorMessage('');
 
       const content = messageInput.trim();
 
-      if (!analysisResult?.analysisId) {
-        throw new Error('분석 결과가 없어 메시지를 전송할 수 없어요');
+      if (!analysisId) {
+        setSendErrorMessage('분석 결과가 없어 메시지를 전송할 수 없어요');
+        return;
       }
 
       const payload: SendTeacherMessageRequest = {
-        analysisId: analysisResult.analysisId,
+        analysisId,
         content,
       };
 
@@ -154,10 +183,11 @@ export const useThreadComposer = ({
       });
 
       if (!response.success) {
-        throw new Error(response.message || '메시지 전송에 실패했어요');
+        setSendErrorMessage(response.message || '메시지 전송에 실패했어요');
+        return;
       }
 
-      const optimisticMessage: MessageItem = {
+      const fallbackMessage: MessageItem = {
         id: response.data?.messageId ?? Date.now(),
         senderName: '나',
         sentAt: formatChatMessageDateTime(new Date().toISOString()),
@@ -168,39 +198,32 @@ export const useThreadComposer = ({
 
       resetComposerState();
 
-      const refetchResult = await refetchMessages();
-
-      if (!refetchResult.isSuccess) {
-        appendOptimisticMessage(optimisticMessage);
-      }
-
+      await refreshMessagesAfterSend(fallbackMessage);
       void markMessagesAsRead();
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 400) {
         try {
           const content = messageInput.trim();
           const response = await threadDetailApi.getMessages(chatRoomId, { size: 5 });
-          const latestMine = response.data?.messages?.find(message => message.isMine);
+          const latestMine = [...(response.data?.messages ?? [])]
+            .reverse()
+            .find(message => message.isMine);
+
           const isActuallySent = latestMine?.content?.trim() === content;
 
           if (isActuallySent) {
+            const fallbackMessage: MessageItem = {
+              id: latestMine.messageId,
+              senderName: '나',
+              sentAt: formatChatMessageDateTime(latestMine.createdAt),
+              content,
+              isMine: true,
+              isUnreadByCounterpart: latestMine.isUnreadByCounterpart,
+            };
+
             resetComposerState();
 
-            const refetchResult = await refetchMessages();
-
-            if (!refetchResult.isSuccess) {
-              appendOptimisticMessage({
-                id: latestMine?.messageId ?? Date.now(),
-                senderName: '나',
-                sentAt: formatChatMessageDateTime(
-                  latestMine?.createdAt ?? new Date().toISOString()
-                ),
-                content,
-                isMine: true,
-                isUnreadByCounterpart: latestMine?.isUnreadByCounterpart ?? true,
-              });
-            }
-
+            await refreshMessagesAfterSend(fallbackMessage);
             void markMessagesAsRead();
             return;
           }
@@ -212,15 +235,13 @@ export const useThreadComposer = ({
       setSendErrorMessage(getThreadDetailErrorMessage(error, '메시지를 전송하지 못했어요'));
     }
   }, [
-    analysisResult?.analysisId,
-    appendOptimisticMessage,
+    analysisId,
     chatRoomId,
     hasMessageInput,
     isAnalysisRequesting,
-    isSendingMessage,
     markMessagesAsRead,
     messageInput,
-    refetchMessages,
+    refreshMessagesAfterSend,
     resetComposerState,
     sendTeacherMessageMutation,
   ]);
@@ -265,24 +286,20 @@ export const useThreadComposer = ({
     void requestMessageAnalysis();
   }, [requestMessageAnalysis]);
 
+  const recommendedMessage = analysisResult?.recommendedMessage;
+
   const handleApplyRecommendedReply = useCallback(async () => {
-    if (!analysisResult?.recommendedMessage) {
+    if (!recommendedMessage || !analysisId) {
       return;
     }
 
     try {
-      const response = await saveRecommendationAdoptionMutation.mutateAsync(
-        analysisResult.analysisId
-      );
-
-      if (!response.success) {
-        throw new Error(response.message || '추천문장 채택 저장에 실패했어요');
-      }
+      await saveRecommendationAdoptionMutation.mutateAsync(analysisId);
     } catch {
       // 채택 저장 실패하더라도 추천문장 적용 UX는 유지합니다.
     }
 
-    setMessageInput(analysisResult.recommendedMessage);
+    setMessageInput(recommendedMessage);
     setAnalysisResult(null);
     setAnalysisErrorMessage('');
     setSendErrorMessage('');
@@ -290,8 +307,9 @@ export const useThreadComposer = ({
     onAnalysisResultChange(null);
     resetFeedbackState();
   }, [
-    analysisResult,
+    analysisId,
     onAnalysisResultChange,
+    recommendedMessage,
     resetFeedbackState,
     saveRecommendationAdoptionMutation,
   ]);

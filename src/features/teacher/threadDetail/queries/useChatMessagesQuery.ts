@@ -6,6 +6,7 @@ import type { MessageItem } from '@/features/teacher/threadDetail/types';
 
 const MESSAGE_PAGE_SIZE = 20;
 const MESSAGE_FOCUS_REFETCH_STALE_TIME = 3000;
+const MESSAGE_POLLING_INTERVAL_MS = 1000;
 
 type ChatMessagesPage = {
   messages: MessageItem[];
@@ -48,6 +49,14 @@ export const useChatMessagesQuery = (chatRoomId: number) => {
       return lastPage.nextCursor ?? undefined;
     },
     refetchOnWindowFocus: false,
+    refetchInterval: () => {
+      if (!isValidChatRoomId || typeof document === 'undefined') {
+        return false;
+      }
+
+      return document.visibilityState === 'visible' ? MESSAGE_POLLING_INTERVAL_MS : false;
+    },
+    refetchIntervalInBackground: false,
     staleTime: MESSAGE_FOCUS_REFETCH_STALE_TIME,
   });
 
