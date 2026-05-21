@@ -59,7 +59,7 @@ export const DatePickerDropdown = ({ value, placeholder, onChange }: DatePickerD
             value={value ? new Date(value) : new Date()}
             calendarType="gregory"
             // 첫 번째 locale 인자를 아예 생략하거나 명시해 줍니다.
-            formatDay={(locale, date) => String(date.getDate())}
+            formatDay={(...args) => String(args[1].getDate())}
             next2Label={null}
             prev2Label={null}
           />
