@@ -5,6 +5,7 @@ import { SectionEmptyState } from '@/components/common/SectionEmptyState';
 import { SectionErrorState } from '@/components/common/SectionErrorState';
 import { InlineButton } from '@/components/common/InlineButton';
 import { SelectDropdown } from '@/components/common/SelectDropdown';
+import { FieldLabel } from '@/components/common/FieldLabel';
 import { DatePickerDropdown } from '@/components/errorReview/DatePickerDropdown';
 import { TextField } from '@/components/common/TextField';
 import { useAdminErrorReview } from '@/features/admin/errorReview/hooks/useAdminErrorReview';
@@ -69,39 +70,59 @@ export const AdminErrorReviewPage = () => {
     <PageContainer>
       <FilterBar>
         <FieldWrap>
-          <SelectDropdown
-            value={draftFilters.riskLevel}
-            options={ERROR_REVIEW_RISK_LEVEL_OPTIONS}
-            onChange={value => setDraftFilters(prev => ({ ...prev, riskLevel: value }))}
-          />
+          <FilterControlRow>
+            <FieldLabel label={ERROR_REVIEW_TEXT.riskLevelLabel} />
+            <ControlWrap>
+              <SelectDropdown
+                value={draftFilters.riskLevel}
+                options={ERROR_REVIEW_RISK_LEVEL_OPTIONS}
+                onChange={value => setDraftFilters(prev => ({ ...prev, riskLevel: value }))}
+              />
+            </ControlWrap>
+          </FilterControlRow>
         </FieldWrap>
 
         <FieldWrap>
-          <SelectDropdown
-            value={draftFilters.feedbackResult}
-            options={ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS}
-            onChange={value => setDraftFilters(prev => ({ ...prev, feedbackResult: value }))}
-          />
+          <FilterControlRow>
+            <FieldLabel label={ERROR_REVIEW_TEXT.feedbackLabel} />
+            <ControlWrap>
+              <SelectDropdown
+                value={draftFilters.feedbackResult}
+                options={ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS}
+                onChange={value => setDraftFilters(prev => ({ ...prev, feedbackResult: value }))}
+              />
+            </ControlWrap>
+          </FilterControlRow>
         </FieldWrap>
 
         <FieldWrap>
-          <TextField
-            type="text"
-            placeholder={ERROR_REVIEW_TEXT.teacherNamePlaceholder}
-            value={draftFilters.teacherName}
-            onChange={e => setDraftFilters(prev => ({ ...prev, teacherName: e.target.value }))}
-          />
+          <FilterControlRow>
+            <FieldLabel label={ERROR_REVIEW_TEXT.teacherNameLabel} />
+            <ControlWrap>
+              <TextField
+                type="text"
+                placeholder={ERROR_REVIEW_TEXT.teacherNamePlaceholder}
+                value={draftFilters.teacherName}
+                onChange={e => setDraftFilters(prev => ({ ...prev, teacherName: e.target.value }))}
+              />
+            </ControlWrap>
+          </FilterControlRow>
         </FieldWrap>
 
         <PeriodFieldWrap>
-          <DatePickerDropdown
-            placeholder={ERROR_REVIEW_TEXT.periodPlaceholder}
-            startDate={draftFilters.startDate}
-            endDate={draftFilters.endDate}
-            onChange={(startDate, endDate) =>
-              setDraftFilters(prev => ({ ...prev, startDate, endDate }))
-            }
-          />
+          <FilterControlRow>
+            <FieldLabel label={ERROR_REVIEW_TEXT.periodLabel} />
+            <PeriodControlWrap>
+              <DatePickerDropdown
+                placeholder={ERROR_REVIEW_TEXT.periodPlaceholder}
+                startDate={draftFilters.startDate}
+                endDate={draftFilters.endDate}
+                onChange={(startDate, endDate) =>
+                  setDraftFilters(prev => ({ ...prev, startDate, endDate }))
+                }
+              />
+            </PeriodControlWrap>
+          </FilterControlRow>
         </PeriodFieldWrap>
 
         <ButtonWrap>
@@ -212,10 +233,6 @@ const FilterBar = styled.div`
 `;
 
 const FieldWrap = styled.div`
-  > div {
-    gap: 0;
-  }
-
   input {
     ${({ theme }) => theme.fonts.labelS};
     height: ${ERROR_REVIEW_FILTER_LAYOUT.controlHeight};
@@ -228,6 +245,22 @@ const FieldWrap = styled.div`
     border-radius: 8px;
     accent-color: ${({ theme }) => theme.colors.brand.primary};
   }
+`;
+
+const FilterControlRow = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+`;
+
+const ControlWrap = styled.div`
+  flex: 1;
+  min-width: 0;
+`;
+
+const PeriodControlWrap = styled(ControlWrap)`
+  flex: 0 1 360px;
 `;
 
 const PeriodFieldWrap = styled(FieldWrap)`
@@ -243,6 +276,8 @@ const PeriodFieldWrap = styled(FieldWrap)`
 `;
 
 const ButtonWrap = styled.div`
+  display: flex;
+  align-items: center;
   width: 100%;
 
   button {

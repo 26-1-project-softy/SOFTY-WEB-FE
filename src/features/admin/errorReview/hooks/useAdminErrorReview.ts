@@ -15,14 +15,20 @@ import {
 } from '@/features/admin/errorReview/constants';
 import type { AdminRiskFeedbackFilterValues } from '@/features/admin/errorReview/types';
 
-const normalizeFilterParams = (filters: AdminRiskFeedbackFilterValues) => ({
-  riskLevel: filters.riskLevel === ERROR_REVIEW_ALL_VALUE ? undefined : filters.riskLevel,
-  feedbackResult:
-    filters.feedbackResult === ERROR_REVIEW_ALL_VALUE ? undefined : filters.feedbackResult,
-  teacherName: filters.teacherName.trim() ? filters.teacherName.trim() : undefined,
-  startDate: filters.startDate || undefined,
-  endDate: filters.endDate || undefined,
-});
+const normalizeFilterParams = (filters: AdminRiskFeedbackFilterValues) => {
+  const normalizedStartDate = filters.startDate || undefined;
+  const normalizedEndDate = filters.endDate || undefined;
+
+  return {
+    riskLevel: filters.riskLevel === ERROR_REVIEW_ALL_VALUE ? undefined : filters.riskLevel,
+    feedbackResult:
+      filters.feedbackResult === ERROR_REVIEW_ALL_VALUE ? undefined : filters.feedbackResult,
+    teacherName: filters.teacherName.trim() ? filters.teacherName.trim() : undefined,
+    startDate: normalizedStartDate,
+    // If only one date is selected, treat it as a single-day query.
+    endDate: normalizedEndDate ?? normalizedStartDate,
+  };
+};
 
 export const useAdminErrorReview = () => {
   const [page, setPage] = useState(ERROR_REVIEW_DEFAULT_QUERY_PARAMS.page);

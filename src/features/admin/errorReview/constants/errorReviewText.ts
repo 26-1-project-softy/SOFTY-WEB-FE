@@ -47,10 +47,14 @@ export const ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS = [
 ] as const;
 
 export const ERROR_REVIEW_TEXT = {
+  riskLevelLabel: '위험도',
+  feedbackLabel: '피드백',
+  teacherNameLabel: '교사명',
+  periodLabel: '조회기간',
   riskLevelPlaceholder: '위험도',
   feedbackPlaceholder: '피드백',
-  teacherNamePlaceholder: '교사명 검색',
-  periodPlaceholder: '조회 기간',
+  teacherNamePlaceholder: '검색',
+  periodPlaceholder: '기간 선택',
   startDatePlaceholder: '시작일',
   endDatePlaceholder: '종료일',
   searchButtonLabel: '조회',
