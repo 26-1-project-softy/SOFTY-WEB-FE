@@ -1,4 +1,4 @@
-import type {
+﻿import type {
   AdminRiskFeedbackFilterValues,
   AdminRiskFeedbackListParams,
 } from '@/features/admin/errorReview/types';
@@ -34,7 +34,6 @@ export const ERROR_REVIEW_DEFAULT_FILTERS: AdminRiskFeedbackFilterValues = {
 export const ERROR_REVIEW_RISK_LEVEL_OPTIONS = [
   { label: '전체', value: ERROR_REVIEW_ALL_FILTER_VALUE },
   { label: '안전', value: 'SAFE' },
-  { label: '주의', value: 'WARNING' },
   { label: '위험', value: 'UNSAFE' },
 ] as const;
 
@@ -57,7 +56,7 @@ export const ERROR_REVIEW_TEXT = {
   previousButtonLabel: '이전',
   nextButtonLabel: '다음',
   paginationMeta: (totalElements: number, page: number, totalPages: number) =>
-    `총 ${totalElements}건 · ${page} / ${totalPages} 페이지`,
+    `총 ${totalElements}건 중 ${page} / ${totalPages} 페이지`,
   openItemAriaLabel: '오류 검토 항목 열기',
   analysisTitle: '분석 메시지',
   riskTitle: '분쟁 가능성 분석 결과',
