@@ -1,4 +1,4 @@
-import { RISK_ANALYSIS_TITLE, RISK_LEVEL } from '@/constants/riskAnalysis';
+﻿import { RISK_ANALYSIS_TITLE, RISK_LEVEL } from '@/constants/riskAnalysis';
 import { formatAiModelDateTime } from '@/utils/formatDateTime';
 import type {
   AdminRiskFeedbackApiItem,
@@ -14,7 +14,13 @@ const getScoreTone = (score: number): ErrorReviewTone => {
 };
 
 const getRiskTone = (riskLevel: AdminRiskFeedbackApiItem['riskLevel']): ErrorReviewTone => {
-  return riskLevel === RISK_LEVEL.UNSAFE ? 'danger' : 'safe';
+  return riskLevel === RISK_LEVEL.SAFE ? 'safe' : 'danger';
+};
+
+const getRiskResult = (riskLevel: AdminRiskFeedbackApiItem['riskLevel']): string => {
+  return riskLevel === RISK_LEVEL.SAFE
+    ? RISK_ANALYSIS_TITLE[RISK_LEVEL.SAFE]
+    : RISK_ANALYSIS_TITLE[RISK_LEVEL.UNSAFE];
 };
 
 export const getErrorReviewItem = (item: AdminRiskFeedbackApiItem): ErrorReviewItem => {
@@ -28,6 +34,6 @@ export const getErrorReviewItem = (item: AdminRiskFeedbackApiItem): ErrorReviewI
     scoreTone: getScoreTone(score),
     riskTone: getRiskTone(item.riskLevel),
     analysisMessage: item.originalMessage || '-',
-    riskResult: RISK_ANALYSIS_TITLE[item.riskLevel],
+    riskResult: getRiskResult(item.riskLevel),
   };
 };

@@ -33,4 +33,17 @@ export type AdminRiskFeedbackListData = {
 export type AdminRiskFeedbackListParams = {
   page: number;
   size: number;
+  riskLevel?: 'ALL' | RiskLevel;
+  feedbackResult?: 'ALL' | 1 | 2 | 3 | 4 | 5;
+  teacherName?: string;
+  startDate?: string;
+  endDate?: string;
+};
+
+export type AdminRiskFeedbackFilterValues = {
+  riskLevel: 'ALL' | RiskLevel;
+  feedbackResult: 'ALL' | 1 | 2 | 3 | 4 | 5;
+  teacherName: string;
+  startDate: string;
+  endDate: string;
 };
