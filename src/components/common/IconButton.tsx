@@ -41,6 +41,7 @@ export const IconButton = ({
 
 const ButtonContainer = styled.button<{ $variant: IconButtonVariant }>`
   display: inline-flex;
+  flex-shrink: 0;
   align-items: center;
   justify-content: center;
   overflow: hidden;
