@@ -15,7 +15,8 @@ import {
   ERROR_REVIEW_TEXT,
   ERROR_REVIEW_ALL_VALUE,
 } from '@/features/admin/errorReview/constants';
-import { IcErrorReview } from '@/icons';
+import { IcErrorReview, IcRefresh } from '@/icons';
+import { IconButton } from '@/components/common/IconButton';
 
 const ERROR_REVIEW_PAGE_LAYOUT = {
   headerHeight: '72px',
@@ -27,12 +28,10 @@ const ERROR_REVIEW_PAGE_LAYOUT = {
 } as const;
 
 const ERROR_REVIEW_FILTER_LAYOUT = {
-  columnsDesktop: 7,
-  columnsTablet: 4,
-  columnsMobile: 2,
+  columnsDesktop: 5,
+  columnsTablet: 2,
   gap: '12px',
-  breakpointTablet: '1280px',
-  breakpointMobile: '900px',
+  breakpointTablet: '780px',
   controlHeight: '42px',
   controlHorizontalPadding: '14px',
 } as const;
@@ -69,50 +68,52 @@ export const AdminErrorReviewPage = () => {
   return (
     <PageContainer>
       <FilterBar>
-        <FieldWrap>
-          <FilterControlRow>
-            <FieldLabel label={ERROR_REVIEW_TEXT.riskLevelLabel} />
-            <ControlWrap>
-              <SelectDropdown
-                value={draftFilters.riskLevel}
-                options={ERROR_REVIEW_RISK_LEVEL_OPTIONS}
-                onChange={value => setDraftFilters(prev => ({ ...prev, riskLevel: value }))}
-              />
-            </ControlWrap>
-          </FilterControlRow>
-        </FieldWrap>
+        <FilterArea>
+          <FieldWrap>
+            <FilterControlRow>
+              <FieldLabel label={ERROR_REVIEW_TEXT.riskLevelLabel} />
+              <ControlWrap>
+                <SelectDropdown
+                  value={draftFilters.riskLevel}
+                  options={ERROR_REVIEW_RISK_LEVEL_OPTIONS}
+                  onChange={value => setDraftFilters(prev => ({ ...prev, riskLevel: value }))}
+                />
+              </ControlWrap>
+            </FilterControlRow>
+          </FieldWrap>
 
-        <FieldWrap>
-          <FilterControlRow>
-            <FieldLabel label={ERROR_REVIEW_TEXT.feedbackLabel} />
-            <ControlWrap>
-              <SelectDropdown
-                value={draftFilters.feedbackResult}
-                options={ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS}
-                onChange={value => setDraftFilters(prev => ({ ...prev, feedbackResult: value }))}
-              />
-            </ControlWrap>
-          </FilterControlRow>
-        </FieldWrap>
+          <FieldWrap>
+            <FilterControlRow>
+              <FieldLabel label={ERROR_REVIEW_TEXT.feedbackLabel} />
+              <ControlWrap>
+                <SelectDropdown
+                  value={draftFilters.feedbackResult}
+                  options={ERROR_REVIEW_FEEDBACK_SCORE_OPTIONS}
+                  onChange={value => setDraftFilters(prev => ({ ...prev, feedbackResult: value }))}
+                />
+              </ControlWrap>
+            </FilterControlRow>
+          </FieldWrap>
 
-        <FieldWrap>
-          <FilterControlRow>
-            <FieldLabel label={ERROR_REVIEW_TEXT.teacherNameLabel} />
-            <ControlWrap>
-              <TextField
-                type="text"
-                placeholder={ERROR_REVIEW_TEXT.teacherNamePlaceholder}
-                value={draftFilters.teacherName}
-                onChange={e => setDraftFilters(prev => ({ ...prev, teacherName: e.target.value }))}
-              />
-            </ControlWrap>
-          </FilterControlRow>
-        </FieldWrap>
+          <FieldWrap>
+            <FilterControlRow>
+              <FieldLabel label={ERROR_REVIEW_TEXT.teacherNameLabel} />
+              <ControlWrap>
+                <TextField
+                  type="text"
+                  placeholder={ERROR_REVIEW_TEXT.teacherNamePlaceholder}
+                  value={draftFilters.teacherName}
+                  onChange={e =>
+                    setDraftFilters(prev => ({ ...prev, teacherName: e.target.value }))
+                  }
+                />
+              </ControlWrap>
+            </FilterControlRow>
+          </FieldWrap>
 
-        <PeriodFieldWrap>
-          <FilterControlRow>
-            <FieldLabel label={ERROR_REVIEW_TEXT.periodLabel} />
-            <PeriodControlWrap>
+          <PeriodFieldWrap>
+            <FilterControlRow>
+              <FieldLabel label={ERROR_REVIEW_TEXT.periodLabel} />
               <DatePickerDropdown
                 placeholder={ERROR_REVIEW_TEXT.periodPlaceholder}
                 startDate={draftFilters.startDate}
@@ -121,30 +122,21 @@ export const AdminErrorReviewPage = () => {
                   setDraftFilters(prev => ({ ...prev, startDate, endDate }))
                 }
               />
-            </PeriodControlWrap>
-          </FilterControlRow>
-        </PeriodFieldWrap>
-
-        <ButtonWrap>
+            </FilterControlRow>
+          </PeriodFieldWrap>
+        </FilterArea>
+        <ButtonsArea>
+          <IconButton type="button" variant="ghost" icon={IcRefresh} onClick={handleResetAll} />
           <InlineButton
             type="button"
-            variant={hasSelectedFilters ? 'primary' : 'ghost'}
+            variant="primary"
             size="L"
             width="100%"
             label={ERROR_REVIEW_TEXT.searchButtonLabel}
+            disabled={!hasSelectedFilters}
             onClick={handleApplyFilters}
           />
-        </ButtonWrap>
-        <ButtonWrap>
-          <InlineButton
-            type="button"
-            variant="ghost"
-            size="L"
-            width="100%"
-            label={ERROR_REVIEW_TEXT.resetButtonLabel}
-            onClick={handleResetAll}
-          />
-        </ButtonWrap>
+        </ButtonsArea>
       </FilterBar>
 
       <ContentArea>
@@ -218,17 +210,42 @@ const PageContainer = styled.div`
 
 const FilterBar = styled.div`
   display: grid;
-  grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsDesktop}, minmax(0, 1fr));
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: ${ERROR_REVIEW_FILTER_LAYOUT.gap};
-  align-items: start;
   padding: 0 16px;
 
   @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointTablet}) {
     grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsTablet}, minmax(0, 1fr));
   }
+`;
 
-  @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointMobile}) {
-    grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsMobile}, minmax(0, 1fr));
+const FilterArea = styled.div`
+  display: grid;
+  grid-column: span 5;
+  grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsDesktop}, minmax(0, 1fr));
+  align-items: end;
+  gap: ${ERROR_REVIEW_FILTER_LAYOUT.gap};
+  min-width: 0;
+
+  @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointTablet}) {
+    grid-column: 1 / -1;
+    grid-template-columns: repeat(${ERROR_REVIEW_FILTER_LAYOUT.columnsTablet}, minmax(0, 1fr));
+  }
+`;
+
+const ButtonsArea = styled.div`
+  display: flex;
+  grid-column: span 2;
+  align-items: flex-end;
+  gap: 10px;
+  min-width: 0;
+
+  button {
+    height: ${ERROR_REVIEW_FILTER_LAYOUT.controlHeight};
+  }
+
+  @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointTablet}) {
+    grid-column: 1 / -1;
   }
 `;
 
@@ -249,7 +266,8 @@ const FieldWrap = styled.div`
 
 const FilterControlRow = styled.div`
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  justify-content: center;
   gap: 10px;
   width: 100%;
 `;
@@ -259,35 +277,8 @@ const ControlWrap = styled.div`
   min-width: 0;
 `;
 
-const PeriodControlWrap = styled(ControlWrap)`
-  flex: 0 1 360px;
-`;
-
 const PeriodFieldWrap = styled(FieldWrap)`
   grid-column: span 2;
-
-  @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointTablet}) {
-    grid-column: span 2;
-  }
-
-  @media (max-width: ${ERROR_REVIEW_FILTER_LAYOUT.breakpointMobile}) {
-    grid-column: span 2;
-  }
-`;
-
-const ButtonWrap = styled.div`
-  display: flex;
-  align-items: center;
-  width: 100%;
-
-  button {
-    height: ${ERROR_REVIEW_FILTER_LAYOUT.controlHeight};
-    padding: 0 ${ERROR_REVIEW_FILTER_LAYOUT.controlHorizontalPadding};
-  }
-
-  span {
-    ${({ theme }) => theme.fonts.labelS};
-  }
 `;
 
 const ContentArea = styled.div`

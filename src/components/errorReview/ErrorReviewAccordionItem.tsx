@@ -7,7 +7,7 @@ const ERROR_REVIEW_ACCORDION_STYLE = {
   radius: '18px',
   paddingExpanded: '18px 20px',
   paddingCollapsed: '16px 20px',
-  headerGap: '10px',
+  headerGap: '16px',
   headerLeftGap: '14px',
   scoreBadgeMinWidth: '48px',
   scoreBadgePadding: '2px 12px',
@@ -82,6 +82,7 @@ const ReviewHeader = styled.div`
 const HeaderLeft = styled.div`
   display: flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: ${ERROR_REVIEW_ACCORDION_STYLE.headerLeftGap};
   min-width: 0;
 `;
@@ -119,6 +120,8 @@ const TeacherName = styled.span`
 `;
 
 const ReviewedAt = styled.span`
+  overflow: hidden;
+  text-overflow: ellipsis;
   ${({ theme }) => theme.fonts.body1};
   color: ${({ theme }) => theme.colors.text.text4};
   white-space: nowrap;
