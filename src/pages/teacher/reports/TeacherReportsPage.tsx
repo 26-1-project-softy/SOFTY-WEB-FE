@@ -1,4 +1,14 @@
+import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
+import { Loader } from '@/components/common/Loader';
+import { SectionEmptyState } from '@/components/common/SectionEmptyState';
+import { SectionErrorState } from '@/components/common/SectionErrorState';
+import { Dialog } from '@/components/common/Dialog';
+import { DialogHeader } from '@/components/common/DialogHeader';
+import { DialogFooter } from '@/components/common/DialogFooter';
+import { InlineButton } from '@/components/common/InlineButton';
+import { Alert } from '@/components/common/Alert';
+import { IconBadge } from '@/components/common/IconBadge';
 import { useTeacherReports } from '@/features/teacher/reports/hooks/useTeacherReports';
 import {
   getInquiryIntentByType,
@@ -6,19 +16,18 @@ import {
   INQUIRY_INTENT_LABEL,
   type InquiryIntentType,
 } from '@/constants/inquiryIntent';
-import { formatDateOnly, formatPreviewName } from '@/features/teacher/reports/lib/reportFormatters';
-import { SectionEmptyState } from '@/components/common/SectionEmptyState';
-import { Loader } from '@/components/common/Loader';
-import { SectionErrorState } from '@/components/common/SectionErrorState';
-import { Dialog } from '@/components/common/Dialog';
-import { DialogHeader } from '@/components/common/DialogHeader';
-import { DialogFooter } from '@/components/common/DialogFooter';
-import { InlineButton } from '@/components/common/InlineButton';
-import { Alert } from '@/components/common/Alert';
-import { IcChat, IcDownload, IcFile } from '@/icons';
+import { formatDateOnly } from '@/features/teacher/reports/lib/reportFormatters';
 import { formatAiModelDateTime } from '@/utils/formatDateTime';
+import {
+  formatUserDisplayName,
+  formatUserDisplayNameWithSuffix,
+  isUnknownUserDisplayName,
+} from '@/utils/formatUserDisplayName';
+import { IcChat, IcDefaultProfile, IcDownload, IcFile } from '@/icons';
 
 export const TeacherReportsPage = () => {
+  const theme = useTheme();
+
   const {
     reportItems,
     selectedReport,
@@ -46,6 +55,14 @@ export const TeacherReportsPage = () => {
     handleDownloadGeneratedPdf,
   } = useTeacherReports();
 
+  const selectedParentName = selectedReport?.parentName ?? '';
+  const selectedParentDisplayName = formatUserDisplayNameWithSuffix({
+    name: selectedParentName,
+    suffix: '학부모님',
+  });
+  const selectedParentAvatarName = formatUserDisplayName(selectedParentName);
+  const isUnknownSelectedParent = isUnknownUserDisplayName(selectedParentAvatarName);
+
   return (
     <ReportsPageContainer>
       <ReportListSection>
@@ -71,6 +88,14 @@ export const TeacherReportsPage = () => {
           <ReportList>
             {reportItems.map(item => {
               const intentType = getInquiryIntentByType(item.intentType);
+              const parentDisplayName = formatUserDisplayNameWithSuffix({
+                name: item.parentName,
+                suffix: '학부모님',
+              });
+              const studentDisplayName = formatUserDisplayNameWithSuffix({
+                name: item.studentName,
+                suffix: '학생',
+              });
 
               return (
                 <ReportListItem
@@ -80,8 +105,8 @@ export const TeacherReportsPage = () => {
                 >
                   <ReportItemTopRow>
                     <ReportTitleArea>
-                      <ParentName>{item.parentName || '-'}</ParentName>
-                      <StudentName>{item.studentName || '-'}</StudentName>
+                      <ParentName>{parentDisplayName}</ParentName>
+                      <StudentName>{studentDisplayName}</StudentName>
                     </ReportTitleArea>
                     <LastMessageDate>
                       마지막 메시지: {formatDateOnly(item.lastMessageAt)}
@@ -151,13 +176,20 @@ export const TeacherReportsPage = () => {
                     <OutgoingTime>{formatAiModelDateTime(message.createdAt)}</OutgoingTime>
                   ) : (
                     <SenderMetaRow>
-                      <SenderAvatar>
-                        {selectedReport.parentName?.trim()
-                          ? selectedReport.parentName.charAt(0)
-                          : '-'}
-                      </SenderAvatar>
+                      {isUnknownSelectedParent ? (
+                        <IconBadge
+                          size={44}
+                          iconSize={22}
+                          icon={IcDefaultProfile}
+                          bgColor={theme.colors.background.bg4}
+                          color={theme.colors.brand.dark}
+                        />
+                      ) : (
+                        <SenderAvatar>{selectedParentAvatarName.charAt(0)}</SenderAvatar>
+                      )}
+
                       <SenderInfo>
-                        <SenderName>{formatPreviewName(selectedReport.parentName)}</SenderName>
+                        <SenderName>{selectedParentDisplayName}</SenderName>
                         <SenderTime>{formatAiModelDateTime(message.createdAt)}</SenderTime>
                       </SenderInfo>
                     </SenderMetaRow>

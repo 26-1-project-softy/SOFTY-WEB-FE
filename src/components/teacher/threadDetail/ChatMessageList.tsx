@@ -5,7 +5,10 @@ import { InlineButton } from '@/components/common/InlineButton';
 import { Loader } from '@/components/common/Loader';
 import { Avatar } from '@/components/common/Avatar';
 import type { DetailLoadState, MessageItem } from '@/features/teacher/threadDetail/types';
-import { IcError, IcRefresh } from '@/icons';
+import { IcDefaultProfile, IcError, IcRefresh } from '@/icons';
+import { IconBadge } from '@/components/common/IconBadge';
+import { formatUserDisplayName, isUnknownUserDisplayName } from '@/utils/formatUserDisplayName';
+import { theme } from '@/styles/theme';
 
 type ChatMessageListProps = {
   loadState: DetailLoadState;
@@ -117,23 +120,39 @@ export const ChatMessageList = ({
         </LoadMoreWrap>
       ) : null}
 
-      {messages.map(message => (
-        <MessageItem key={message.id} $isMine={message.isMine}>
-          {!message.isMine && (
-            <CounterpartInfo>
-              <Avatar lastName={message.senderName.charAt(0)} />
-              <SenderName>{message.senderName}</SenderName>
-            </CounterpartInfo>
-          )}
+      {messages.map(message => {
+        const senderDisplayName = formatUserDisplayName(message.senderName);
+        const isUnknownSender = isUnknownUserDisplayName(senderDisplayName);
 
-          <BubbleWrap $isMine={message.isMine}>
-            {message.isMine && message.isUnreadByCounterpart && <UnreadMarker>1</UnreadMarker>}
-            <MessageBubble $isMine={message.isMine}>{message.content}</MessageBubble>
-          </BubbleWrap>
+        return (
+          <MessageItem key={message.id} $isMine={message.isMine}>
+            {!message.isMine && (
+              <CounterpartInfo>
+                {isUnknownSender ? (
+                  <IconBadge
+                    size={36}
+                    iconSize={18}
+                    icon={IcDefaultProfile}
+                    bgColor={theme.colors.background.bg4}
+                    color={theme.colors.brand.dark}
+                  />
+                ) : (
+                  <Avatar lastName={senderDisplayName.charAt(0)} />
+                )}
 
-          <MessageTime $isMine={message.isMine}>{message.sentAt}</MessageTime>
-        </MessageItem>
-      ))}
+                <SenderName>{senderDisplayName}</SenderName>
+              </CounterpartInfo>
+            )}
+
+            <BubbleWrap $isMine={message.isMine}>
+              {message.isMine && message.isUnreadByCounterpart && <UnreadMarker>1</UnreadMarker>}
+              <MessageBubble $isMine={message.isMine}>{message.content}</MessageBubble>
+            </BubbleWrap>
+
+            <MessageTime $isMine={message.isMine}>{message.sentAt}</MessageTime>
+          </MessageItem>
+        );
+      })}
     </MessageArea>
   );
 };

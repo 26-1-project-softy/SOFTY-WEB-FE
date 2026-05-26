@@ -1,10 +1,18 @@
+import { useTheme } from '@emotion/react';
 import styled from '@emotion/styled';
 import { Avatar } from '@/components/common/Avatar';
+import { IconBadge } from '@/components/common/IconBadge';
 import { StatusTagButton } from '@/components/teacher/threadDetail/StatusTagButton';
 import type { ThreadRoomItem } from '@/features/teacher/threadList/types';
 import type { ThreadStatus } from '@/stores/threadStatusStore';
 import { INQUIRY_INTENT_COLOR_KEY, type InquiryIntentType } from '@/constants/inquiryIntent';
 import { INQUIRY_STATUS_LABEL } from '@/constants/inquiryStatus';
+import {
+  formatUserDisplayName,
+  formatUserDisplayNameWithSuffix,
+  isUnknownUserDisplayName,
+} from '@/utils/formatUserDisplayName';
+import { IcDefaultProfile } from '@/icons';
 
 type ThreadCardProps = {
   room: ThreadRoomItem;
@@ -13,15 +21,40 @@ type ThreadCardProps = {
 };
 
 export const ThreadCard = ({ room, currentStatus, onClick }: ThreadCardProps) => {
+  const theme = useTheme();
+
+  const counterpartName = formatUserDisplayName(room.counterpartName);
+  const isUnknownCounterpart = isUnknownUserDisplayName(counterpartName);
+
+  const counterpartDisplayName = formatUserDisplayNameWithSuffix({
+    name: room.counterpartName,
+    suffix: '학부모님',
+  });
+
+  const studentDisplayName = formatUserDisplayNameWithSuffix({
+    name: room.studentName,
+    suffix: '학생',
+  });
+
   return (
     <ThreadCardContainer type="button" onClick={onClick}>
       <ThreadBodyArea>
-        <Avatar size={48} lastName={room.studentName.charAt(0)} />
+        {isUnknownCounterpart ? (
+          <IconBadge
+            size={48}
+            iconSize={24}
+            icon={IcDefaultProfile}
+            bgColor={theme.colors.background.bg4}
+            color={theme.colors.brand.dark}
+          />
+        ) : (
+          <Avatar size={48} lastName={counterpartName.charAt(0)} />
+        )}
 
         <ThreadContentArea>
           <NameGroup>
-            <ParentName>{room.counterpartName}</ParentName>
-            <StudentName>{room.studentName}</StudentName>
+            <ParentName>{counterpartDisplayName}</ParentName>
+            <StudentName>{studentDisplayName}</StudentName>
           </NameGroup>
 
           <PreviewText>{room.preview}</PreviewText>
