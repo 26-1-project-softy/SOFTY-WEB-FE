@@ -39,12 +39,13 @@ const DialogHeaderContainer = styled.div`
 
 const Title = styled.h2`
   word-break: keep-all;
-  ${({ theme }) => theme.fonts.labelM};
+  ${({ theme }) => theme.fonts.title3};
+  font-weight: 700;
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
 const Description = styled.div`
   word-break: keep-all;
-  ${({ theme }) => theme.fonts.body1};
+  ${({ theme }) => theme.fonts.body2};
   color: ${({ theme }) => theme.colors.text.text2};
 `;
