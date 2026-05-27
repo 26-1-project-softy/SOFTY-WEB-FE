@@ -27,7 +27,7 @@ export const SectionEmptyState = ({
 const Container = styled.div`
   display: flex;
   flex-direction: column;
-  flex: 1;
+  height: 100%;
   align-items: center;
   justify-content: center;
   color: ${({ theme }) => theme.colors.text.text4};
@@ -35,9 +35,13 @@ const Container = styled.div`
 `;
 
 const Title = styled.p`
+  text-align: center;
+  word-break: keep-all;
   ${({ theme }) => theme.fonts.labelS};
 `;
 
 const Description = styled.p`
+  text-align: center;
+  word-break: keep-all;
   ${({ theme }) => theme.fonts.body2};
 `;

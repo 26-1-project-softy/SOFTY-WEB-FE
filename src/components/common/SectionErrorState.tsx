@@ -40,7 +40,7 @@ export const SectionErrorState = ({
 const SectionErrorStateContainer = styled.div`
   display: flex;
   flex-direction: column;
-  flex: 1;
+  height: 100%;
   align-items: center;
   justify-content: center;
   gap: 16px;
@@ -55,11 +55,15 @@ const SectionErrorIcon = styled.span`
 `;
 
 const SectionErrorTitle = styled.h2`
+  text-align: center;
+  word-break: keep-all;
   ${({ theme }) => theme.fonts.labelS};
   color: ${({ theme }) => theme.colors.text.text1};
 `;
 
 const SectionErrorDescription = styled.p`
+  text-align: center;
+  word-break: keep-all;
   ${({ theme }) => theme.fonts.body2};
   color: ${({ theme }) => theme.colors.text.text1};
 `;
