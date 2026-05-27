@@ -28,6 +28,8 @@ export const MessageBubbleList = ({
       {messages.map(message => {
         const senderDisplayName = formatUserDisplayName(message.senderName);
         const isUnknownSender = isUnknownUserDisplayName(senderDisplayName);
+        const messageContent = message.content || '-';
+        const hasTrailingLineBreak = message.content.endsWith('\n');
 
         return (
           <MessageItem key={message.id} $isMine={message.isMine}>
@@ -53,7 +55,11 @@ export const MessageBubbleList = ({
               {showUnreadMarker && message.isMine && message.isUnreadByCounterpart ? (
                 <UnreadMarker>1</UnreadMarker>
               ) : null}
-              <MessageBubble $isMine={message.isMine}>{message.content || '-'}</MessageBubble>
+
+              <MessageBubble $isMine={message.isMine}>
+                {messageContent}
+                {hasTrailingLineBreak ? <TrailingLineBreakMarker aria-hidden="true" /> : null}
+              </MessageBubble>
             </BubbleWrap>
 
             <MessageTime $isMine={message.isMine}>{message.sentAt}</MessageTime>
@@ -103,9 +109,17 @@ const UnreadMarker = styled.span`
 
 const MessageBubble = styled.div<{ $isMine: boolean }>`
   ${({ theme }) => theme.fonts.body2};
+  white-space: break-spaces;
+  overflow-wrap: anywhere;
   border-radius: ${({ $isMine }) => ($isMine ? '20px 0' : '0 20px')} 20px 20px;
   padding: 12px 16px;
   color: ${({ $isMine, theme }) => ($isMine ? theme.colors.text.textW : theme.colors.text.text2)};
   background: ${({ $isMine, theme }) =>
     $isMine ? theme.colors.brand.primary : theme.colors.background.bg1};
+`;
+
+const TrailingLineBreakMarker = styled.span`
+  &::after {
+    content: '\\00a0';
+  }
 `;

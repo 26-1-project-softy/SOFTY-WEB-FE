@@ -59,10 +59,15 @@ export const useThreadComposer = ({
     sendTeacherMessageMutation.isPending;
 
   const isSendingMessage = sendTeacherMessageMutation.isPending;
+
+  // 공백만 있는 메시지는 막되, 실제 전송 content는 원문 그대로 사용한다.
   const hasMessageInput = messageInput.trim().length > 0;
+
   const composerActionMode: ComposerActionMode = analysisResult ? 'send' : 'assist';
   const isComposerActionDisabled = !hasMessageInput || isAnalysisRequesting;
   const isUnsafeRisk = analysisResult?.riskLevel === 'UNSAFE';
+  const analysisId = analysisResult?.analysisId;
+  const recommendedMessage = analysisResult?.recommendedMessage;
 
   const resetComposerState = useCallback(() => {
     setMessageInput('');
@@ -95,7 +100,7 @@ export const useThreadComposer = ({
         return null;
       }
 
-      const content = messageInput.trim();
+      const content = messageInput;
 
       const response = lastAnalysisId
         ? await recheckTeacherMessageMutation.mutateAsync({
@@ -154,8 +159,6 @@ export const useThreadComposer = ({
     [appendFallbackMineMessage, onRequestScrollToLatestMessage, refetchMessages]
   );
 
-  const analysisId = analysisResult?.analysisId;
-
   const sendTeacherMessage = useCallback(async () => {
     if (!hasMessageInput || isAnalysisRequesting) {
       return;
@@ -165,7 +168,7 @@ export const useThreadComposer = ({
       setAnalysisErrorMessage('');
       setSendErrorMessage('');
 
-      const content = messageInput.trim();
+      const content = messageInput;
 
       if (!analysisId) {
         setSendErrorMessage('분석 결과가 없어 메시지를 전송할 수 없어요');
@@ -203,13 +206,13 @@ export const useThreadComposer = ({
     } catch (error) {
       if (isAxiosError(error) && error.response?.status === 400) {
         try {
-          const content = messageInput.trim();
+          const content = messageInput;
           const response = await threadDetailApi.getMessages(chatRoomId, { size: 5 });
           const latestMine = [...(response.data?.messages ?? [])]
             .reverse()
             .find(message => message.isMine);
 
-          const isActuallySent = latestMine?.content?.trim() === content;
+          const isActuallySent = latestMine?.content === content;
 
           if (isActuallySent) {
             const fallbackMessage: MessageItem = {
@@ -285,8 +288,6 @@ export const useThreadComposer = ({
   const handleRetryAnalysis = useCallback(() => {
     void requestMessageAnalysis();
   }, [requestMessageAnalysis]);
-
-  const recommendedMessage = analysisResult?.recommendedMessage;
 
   const handleApplyRecommendedReply = useCallback(async () => {
     if (!recommendedMessage || !analysisId) {
