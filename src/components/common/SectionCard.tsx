@@ -32,15 +32,17 @@ const SectionCardContainer = styled.section`
   display: flex;
   min-width: 0;
   flex-direction: column;
-  border: 1px solid ${({ theme }) => theme.colors.border.border2};
+  overflow: hidden;
   border-radius: 10px;
   background: ${({ theme }) => theme.colors.background.bg1};
+  box-shadow: ${({ theme }) => theme.colors.shadow.card};
 `;
 
 const SectionCardHeader = styled.div`
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   padding: 12px 20px;
   gap: 16px;
 `;
