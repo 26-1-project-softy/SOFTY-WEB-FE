@@ -42,7 +42,7 @@ export const ThreadCard = ({ room, currentStatus, onClick }: ThreadCardProps) =>
         {isUnknownCounterpart ? (
           <IconBadge
             size={48}
-            iconSize={24}
+            iconSize={20}
             icon={IcDefaultProfile}
             bgColor={theme.colors.background.bg4}
             color={theme.colors.brand.dark}
