@@ -81,10 +81,24 @@ const ThreadCardContainer = styled.button`
   justify-content: space-between;
   gap: 20px;
   padding: 20px;
-  border: 1px solid ${({ theme }) => theme.colors.border.border2};
   border-radius: 10px;
   background: ${({ theme }) => theme.colors.background.bg1};
   text-align: left;
+  box-shadow: ${({ theme }) => theme.colors.shadow.card};
+  transition:
+    transform 0.18s ease,
+    box-shadow 0.18s ease,
+    background-color 0.18s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    box-shadow: ${({ theme }) => theme.colors.shadow.cardHover};
+    background: ${({ theme }) => theme.colors.background.bg1};
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
 `;
 
 const ThreadBodyArea = styled.div`
