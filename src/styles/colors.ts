@@ -41,6 +41,7 @@ export const colors = {
     warningSoft: '#FEFBEC',
     error: '#FF2C3D',
     errorSoft: '#FAE3E2',
+    errorPressed: '#E62636',
   },
   overlay: {
     dim: 'rgba(0, 0, 0, 0.5)',
