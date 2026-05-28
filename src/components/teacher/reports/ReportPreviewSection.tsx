@@ -46,7 +46,7 @@ export const ReportPreviewSection = ({
   const headerAction = (
     <InlineButton
       variant="primary"
-      size="L"
+      size="M"
       icon={IcFile}
       label={isGeneratingPdf ? '생성 중...' : 'PDF 생성하기'}
       disabled={isPdfButtonDisabled}
