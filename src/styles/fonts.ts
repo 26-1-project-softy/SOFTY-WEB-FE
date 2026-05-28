@@ -18,7 +18,7 @@ export const fonts = {
   title1: createFontStyle('Pretendard', 900, 28, 150),
   title2: createFontStyle('Pretendard', 600, 24, 150),
   title3: createFontStyle('Pretendard', 600, 18, 150),
-  title4: createFontStyle('Pretendard', 600, 16, 150),
+  title4: createFontStyle('Pretendard', 700, 16, 150),
   labelL: createFontStyleNew('Pretendard', 700, 24, 36),
   labelM: createFontStyleNew('Pretendard', 700, 20, 30),
   labelS: createFontStyleNew('Pretendard', 600, 16, 19),

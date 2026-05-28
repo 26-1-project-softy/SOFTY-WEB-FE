@@ -9,6 +9,7 @@ import {
 } from '@/constants/inquiryIntent';
 import { INQUIRY_STATUS, INQUIRY_STATUS_LABEL } from '@/constants/inquiryStatus';
 import type { ThreadStatus } from '@/stores/threadStatusStore';
+import { formatUserDisplayNameWithSuffix } from '@/utils/formatUserDisplayName';
 
 type ChatHeaderProps = {
   counterpartName: string;
@@ -31,15 +32,23 @@ export const ChatHeader = ({
   onToggleStatusMenu,
   onSelectStatus,
 }: ChatHeaderProps) => {
-  const parentName = counterpartName?.trim();
+  const counterpartDisplayName = formatUserDisplayNameWithSuffix({
+    name: counterpartName,
+    suffix: '학부모님',
+  });
+
+  const studentDisplayName = formatUserDisplayNameWithSuffix({
+    name: studentName,
+    suffix: '학생',
+  });
 
   return (
     <Header
-      title={parentName ? `${counterpartName} 학부모님` : '채팅방'}
+      title={counterpartDisplayName}
       onBack={onBack}
       metaData={
         <ChatHeaderMetaArea>
-          <StudentName>{studentName || '-'}</StudentName>
+          <StudentName>{studentDisplayName}</StudentName>
 
           <IntentTag $intentType={intentType}>{INQUIRY_INTENT_LABEL[intentType]}</IntentTag>
 

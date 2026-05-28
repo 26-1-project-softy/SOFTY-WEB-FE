@@ -3,7 +3,7 @@ import { useChatMessageAutoScroll } from '@/features/teacher/threadDetail/hooks/
 import { Alert } from '@/components/common/Alert';
 import { InlineButton } from '@/components/common/InlineButton';
 import { Loader } from '@/components/common/Loader';
-import { Avatar } from '@/components/common/Avatar';
+import { MessageBubbleList } from '@/components/common/MessageBubbleList';
 import type { DetailLoadState, MessageItem } from '@/features/teacher/threadDetail/types';
 import { IcError, IcRefresh } from '@/icons';
 
@@ -117,23 +117,7 @@ export const ChatMessageList = ({
         </LoadMoreWrap>
       ) : null}
 
-      {messages.map(message => (
-        <MessageItem key={message.id} $isMine={message.isMine}>
-          {!message.isMine && (
-            <CounterpartInfo>
-              <Avatar lastName={message.senderName.charAt(0)} />
-              <SenderName>{message.senderName}</SenderName>
-            </CounterpartInfo>
-          )}
-
-          <BubbleWrap $isMine={message.isMine}>
-            {message.isMine && message.isUnreadByCounterpart && <UnreadMarker>1</UnreadMarker>}
-            <MessageBubble $isMine={message.isMine}>{message.content}</MessageBubble>
-          </BubbleWrap>
-
-          <MessageTime $isMine={message.isMine}>{message.sentAt}</MessageTime>
-        </MessageItem>
-      ))}
+      <MessageBubbleList messages={messages} showUnreadMarker />
     </MessageArea>
   );
 };
@@ -196,50 +180,4 @@ const DetailLoadingBox = styled(DetailErrorBox)`
 
 const LoadMoreWrap = styled.div`
   align-self: center;
-`;
-
-const MessageItem = styled.article<{ $isMine: boolean }>`
-  display: flex;
-  flex-direction: column;
-  align-items: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
-  gap: 8px;
-`;
-
-const CounterpartInfo = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-`;
-
-const SenderName = styled.span`
-  ${({ theme }) => theme.fonts.labelXS};
-  color: ${({ theme }) => theme.colors.text.text1};
-`;
-
-const MessageTime = styled.span<{ $isMine: boolean }>`
-  text-align: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
-  ${({ theme }) => theme.fonts.caption};
-  color: ${({ theme }) => theme.colors.text.text4};
-`;
-
-const BubbleWrap = styled.div<{ $isMine: boolean }>`
-  display: flex;
-  align-items: flex-end;
-  justify-content: ${({ $isMine }) => ($isMine ? 'flex-end' : 'flex-start')};
-  max-width: min(72%, 540px);
-  gap: 8px;
-`;
-
-const UnreadMarker = styled.span`
-  ${({ theme }) => theme.fonts.caption};
-  color: ${({ theme }) => theme.colors.brand.primary};
-`;
-
-const MessageBubble = styled.div<{ $isMine: boolean }>`
-  ${({ theme }) => theme.fonts.body2};
-  border-radius: ${({ $isMine }) => ($isMine ? '20px 0' : '0 20px')} 20px 20px;
-  padding: 12px 16px;
-  color: ${({ $isMine, theme }) => ($isMine ? theme.colors.text.textW : theme.colors.text.text2)};
-  background: ${({ $isMine, theme }) =>
-    $isMine ? theme.colors.brand.primary : theme.colors.background.bg1};
 `;

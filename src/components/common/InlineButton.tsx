@@ -51,7 +51,7 @@ export const InlineButton = ({
       disabled={disabled}
       {...buttonProps}
     >
-      {Icon && <Icon color={contentColor} />}
+      {Icon && <Icon width={18} height={18} color={contentColor} />}
       <ButtonLabel $color={contentColor}>{label}</ButtonLabel>
     </ButtonContainer>
   );

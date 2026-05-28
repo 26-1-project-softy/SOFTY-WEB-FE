@@ -41,6 +41,7 @@ export const colors = {
     warningSoft: '#FEFBEC',
     error: '#FF2C3D',
     errorSoft: '#FAE3E2',
+    errorPressed: '#E62636',
   },
   overlay: {
     dim: 'rgba(0, 0, 0, 0.5)',
@@ -52,6 +53,8 @@ export const colors = {
     dialog: '0 20px 48px rgba(0, 0, 0, 0.18)',
     toast: '0 8px 20px rgba(0, 0, 0, 0.08)',
     toastHover: '0 10px 22px rgba(0, 0, 0, 0.15)',
+    card: '0 4px 16px rgba(0, 0, 0, 0.06)',
+    cardHover: '0 8px 24px rgba(0, 0, 0, 0.08)',
   },
   chart: {
     recommendationUsedAsIs: '#55B5A6',
