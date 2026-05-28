@@ -56,14 +56,12 @@ const SectionCardTextArea = styled.div`
 
 const SectionCardTitle = styled.h2`
   ${({ theme }) => theme.fonts.labelM};
+  font-size: 18px;
   color: ${({ theme }) => theme.colors.text.text1};
-
-  @media (max-width: 768px) {
-    ${({ theme }) => theme.fonts.labelS};
-  }
 `;
 
 const SectionCardDescription = styled.p`
+  word-break: keep-all;
   ${({ theme }) => theme.fonts.caption};
   color: ${({ theme }) => theme.colors.text.text4};
 `;
@@ -72,6 +70,7 @@ const SectionCardActionArea = styled.div`
   display: flex;
   align-items: center;
   flex-shrink: 0;
+  gap: 10px;
 `;
 
 const CardContentContainer = styled.div`
