@@ -118,11 +118,13 @@ export const TeacherSettingsPage = () => {
       <ContentArea>
         {renderSettingContent()}
 
-        <AccountManagementCard
-          disabled={isWithdrawing}
-          onLogout={handleLogout}
-          onWithdraw={handleOpenWithdrawModal}
-        />
+        {!isLoading ? (
+          <AccountManagementCard
+            disabled={isWithdrawing}
+            onLogout={handleLogout}
+            onWithdraw={handleOpenWithdrawModal}
+          />
+        ) : null}
       </ContentArea>
 
       <ClassChangeFormDialog
