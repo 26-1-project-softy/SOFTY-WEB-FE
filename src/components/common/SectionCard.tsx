@@ -58,6 +58,10 @@ const SectionCardTitle = styled.h2`
   ${({ theme }) => theme.fonts.labelM};
   font-size: 18px;
   color: ${({ theme }) => theme.colors.text.text1};
+
+  @media (max-width: 768px) {
+    ${({ theme }) => theme.fonts.labelS};
+  }
 `;
 
 const SectionCardDescription = styled.p`
