@@ -32,7 +32,7 @@ export const Alert = ({ title, description, variant = 'error', onRetry }: AlertP
         </AlertTextContainer>
       </AlertContentContainer>
 
-      {onRetry && <InlineButton variant="ghost" size="L" label="다시 시도" onClick={onRetry} />}
+      {onRetry && <InlineButton variant="text" size="L" label="다시 시도" onClick={onRetry} />}
     </AlertContainer>
   );
 };
