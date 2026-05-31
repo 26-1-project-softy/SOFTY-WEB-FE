@@ -72,7 +72,7 @@ export const ReportRoomListSection = ({
     <ReportListSection>
       <ReportList>
         {reportItems.map(item => {
-          const intentType = getInquiryIntentByType(item.intentType);
+          const intentType = getInquiryIntentByType(item.intentLabel);
           const parentDisplayName = formatUserDisplayNameWithSuffix({
             name: item.parentName,
             suffix: '학부모님',
@@ -98,7 +98,9 @@ export const ReportRoomListSection = ({
                 </LastMessageDate>
               </ReportItemTopRow>
 
-              <IntentBadge $intentType={intentType}>{INQUIRY_INTENT_LABEL[intentType]}</IntentBadge>
+              <IntentBadge $intentType={intentType}>
+                {item.intentLabel || INQUIRY_INTENT_LABEL[intentType]}
+              </IntentBadge>
             </ReportListItem>
           );
         })}

@@ -146,7 +146,8 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
 
   const counterpartName = chatRoomDetail?.counterpartName ?? '';
   const studentName = chatRoomDetail?.studentName ?? '';
-  const intentType: InquiryIntentType = getInquiryIntentByType(chatRoomDetail?.intentType);
+  const intentLabel = chatRoomDetail?.intentLabel ?? '';
+  const intentType: InquiryIntentType = getInquiryIntentByType(intentLabel);
 
   const loadState: DetailLoadState = !isValidChatRoomId
     ? 'error'
@@ -196,6 +197,7 @@ export const useThreadDetail = ({ chatRoomId }: UseTeacherThreadDetailParams) =>
     detailErrorMessage,
     counterpartName,
     studentName,
+    intentLabel,
     intentType,
     messages,
     messagesError,
