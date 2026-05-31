@@ -40,6 +40,7 @@ export const TeacherThreadDetailPage = () => {
     detailErrorMessage,
     counterpartName,
     studentName,
+    intentLabel,
     intentType,
     messages,
     messagesError,
@@ -73,6 +74,7 @@ export const TeacherThreadDetailPage = () => {
       <ChatHeader
         counterpartName={counterpartName}
         studentName={studentName}
+        intentLabel={intentLabel}
         intentType={intentType}
         status={status}
         isStatusMenuOpen={isStatusMenuOpen}

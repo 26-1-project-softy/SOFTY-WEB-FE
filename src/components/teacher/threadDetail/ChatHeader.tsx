@@ -14,6 +14,7 @@ import { formatUserDisplayNameWithSuffix } from '@/utils/formatUserDisplayName';
 type ChatHeaderProps = {
   counterpartName: string;
   studentName: string;
+  intentLabel?: string;
   intentType: InquiryIntentType;
   status: ThreadStatus;
   isStatusMenuOpen: boolean;
@@ -25,6 +26,7 @@ type ChatHeaderProps = {
 export const ChatHeader = ({
   counterpartName,
   studentName,
+  intentLabel,
   intentType,
   status,
   isStatusMenuOpen,
@@ -50,7 +52,9 @@ export const ChatHeader = ({
         <ChatHeaderMetaArea>
           <StudentName>{studentDisplayName}</StudentName>
 
-          <IntentTag $intentType={intentType}>{INQUIRY_INTENT_LABEL[intentType]}</IntentTag>
+          <IntentTag $intentType={intentType}>
+            {intentLabel && intentLabel.trim() ? intentLabel : INQUIRY_INTENT_LABEL[intentType]}
+          </IntentTag>
 
           <StatusDropdownArea>
             <StatusTagButton

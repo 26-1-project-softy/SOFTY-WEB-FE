@@ -9,6 +9,7 @@ export type ChatRoomDetailData = {
   counterpartName: string;
   studentName: string;
   intentType?: string | null;
+  intentLabel?: string | null;
   status: ThreadStatus;
 };
 
