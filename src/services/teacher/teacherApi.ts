@@ -65,7 +65,10 @@ export const teacherApi = {
   },
 
   changeTeacherClass: async (payload: ChangeTeacherClassRequest) => {
-    const { data } = await apiClient.patch<ChangeTeacherClassResponse>('/teachers/class', payload);
+    const { data } = await apiClient.patch<ChangeTeacherClassResponse>(
+      '/teachers/me/class',
+      payload
+    );
 
     return data;
   },
