@@ -88,6 +88,7 @@ const DialogOverlay = styled.div`
 const DialogPanel = styled.div`
   display: flex;
   flex-direction: column;
+  min-width: 441px;
   max-height: 80vh;
   overflow-y: auto;
   border-radius: 16px;
@@ -98,6 +99,7 @@ const DialogPanel = styled.div`
   outline: none;
 
   @media (max-width: 393px) {
+    min-width: 360px;
     padding: 24px;
   }
 `;
