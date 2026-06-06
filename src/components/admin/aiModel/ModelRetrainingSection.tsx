@@ -64,12 +64,12 @@ const RetrainingStatusAlert = ({
     return <Alert title="재학습을 시작하지 못했어요" description="잠시 후 다시 시도해주세요." />;
   }
 
-  if (isPerformanceDegraded) {
+  if (!isPerformanceDegraded) {
     return (
       <Alert
         variant="warning"
         title="성능 저하가 감지되었어요"
-        description="F1-score가 0.7 이하로 내려갔어요. 최신 데이터셋으로 재학습을 진행해주세요."
+        description="F1-score가 0.8 이하로 내려갔어요. 최신 데이터셋으로 재학습을 진행해주세요."
       />
     );
   }

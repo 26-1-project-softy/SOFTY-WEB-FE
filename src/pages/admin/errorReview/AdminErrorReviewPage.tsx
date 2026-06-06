@@ -144,9 +144,7 @@ export const AdminErrorReviewPage = () => {
           <PageStateContainer>
             <Loader />
           </PageStateContainer>
-        ) : null}
-
-        {!isLoading && isError ? (
+        ) : isError ? (
           <PageStateContainer>
             <SectionErrorState
               title={ERROR_REVIEW_TEXT.errorTitle}
@@ -155,9 +153,7 @@ export const AdminErrorReviewPage = () => {
               onRetry={() => void refetch()}
             />
           </PageStateContainer>
-        ) : null}
-
-        {!isLoading && !isError && items.length === 0 ? (
+        ) : items.length === 0 ? (
           <PageStateContainer>
             <EmptyStateWrap>
               <SectionEmptyState
@@ -167,36 +163,36 @@ export const AdminErrorReviewPage = () => {
               />
             </EmptyStateWrap>
           </PageStateContainer>
-        ) : null}
+        ) : (
+          <>
+            <ErrorReviewList items={items} expandedId={expandedId} onToggle={handleToggle} />
 
-        {!isLoading && !isError && items.length > 0 ? (
-          <ErrorReviewList items={items} expandedId={expandedId} onToggle={handleToggle} />
-        ) : null}
+            <PaginationBar>
+              <PaginationMeta>
+                {ERROR_REVIEW_TEXT.paginationMeta(totalElements, page, totalPages)}
+              </PaginationMeta>
+              <PaginationButtons>
+                <InlineButton
+                  type="button"
+                  variant="ghost"
+                  size="M"
+                  label={ERROR_REVIEW_TEXT.previousButtonLabel}
+                  disabled={isFirstPage}
+                  onClick={() => setPage(page - 1)}
+                />
+                <InlineButton
+                  type="button"
+                  variant="ghost"
+                  size="M"
+                  label={ERROR_REVIEW_TEXT.nextButtonLabel}
+                  disabled={isLastPage}
+                  onClick={() => setPage(page + 1)}
+                />
+              </PaginationButtons>
+            </PaginationBar>
+          </>
+        )}
       </ContentArea>
-
-      <PaginationBar>
-        <PaginationMeta>
-          {ERROR_REVIEW_TEXT.paginationMeta(totalElements, page, totalPages)}
-        </PaginationMeta>
-        <PaginationButtons>
-          <InlineButton
-            type="button"
-            variant="ghost"
-            size="M"
-            label={ERROR_REVIEW_TEXT.previousButtonLabel}
-            disabled={isFirstPage}
-            onClick={() => setPage(page - 1)}
-          />
-          <InlineButton
-            type="button"
-            variant="ghost"
-            size="M"
-            label={ERROR_REVIEW_TEXT.nextButtonLabel}
-            disabled={isLastPage}
-            onClick={() => setPage(page + 1)}
-          />
-        </PaginationButtons>
-      </PaginationBar>
     </PageContainer>
   );
 };

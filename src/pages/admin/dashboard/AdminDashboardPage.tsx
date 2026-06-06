@@ -19,14 +19,8 @@ export const AdminDashboardPage = () => {
     refetchCurrentTab,
   } = useAdminDashboard();
 
-  const isErrorState = isCurrentTabError;
-  const isEmptyState =
-    (activeTab === 'recommendation' && !recommendationData) ||
-    (activeTab === 'risk' && !riskData) ||
-    (activeTab === 'pdf' && !pdfData);
-
   return (
-    <AdminDashboardPageContainer $isFullHeight={isErrorState || isEmptyState}>
+    <AdminDashboardPageContainer>
       {activeTab === 'recommendation' && (
         <RecommendationAdoptionPanel
           data={recommendationData}
@@ -57,12 +51,7 @@ export const AdminDashboardPage = () => {
   );
 };
 
-const AdminDashboardPageContainer = styled.div<{ $isFullHeight: boolean }>`
-  ${({ $isFullHeight }) =>
-    $isFullHeight &&
-    `
-      height: 100%;
-      display: flex;
-    `}
+const AdminDashboardPageContainer = styled.div`
+  height: 100%;
   padding: 24px 16px;
 `;
